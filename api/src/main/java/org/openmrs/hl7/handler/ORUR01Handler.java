@@ -22,6 +22,42 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import ca.uhn.hl7v2.HL7Exception;
+import ca.uhn.hl7v2.app.Application;
+import ca.uhn.hl7v2.app.ApplicationException;
+import ca.uhn.hl7v2.model.DataTypeException;
+import ca.uhn.hl7v2.model.Message;
+import ca.uhn.hl7v2.model.Type;
+import ca.uhn.hl7v2.model.Varies;
+import ca.uhn.hl7v2.model.v25.datatype.CE;
+import ca.uhn.hl7v2.model.v25.datatype.CWE;
+import ca.uhn.hl7v2.model.v25.datatype.CX;
+import ca.uhn.hl7v2.model.v25.datatype.DLD;
+import ca.uhn.hl7v2.model.v25.datatype.DT;
+import ca.uhn.hl7v2.model.v25.datatype.DTM;
+import ca.uhn.hl7v2.model.v25.datatype.ED;
+import ca.uhn.hl7v2.model.v25.datatype.FT;
+import ca.uhn.hl7v2.model.v25.datatype.ID;
+import ca.uhn.hl7v2.model.v25.datatype.IS;
+import ca.uhn.hl7v2.model.v25.datatype.NM;
+import ca.uhn.hl7v2.model.v25.datatype.PL;
+import ca.uhn.hl7v2.model.v25.datatype.ST;
+import ca.uhn.hl7v2.model.v25.datatype.TM;
+import ca.uhn.hl7v2.model.v25.datatype.TS;
+import ca.uhn.hl7v2.model.v25.datatype.XCN;
+import ca.uhn.hl7v2.model.v25.group.ORU_R01_OBSERVATION;
+import ca.uhn.hl7v2.model.v25.group.ORU_R01_ORDER_OBSERVATION;
+import ca.uhn.hl7v2.model.v25.group.ORU_R01_PATIENT_RESULT;
+import ca.uhn.hl7v2.model.v25.message.ORU_R01;
+import ca.uhn.hl7v2.model.v25.segment.MSH;
+import ca.uhn.hl7v2.model.v25.segment.NK1;
+import ca.uhn.hl7v2.model.v25.segment.OBR;
+import ca.uhn.hl7v2.model.v25.segment.OBX;
+import ca.uhn.hl7v2.model.v25.segment.ORC;
+import ca.uhn.hl7v2.model.v25.segment.PID;
+import ca.uhn.hl7v2.model.v25.segment.PV1;
+import ca.uhn.hl7v2.parser.EncodingCharacters;
+import ca.uhn.hl7v2.parser.PipeParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
@@ -47,45 +83,10 @@ import org.openmrs.api.context.Context;
 import org.openmrs.hl7.HL7Constants;
 import org.openmrs.hl7.HL7InQueueProcessor;
 import org.openmrs.hl7.HL7Service;
+import org.openmrs.obs.ComplexData;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.util.StringUtils;
-
-import ca.uhn.hl7v2.HL7Exception;
-import ca.uhn.hl7v2.app.Application;
-import ca.uhn.hl7v2.app.ApplicationException;
-import ca.uhn.hl7v2.model.DataTypeException;
-import ca.uhn.hl7v2.model.Message;
-import ca.uhn.hl7v2.model.Type;
-import ca.uhn.hl7v2.model.Varies;
-import ca.uhn.hl7v2.model.v25.datatype.CE;
-import ca.uhn.hl7v2.model.v25.datatype.CWE;
-import ca.uhn.hl7v2.model.v25.datatype.CX;
-import ca.uhn.hl7v2.model.v25.datatype.DLD;
-import ca.uhn.hl7v2.model.v25.datatype.DT;
-import ca.uhn.hl7v2.model.v25.datatype.DTM;
-import ca.uhn.hl7v2.model.v25.datatype.FT;
-import ca.uhn.hl7v2.model.v25.datatype.ID;
-import ca.uhn.hl7v2.model.v25.datatype.IS;
-import ca.uhn.hl7v2.model.v25.datatype.NM;
-import ca.uhn.hl7v2.model.v25.datatype.PL;
-import ca.uhn.hl7v2.model.v25.datatype.ST;
-import ca.uhn.hl7v2.model.v25.datatype.TM;
-import ca.uhn.hl7v2.model.v25.datatype.TS;
-import ca.uhn.hl7v2.model.v25.datatype.XCN;
-import ca.uhn.hl7v2.model.v25.group.ORU_R01_OBSERVATION;
-import ca.uhn.hl7v2.model.v25.group.ORU_R01_ORDER_OBSERVATION;
-import ca.uhn.hl7v2.model.v25.group.ORU_R01_PATIENT_RESULT;
-import ca.uhn.hl7v2.model.v25.message.ORU_R01;
-import ca.uhn.hl7v2.model.v25.segment.MSH;
-import ca.uhn.hl7v2.model.v25.segment.NK1;
-import ca.uhn.hl7v2.model.v25.segment.OBR;
-import ca.uhn.hl7v2.model.v25.segment.OBX;
-import ca.uhn.hl7v2.model.v25.segment.ORC;
-import ca.uhn.hl7v2.model.v25.segment.PID;
-import ca.uhn.hl7v2.model.v25.segment.PV1;
-import ca.uhn.hl7v2.parser.EncodingCharacters;
-import ca.uhn.hl7v2.parser.PipeParser;
 
 /**
  * Parses ORUR01 messages into openmrs Encounter objects Usage: GenericParser parser = new
@@ -136,6 +137,7 @@ public class ORUR01Handler implements Application {
 	 * @should create an encounter and find the provider by uuid
 	 * @should create an encounter and find the provider by providerId
 	 * @should fail if the provider name type code is not specified and is not a personId
+	 * @should set complex data for obs with complex concepts
 	 */
 	public Message processMessage(Message message) throws ApplicationException {
 		
@@ -767,6 +769,22 @@ public class ORUR01Handler implements Application {
 				return null;
 			}
 			obs.setValueText(value.getValue());
+		} else if ("ED".equals(hl7Datatype)) {
+			ED value = (ED) obx5;
+			if (value == null || value.getData() == null || !StringUtils.hasText(value.getData().getValue())) {
+				log.warn("Not creating null valued obs for concept " + concept);
+				return null;
+			}
+			//we need to hydrate the concept so that the EncounterSaveHandler
+			//doesn't fail since it needs to check if it is a concept numeric
+			Concept c = Context.getConceptService().getConcept(obs.getConcept().getConceptId());
+			obs.setConcept(c);
+			String title = null;
+			if (obs.getValueCodedName() != null)
+				title = obs.getValueCodedName().getName();
+			if (!StringUtils.hasText(title))
+				title = c.getName().getName();
+			obs.setComplexData(new ComplexData(title, value.getData().getValue()));
 		} else {
 			// unsupported data type
 			// TODO: support RP (report), SN (structured numeric)
@@ -908,8 +926,7 @@ public class ORUR01Handler implements Application {
 			// the concept is local
 			try {
 				Integer conceptId = new Integer(hl7ConceptId);
-				Concept concept = new Concept(conceptId);
-				return concept;
+				return Context.getConceptService().getConcept(conceptId);
 			}
 			catch (NumberFormatException e) {
 				throw new HL7Exception("Invalid concept ID '" + hl7ConceptId + "' in hl7 message with uid: " + uid);
@@ -1033,9 +1050,8 @@ public class ORUR01Handler implements Application {
 		Integer patientId = Context.getHL7Service().resolvePatientId(pid);
 		if (patientId == null)
 			throw new HL7Exception("Could not resolve patient");
-		Patient patient = new Patient();
-		patient.setPatientId(patientId);
-		return patient;
+		
+		return Context.getPatientService().getPatient(patientId);
 	}
 	
 	/**
@@ -1058,11 +1074,17 @@ public class ORUR01Handler implements Application {
 		Integer locationId = Context.getHL7Service().resolveLocationId(hl7Location);
 		if (locationId == null)
 			throw new HL7Exception("Could not resolve location");
-		Location location = new Location();
-		location.setLocationId(locationId);
-		return location;
+		
+		return Context.getLocationService().getLocation(locationId);
 	}
 	
+	/**
+	 * needs to find a Form based on information in MSH-21. example: 16^AMRS.ELD.FORMID
+	 * 
+	 * @param msh
+	 * @return
+	 * @throws HL7Exception
+	 */
 	private Form getForm(MSH msh) throws HL7Exception {
 		Integer formId = null;
 		try {

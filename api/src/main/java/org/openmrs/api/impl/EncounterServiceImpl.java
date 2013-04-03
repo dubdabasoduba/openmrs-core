@@ -48,8 +48,7 @@ import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.PrivilegeConstants;
-import org.openmrs.validator.EncounterValidator;
-import org.openmrs.validator.ValidateUtil;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 
@@ -83,7 +82,7 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 		if (query == null)
 			throw new IllegalArgumentException("The 'query' parameter is required and cannot be null");
 		
-		return dao.getEncounters(query, null, null, includeVoided);
+		return dao.getEncounters(query, null, null, null, includeVoided);
 	}
 	
 	/**
@@ -628,7 +627,18 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 	@Override
 	public List<Encounter> getEncounters(String query, Integer start, Integer length, boolean includeVoided)
 	        throws APIException {
-		return dao.getEncounters(query, start, length, includeVoided);
+		return dao.getEncounters(query, null, start, length, includeVoided);
+	}
+	
+	/**
+	 * @see org.openmrs.api.EncounterService#getEncounters(java.lang.String, java.lang.Integer,
+	 * java.lang.Integer, java.lang.Integer, boolean)
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public List<Encounter> getEncounters(String query, Integer patientId, Integer start, Integer length,
+	        boolean includeVoided) throws APIException {
+		return dao.getEncounters(query, patientId, start, length, includeVoided);
 	}
 	
 	/**
@@ -636,7 +646,7 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 	 */
 	@Override
 	public Integer getCountOfEncounters(String query, boolean includeVoided) {
-		return OpenmrsUtil.convertToInteger(dao.getCountOfEncounters(query, includeVoided));
+		return OpenmrsUtil.convertToInteger(dao.getCountOfEncounters(query, null, includeVoided));
 	}
 	
 	/**
@@ -659,23 +669,42 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 	 */
 	@Override
 	public EncounterVisitHandler getActiveEncounterVisitHandler() throws APIException {
-		String value = Context.getAdministrationService().getGlobalProperty(OpenmrsConstants.GP_VISIT_ASSIGNMENT_HANDLER,
-		    null);
 		
-		if (StringUtils.isBlank(value))
+		String handlerGlobalValue = Context.getAdministrationService().getGlobalProperty(
+		    OpenmrsConstants.GP_VISIT_ASSIGNMENT_HANDLER, null);
+		
+		if (StringUtils.isBlank(handlerGlobalValue))
 			return null;
 		
-		try {
-			Object handler = OpenmrsClassLoader.getInstance().loadClass(value).newInstance();
-			if (!(handler instanceof EncounterVisitHandler))
+		EncounterVisitHandler handler = null;
+		
+		// convention = [NamePrefix:beanName] or [className]
+		String namePrefix = OpenmrsConstants.REGISTERED_COMPONENT_NAME_PREFIX;
+		
+		if (handlerGlobalValue.startsWith(namePrefix)) {
+			String beanName = handlerGlobalValue.substring(namePrefix.length());
+			
+			handler = Context.getRegisteredComponent(beanName, EncounterVisitHandler.class);
+		} else {
+			Object instance;
+			
+			try {
+				instance = OpenmrsClassLoader.getInstance().loadClass(handlerGlobalValue).newInstance();
+			}
+			catch (Exception ex) {
+				throw new APIException("Failed to instantiate assignment handler object for class class: "
+				        + handlerGlobalValue, ex);
+			}
+			
+			if (instance instanceof EncounterVisitHandler) {
+				handler = (EncounterVisitHandler) instance;
+			} else {
 				throw new APIException(
 				        "The registered visit assignment handler should implement the EncounterVisitHandler interface");
-			
-			return (EncounterVisitHandler) handler;
+			}
 		}
-		catch (Exception ex) {
-			throw new APIException("Failed to instantiate assignment handler object for class class: " + value, ex);
-		}
+		
+		return handler;
 	}
 	
 	/**

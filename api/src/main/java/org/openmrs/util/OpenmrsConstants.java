@@ -72,7 +72,7 @@ public final class OpenmrsConstants {
 	 * <i>major</i>.<i>minor</i>.<i>maintenance</i> <i>suffix</i> Build <i>buildNumber</i>
 	 */
 	public static final String OPENMRS_VERSION = THIS_PACKAGE.getSpecificationVendor() != null ? THIS_PACKAGE
-	        .getSpecificationVendor() : getBuildVersion();
+	        .getSpecificationVendor() : (getBuildVersion() != null ? getBuildVersion() : getVersion());
 	
 	/**
 	 * This holds the current openmrs code version in a short space-less string.<br/>
@@ -81,7 +81,7 @@ public final class OpenmrsConstants {
 	 * >
 	 */
 	public static final String OPENMRS_VERSION_SHORT = THIS_PACKAGE.getSpecificationVersion() != null ? THIS_PACKAGE
-	        .getSpecificationVersion() : getBuildVersionShort();
+	        .getSpecificationVersion() : (getBuildVersionShort() != null ? getBuildVersionShort() : getVersion());
 	
 	/**
 	 * @return build version with alpha characters (eg:1.10.0 SNAPSHOT Build 24858) 
@@ -140,6 +140,41 @@ public final class OpenmrsConstants {
 		}
 		catch (IOException e) {
 			log.error("Unable to get MANIFEST.MF file into manifest object");
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Somewhat hacky method to fetch the version from the maven pom.properties file. <br/>
+	 * This method should not be used unless in a dev environment. The preferred way to get the
+	 * version is from the manifest in the api jar file. More detail is included in the properties
+	 * there.
+	 * 
+	 * @return version number defined in maven pom.xml file(s)
+	 * @see #OPENMRS_VERSION_SHORT
+	 * @see #OPENMRS_VERSION
+	 */
+	
+	private static String getVersion() {
+		Properties props = new Properties();
+		
+		// Get hold of the path to the properties file
+		// (Maven will make sure it's on the class path)
+		java.net.URL url = OpenmrsConstants.class.getClassLoader().getResource(
+		    "META-INF/maven/org.openmrs.api/openmrs-api/pom.properties");
+		if (url == null) {
+			log.error("Unable to find pom.properties file built by maven");
+			return null;
+		}
+		
+		// Load the file
+		try {
+			props.load(url.openStream());
+			return props.getProperty("version"); // this will return something like "1.9.0-SNAPSHOT" in dev environments
+		}
+		catch (IOException e) {
+			log.error("Unable to get pom.properties file into Properties object");
 		}
 		
 		return null;
@@ -1266,6 +1301,12 @@ public final class OpenmrsConstants {
 		                "org.openmrs.api:" + LOG_LEVEL_INFO,
 		                "Logging levels for log4j.xml. Valid format is class:level,class:level. If class not specified, 'org.openmrs.api' presumed. Valid levels are trace, debug, info, warn, error or fatal"));
 		
+		props.add(new GlobalProperty(GP_LOG_LOCATION, "",
+		        "A directory where the OpenMRS log file appender is stored. The log file name is 'openmrs.log'."));
+		
+		props.add(new GlobalProperty(GP_LOG_LAYOUT, "%p - %C{1}.%M(%L) |%d{ISO8601}| %m%n",
+		        "A log layout pattern which is used by the OpenMRS file appender."));
+		
 		props
 		        .add(new GlobalProperty(
 		                GLOBAL_PROPERTY_DEFAULT_PATIENT_IDENTIFIER_VALIDATOR,
@@ -1624,6 +1665,27 @@ public final class OpenmrsConstants {
 	// Global property key for global logger level
 	public static final String GLOBAL_PROPERTY_LOG_LEVEL = "log.level";
 	
+	/**
+	 * It points to a directory where 'openmrs.log' is stored.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String GP_LOG_LOCATION = "log.location";
+	
+	/**
+	 * It specifies a log layout pattern used by the OpenMRS file appender.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String GP_LOG_LAYOUT = "log.layout";
+	
+	/**
+	 * It specifies a default name of the OpenMRS file appender.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String LOG_OPENMRS_FILE_APPENDER = "OPENMRS FILE APPENDER";
+	
 	// Global logger category
 	public static final String LOG_CLASS_DEFAULT = "org.openmrs.api";
 	
@@ -1661,4 +1723,7 @@ public final class OpenmrsConstants {
 	
 	/** The data type to return on failing to load a custom data type. */
 	public static final String DEFAULT_CUSTOM_DATATYPE = FreeTextDatatype.class.getName();
+	
+	/**Prefix followed by registered component name.*/
+	public static final String REGISTERED_COMPONENT_NAME_PREFIX = "bean:";
 }

@@ -29,6 +29,7 @@ import org.openmrs.api.db.DatatypeDAO;
 import org.openmrs.customdatatype.CustomDatatype;
 import org.openmrs.customdatatype.CustomDatatypeException;
 import org.openmrs.customdatatype.CustomDatatypeHandler;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Standard implementation of {@link DatatypeService}
@@ -57,6 +58,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 	 * @see org.openmrs.api.DatatypeService#getAllDatatypeClasses()
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public Set<Class<? extends CustomDatatype<?>>> getAllDatatypeClasses() {
 		if (datatypeClasses == null) {
 			populateBeanListsFromContext();
@@ -68,6 +70,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 	 * @see org.openmrs.api.DatatypeService#getAllHandlerClasses()
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public Set<Class<? extends CustomDatatypeHandler<?, ?>>> getAllHandlerClasses() {
 		if (handlerClasses == null) {
 			populateBeanListsFromContext();
@@ -95,6 +98,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 	 * @see org.openmrs.api.DatatypeService#getDatatype(java.lang.Class, java.lang.String)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public <T extends CustomDatatype<?>> T getDatatype(Class<T> clazz, String config) {
 		try {
 			T dt = clazz.newInstance();
@@ -110,6 +114,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 	 * @see org.openmrs.api.DatatypeService#getHandlerClasses(Class)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public List<Class<? extends CustomDatatypeHandler>> getHandlerClasses(Class<? extends CustomDatatype<?>> datatype) {
 		List<Class<? extends CustomDatatypeHandler>> ret = new ArrayList<Class<? extends CustomDatatypeHandler>>();
 		for (Class<? extends CustomDatatypeHandler<?, ?>> candidate : getAllHandlerClasses()) {
@@ -149,6 +154,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 	 * @see org.openmrs.api.DatatypeService#getHandler(org.openmrs.customdatatype.CustomDatatype, java.lang.String)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public CustomDatatypeHandler<?, ?> getHandler(CustomDatatype<?> datatype, String handlerConfig) {
 		if (prioritizedHandlerClasses == null)
 			prioritizeHandlers();

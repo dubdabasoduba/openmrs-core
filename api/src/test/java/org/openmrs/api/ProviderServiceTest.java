@@ -13,12 +13,6 @@
  */
 package org.openmrs.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,8 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
-
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
@@ -40,6 +34,12 @@ import org.openmrs.api.context.Context;
 import org.openmrs.customdatatype.datatype.FreeTextDatatype;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This test class (should) contain tests for all of the ProviderService
@@ -111,27 +111,6 @@ public class ProviderServiceTest extends BaseContextSensitiveTest {
 	public void getAllProviders_shouldGetAllProvidersThatAreUnretired() throws Exception {
 		List<Provider> providers = service.getAllProviders(false);
 		assertEquals(7, providers.size());
-	}
-	
-	/**
-	 * @see ProviderService#getCountOfProviders(String)
-	 * @verifies fetch number of provider matching given query.
-	 */
-	@Test
-	public void getCountOfProviders_shouldFetchNumberOfProviderMatchingGivenQuery() throws Exception {
-		assertEquals(1, service.getCountOfProviders("Hippo").intValue());
-		Person person = Context.getPersonService().getPerson(502);
-		Set<PersonName> names = person.getNames();
-		for (Iterator<PersonName> iterator = names.iterator(); iterator.hasNext();) {
-			PersonName name = (PersonName) iterator.next();
-			name.setVoided(true);
-			
-		}
-		PersonName personName = new PersonName("Hippot", "A", "B");
-		personName.setPreferred(true);
-		person.addName(personName);
-		Context.getPersonService().savePerson(person);
-		assertEquals(1, service.getCountOfProviders("Hippo").intValue());
 	}
 	
 	/**
@@ -238,7 +217,7 @@ public class ProviderServiceTest extends BaseContextSensitiveTest {
 	 */
 	@Test
 	public void getProviders_shouldFetchProviderByMatchingQueryStringWithAnyUnVoidedPersonsFamilyName() throws Exception {
-		assertEquals(2, service.getProviders("Che", 0, null, null).size());
+		assertEquals(2, service.getProviders("Che", 0, null, null, true).size());
 	}
 	
 	/**
@@ -407,6 +386,26 @@ public class ProviderServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
+	 * @see ProviderService#getProviders(String, Integer, Integer, java.util.Map)
+	 * @verifies finds retired providers
+	 */
+	@Test
+	public void getProviders_shouldReturnRetiredProvidersByDefault() throws Exception {
+		List<Provider> providers = service.getProviders(null, null, null, null);
+		Assert.assertEquals(9, providers.size());
+	}
+	
+	/**
+	 * @see ProviderService#getProviders(String, Integer, Integer, java.util.Map, boolean)
+	 * @verifies does not find retired providers
+	 */
+	@Test
+	public void getProviders_shouldNotReturnRetiredProvidersIfIncludeRetiredFalse() throws Exception {
+		List<Provider> providers = service.getProviders(null, null, null, null, false);
+		Assert.assertEquals(7, providers.size());
+	}
+	
+	/**
 	 * @see ProviderService#getProvidersByPerson(Person)
 	 * @verifies fail if person is null
 	 */
@@ -447,12 +446,12 @@ public class ProviderServiceTest extends BaseContextSensitiveTest {
 	 * @verifies return all providers if query is empty
 	 */
 	@Test
-	public void getProviders_shouldReturnAllProvidersIfQueryIsEmpty() throws Exception {
+	public void getProviders_shouldReturnAllProvidersIfQueryIsEmptyAndIncludeRetiredTrue() throws Exception {
 		//given
 		List<Provider> allProviders = service.getAllProviders();
 		
 		//when
-		List<Provider> providers = service.getProviders("", null, null, null);
+		List<Provider> providers = service.getProviders("", null, null, null, true);
 		
 		//then
 		Assert.assertEquals(allProviders.size(), providers.size());
@@ -521,5 +520,46 @@ public class ProviderServiceTest extends BaseContextSensitiveTest {
 		provider.setName("new developer");
 		provider.setIdentifier("");
 		Assert.assertTrue(service.isProviderIdentifierUnique(provider));
+	}
+	
+	/**
+	 * @see {@link ProviderService#getCountOfProviders(String,null)}
+	 */
+	@Test
+	@Verifies(value = "should fetch number of provider matching given query", method = "getCountOfProviders(String,null)")
+	public void getCountOfProviders_shouldFetchNumberOfProviderMatchingGivenQuery() throws Exception {
+		assertEquals(1, service.getCountOfProviders("Hippo").intValue());
+		Person person = Context.getPersonService().getPerson(502);
+		Set<PersonName> names = person.getNames();
+		for (Iterator<PersonName> iterator = names.iterator(); iterator.hasNext();) {
+			PersonName name = (PersonName) iterator.next();
+			name.setVoided(true);
+			
+		}
+		PersonName personName = new PersonName("Hippot", "A", "B");
+		personName.setPreferred(true);
+		person.addName(personName);
+		Context.getPersonService().savePerson(person);
+		assertEquals(1, service.getCountOfProviders("Hippo").intValue());
+	}
+	
+	/**
+	 * @see {@link ProviderService#getCountOfProviders(String)}
+	 */
+	@Test
+	@Ignore
+	@Verifies(value = "should exclude retired providers", method = "getCountOfProviders(String)")
+	public void getCountOfProviders_shouldExcludeRetiredProviders() throws Exception {
+		assertEquals(2, service.getCountOfProviders("provider").intValue());
+	}
+	
+	/**
+	 * @see {@link ProviderService#getCountOfProviders(String,null)}
+	 */
+	@Test
+	@Ignore
+	@Verifies(value = "should include retired providers if includeRetired is set to true", method = "getCountOfProviders(String,null)")
+	public void getCountOfProviders_shouldIncludeRetiredProvidersIfIncludeRetiredIsSetToTrue() throws Exception {
+		assertEquals(4, service.getCountOfProviders("provider").intValue());
 	}
 }

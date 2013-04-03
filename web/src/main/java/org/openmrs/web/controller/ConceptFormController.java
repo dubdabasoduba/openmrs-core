@@ -62,6 +62,7 @@ import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.PrivilegeConstants;
 import org.openmrs.validator.ConceptValidator;
+import org.openmrs.validator.ValidateUtil;
 import org.openmrs.web.WebConstants;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.beans.propertyeditors.CustomNumberEditor;
@@ -160,6 +161,7 @@ public class ConceptFormController extends SimpleFormController {
 	 * @should remove a concept map from an existing concept
 	 * @should ignore new concept map row if the user did not select a term
 	 * @should add a new Concept map when creating a concept
+	 * @should not save changes if there are validation errors
 	 */
 	@Override
 	protected ModelAndView onSubmit(HttpServletRequest request, HttpServletResponse response, Object obj,
@@ -245,7 +247,7 @@ public class ConceptFormController extends SimpleFormController {
 					concept.getCreator().getPersonName();
 				
 				try {
-					new ConceptValidator().validate(concept, errors);
+					ValidateUtil.validate(concept, errors);
 					if (!errors.hasErrors()) {
 						cs.saveConcept(concept);
 						httpSession.setAttribute(WebConstants.OPENMRS_MSG_ATTR, "Concept.saved");
@@ -472,9 +474,7 @@ public class ConceptFormController extends SimpleFormController {
 				}
 				
 				ConceptName shortNameInLocale = shortNamesByLocale.get(locale);
-				if (StringUtils.hasText(shortNameInLocale.getName())) {
-					concept.setShortName(shortNameInLocale);
-				}
+				concept.setShortName(shortNameInLocale);
 				
 				for (ConceptName synonym : synonymsByLocale.get(locale)) {
 					if (synonym != null && StringUtils.hasText(synonym.getName())) {
@@ -594,6 +594,18 @@ public class ConceptFormController extends SimpleFormController {
 			}
 			
 			return concept;
+		}
+		
+		/**
+		 * Builds a white-space separated list of concept ids belonging to a concept set
+		 * @return
+		 */
+		public String getSetElements() {
+			String result = "";
+			for (ConceptSet set : concept.getConceptSets()) {
+				result += set.getConcept().getConceptId() + " ";
+			}
+			return result;
 		}
 		
 		/**

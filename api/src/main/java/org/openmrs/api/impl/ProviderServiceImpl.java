@@ -110,7 +110,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	}
 	
 	/**
-	 * @see org.openmrs.api.ProviderService#getProvidersByPerson( org.openmrs.Person, boolean )
+	 * @see org.openmrs.api.ProviderService#getProvidersByPerson(org.openmrs.Person, boolean )
 	 */
 	@Override
 	public Collection<Provider> getProvidersByPerson(Person person, boolean includeRetired) {
@@ -131,18 +131,36 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	 */
 	@Override
 	public Integer getCountOfProviders(String query) {
-		return OpenmrsUtil.convertToInteger(dao.getCountOfProviders(query));
+		return getCountOfProviders(query, false);
 	}
 	
 	/**
-	 * @see org.openmrs.api.ProviderService#getProviders(String, Integer, Integer, java.util.Map
+	 * @see org.openmrs.api.ProviderService#getCountOfProviders(java.lang.String, boolean)
+	 */
+	@Override
+	public Integer getCountOfProviders(String query, boolean includeRetired) {
+		return OpenmrsUtil.convertToInteger(dao.getCountOfProviders(query, includeRetired));
+	}
+	
+	/**
+	 * @see org.openmrs.api.ProviderService#getProviders(String, Integer, Integer, java.util.Map,
+	 *      boolean)
+	 */
+	@Override
+	public List<Provider> getProviders(String query, Integer start, Integer length,
+	        Map<ProviderAttributeType, Object> attributeValues, boolean includeRetired) {
+		Map<ProviderAttributeType, String> serializedAttributeValues = CustomDatatypeUtil
+		        .getValueReferences(attributeValues);
+		return dao.getProviders(query, serializedAttributeValues, start, length, includeRetired);
+	}
+	
+	/**
+	 * @see org.openmrs.api.ProviderService#getProviders(String, Integer, Integer, java.util.Map)
 	 */
 	@Override
 	public List<Provider> getProviders(String query, Integer start, Integer length,
 	        Map<ProviderAttributeType, Object> attributeValues) {
-		Map<ProviderAttributeType, String> serializedAttributeValues = CustomDatatypeUtil
-		        .getValueReferences(attributeValues);
-		return dao.getProviders(query, serializedAttributeValues, start, length);
+		return getProviders(query, start, length, attributeValues, true);
 	}
 	
 	/**
