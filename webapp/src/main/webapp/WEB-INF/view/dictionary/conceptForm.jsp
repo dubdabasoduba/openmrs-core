@@ -74,8 +74,7 @@
 <style>
 	.inlineForm { padding: 0px; margin: 0px; display: inline; }
 	#conceptTable th { text-align: right; padding-right: 15px; }
-	#conceptNameTable th { text-align: left; }
-	.localeSpecific td, a.selectedTab { background-color: whitesmoke; }
+	#conceptNameTable th { text-align: left; }	
 	a.tab { border-bottom: 1px solid whitesmoke; padding-left: 3px; padding-right: 3px; }
 	.hidden, #newConceptSynonym, #newConceptMapping { display: none; }
 	.checkbox_void{ margin-left: 80px; }
@@ -368,7 +367,7 @@
 		<th valign="top"><openmrs:message code="Concept.conceptSets"/></th>
 		<td valign="top">
 			<spring:bind path="command.concept.conceptSets">
-				<input type="hidden" name="${status.expression}" id="conceptSets" size="40" value='<c:forEach items="${command.concept.conceptSets}" var="set">${set.concept.conceptId} </c:forEach>' />
+				<input type="hidden" name="${status.expression}" id="conceptSets" size="40" value='${command.setElements}'/>
 			</spring:bind>
 			<table cellpadding="0" cellspacing="0">
 				<tr>

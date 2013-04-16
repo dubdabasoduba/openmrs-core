@@ -69,16 +69,19 @@ public interface ProviderDAO {
 	 * @param name
 	 * @param serializedAttributeValues
 	 * @param start
-	 * @param length @return List of Providers
+	 * @param length
+	 * @param includeRetired
+	 * @return List of Providers
 	 */
 	public List<Provider> getProviders(String name, Map<ProviderAttributeType, String> serializedAttributeValues,
-	        Integer start, Integer length);
+	        Integer start, Integer length, boolean includeRetired);
 	
 	/**
 	 * @param name
+	 * @param includeRetired
 	 * @return Count of providers satisfying the given query
 	 */
-	public Long getCountOfProviders(String name);
+	public Long getCountOfProviders(String name, boolean includeRetired);
 	
 	/**
 	 * @see ProviderService#getAllProviderAttributeTypes(boolean)

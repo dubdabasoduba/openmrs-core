@@ -286,10 +286,18 @@
 				<spring:bind path="encounter.encounterType">
 					<c:choose>
 						<c:when test="${encounter.encounterId == null}">
+							<c:set var="groupOpen" value="false" />
 							<select name="encounterType">
 								<c:forEach items="${encounterTypes}" var="type">
-									<option value="${type.encounterTypeId}" <c:if test="${type.encounterTypeId == status.value}">selected</c:if>>${type.name}</option>
+									<c:if test="${type.retired && !groupOpen}">
+										<optgroup label="<openmrs:message code="Encounter.type.retired"/>">
+										<c:set var="groupOpen" value="true" />
+									</c:if>
+									<option value="${type.encounterTypeId}" <c:if test="${type.encounterTypeId == status.value}">selected</c:if>>${type.name}</option>								
 								</c:forEach>
+								<c:if test="${groupOpen}">
+									</optgroup>
+								</c:if>
 							</select>
 						</c:when>
 						<c:otherwise>
@@ -422,6 +430,16 @@
 	&nbsp;
 	<input type="button" value='<openmrs:message code="general.cancel"/>' onclick="history.go(-1); return; document.location='index.htm?autoJump=false&phrase=<request:parameter name="phrase"/>'">
 	</form>
+
+<!-- If new encounter add a provider row by default -->	
+<c:if test="${encounter.encounterId == null}">
+	<script>
+		var providerIds = document.getElementsByName("providerIds");
+		if(providerIds.length == 1) {
+			addProvider();
+		}		
+	</script>
+</c:if>
 	
 <c:if test="${encounter.encounterId != null}">
 	<br/>

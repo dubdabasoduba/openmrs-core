@@ -59,6 +59,7 @@ import org.openmrs.util.OpenmrsClassLoader;
 import org.springframework.aop.Advisor;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -84,7 +85,9 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	private ApplicationContext applicationContext;
 	
-	private Boolean refreshingContext = new Boolean(false);
+	private static boolean refreshingContext = false;
+	
+	private static final Object refreshingContextLock = new Object();
 	
 	/**
 	 * Static variable holding whether or not to use the system classloader. By default this is
@@ -700,16 +703,24 @@ public class ServiceContext implements ApplicationContextAware {
 		
 		// if the context is refreshing, wait until it is
 		// done -- otherwise a null service might be returned
-		synchronized (refreshingContext) {
-			if (refreshingContext.booleanValue())
-				try {
-					log.warn("Waiting to get service: " + cls + " while the context is being refreshed");
-					refreshingContext.wait();
-					log.warn("Finished waiting to get service " + cls + " while the context was being refreshed");
+		synchronized (refreshingContextLock) {
+			try {
+				while (refreshingContext) {
+					if (log.isDebugEnabled()) {
+						log.debug("Waiting to get service: " + cls + " while the context is being refreshed");
+					}
+					
+					refreshingContextLock.wait();
+					
+					if (log.isDebugEnabled()) {
+						log.debug("Finished waiting to get service " + cls + " while the context was being refreshed");
+					}
 				}
-				catch (InterruptedException e) {
-					log.warn("Refresh lock was interrupted", e);
-				}
+				
+			}
+			catch (InterruptedException e) {
+				log.warn("Refresh lock was interrupted", e);
+			}
 		}
 		
 		Object service = services.get(cls);
@@ -837,11 +848,21 @@ public class ServiceContext implements ApplicationContextAware {
 	}
 	
 	/**
+	 * Checks if we are using the system class loader.
+	 * 
+	 * @return true if using the system class loader, else false.
+	 */
+	public boolean isUseSystemClassLoader() {
+		return useSystemClassLoader;
+	}
+	
+	/**
 	 * Should be called <b>right before</b> any spring context refresh This forces all calls to
 	 * getService to wait until <code>doneRefreshingContext</code> is called
 	 */
 	public void startRefreshingContext() {
-		synchronized (refreshingContext) {
+		synchronized (refreshingContextLock) {
+			log.info("Refreshing Context");
 			refreshingContext = true;
 		}
 	}
@@ -851,9 +872,10 @@ public class ServiceContext implements ApplicationContextAware {
 	 * getService that were waiting because <code>startRefreshingContext</code> was called
 	 */
 	public void doneRefreshingContext() {
-		synchronized (refreshingContext) {
-			refreshingContext.notifyAll();
+		synchronized (refreshingContextLock) {
+			log.info("Done refreshing Context");
 			refreshingContext = false;
+			refreshingContextLock.notifyAll();
 		}
 	}
 	
@@ -866,7 +888,9 @@ public class ServiceContext implements ApplicationContextAware {
 	 *         doneRefreshingContext()
 	 */
 	public boolean isRefreshingContext() {
-		return refreshingContext.booleanValue();
+		synchronized (refreshingContextLock) {
+			return refreshingContext;
+		}
 	}
 	
 	/**
@@ -890,6 +914,24 @@ public class ServiceContext implements ApplicationContextAware {
 		if (log.isTraceEnabled())
 			log.trace("getRegisteredComponents(" + type + ") = " + m);
 		return new ArrayList<T>(m.values());
+	}
+	
+	/**
+	 * Retrieves a bean that match the given type (including subclasses) and name.
+	 * 
+	 * @param beanName the name of registered bean to retrieve
+	 * @param type the type of bean to retrieve 
+	 * @return bean of passed type
+	 * 
+	 * @since 1.9.4
+	 */
+	public <T> T getRegisteredComponent(String beanName, Class<T> type) throws APIException {
+		try {
+			return applicationContext.getBean(beanName, type);
+		}
+		catch (BeansException beanException) {
+			throw new APIException("Error during getting registered component.", beanException);
+		}
 	}
 	
 	/**
@@ -936,9 +978,21 @@ public class ServiceContext implements ApplicationContextAware {
 			@Override
 			public void run() {
 				try {
-					synchronized (refreshingContext) {
+					synchronized (refreshingContextLock) {
 						//Need to wait for application context to finish refreshing otherwise we get into trouble.
-						refreshingContext.wait();
+						while (refreshingContext) {
+							if (log.isDebugEnabled()) {
+								log.debug("Waiting to get service: " + classString + " while the context"
+								        + " is being refreshed");
+							}
+							
+							refreshingContextLock.wait();
+							
+							if (log.isDebugEnabled()) {
+								log.debug("Finished waiting to get service " + classString
+								        + " while the context was being refreshed");
+							}
+						}
 					}
 					
 					Daemon.runStartupForService(openmrsService);
@@ -1027,7 +1081,6 @@ public class ServiceContext implements ApplicationContextAware {
 	 * 
 	 * @param datatypeService the datatypeService to set
 	 * @since 1.9
-	 * 
 	 */
 	public void setDatatypeService(DatatypeService datatypeService) {
 		setService(DatatypeService.class, datatypeService);

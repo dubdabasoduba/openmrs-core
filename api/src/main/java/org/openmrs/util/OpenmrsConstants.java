@@ -72,7 +72,7 @@ public final class OpenmrsConstants {
 	 * <i>major</i>.<i>minor</i>.<i>maintenance</i> <i>suffix</i> Build <i>buildNumber</i>
 	 */
 	public static final String OPENMRS_VERSION = THIS_PACKAGE.getSpecificationVendor() != null ? THIS_PACKAGE
-	        .getSpecificationVendor() : getBuildVersion();
+	        .getSpecificationVendor() : (getBuildVersion() != null ? getBuildVersion() : getVersion());
 	
 	/**
 	 * This holds the current openmrs code version in a short space-less string.<br/>
@@ -81,7 +81,7 @@ public final class OpenmrsConstants {
 	 * >
 	 */
 	public static final String OPENMRS_VERSION_SHORT = THIS_PACKAGE.getSpecificationVersion() != null ? THIS_PACKAGE
-	        .getSpecificationVersion() : getBuildVersionShort();
+	        .getSpecificationVersion() : (getBuildVersionShort() != null ? getBuildVersionShort() : getVersion());
 	
 	/**
 	 * @return build version with alpha characters (eg:1.10.0 SNAPSHOT Build 24858) 
@@ -140,6 +140,41 @@ public final class OpenmrsConstants {
 		}
 		catch (IOException e) {
 			log.error("Unable to get MANIFEST.MF file into manifest object");
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Somewhat hacky method to fetch the version from the maven pom.properties file. <br/>
+	 * This method should not be used unless in a dev environment. The preferred way to get the
+	 * version is from the manifest in the api jar file. More detail is included in the properties
+	 * there.
+	 * 
+	 * @return version number defined in maven pom.xml file(s)
+	 * @see #OPENMRS_VERSION_SHORT
+	 * @see #OPENMRS_VERSION
+	 */
+	
+	private static String getVersion() {
+		Properties props = new Properties();
+		
+		// Get hold of the path to the properties file
+		// (Maven will make sure it's on the class path)
+		java.net.URL url = OpenmrsConstants.class.getClassLoader().getResource(
+		    "META-INF/maven/org.openmrs.api/openmrs-api/pom.properties");
+		if (url == null) {
+			log.error("Unable to find pom.properties file built by maven");
+			return null;
+		}
+		
+		// Load the file
+		try {
+			props.load(url.openStream());
+			return props.getProperty("version"); // this will return something like "1.9.0-SNAPSHOT" in dev environments
+		}
+		catch (IOException e) {
+			log.error("Unable to get pom.properties file into Properties object");
 		}
 		
 		return null;
@@ -753,6 +788,8 @@ public final class OpenmrsConstants {
 	
 	public static final String GLOBAL_PROPERTY_USER_HEADER_ATTRIBUTES = "user.headerAttributeTypes";
 	
+	public static final String GLOBAL_PROPERTY_USER_REQUIRE_EMAIL_AS_USERNAME = "user.requireEmailAsUsername";
+	
 	public static final String GLOBAL_PROPERTY_HL7_ARCHIVE_DIRECTORY = "hl7_archive.dir";
 	
 	public static final String GLOBAL_PROPERTY_DEFAULT_THEME = "default_theme";
@@ -767,7 +804,7 @@ public final class OpenmrsConstants {
 	public static final String[] GLOBAL_PROPERTIES_OF_PERSON_ATTRIBUTES = { GLOBAL_PROPERTY_PATIENT_LISTING_ATTRIBUTES,
 	        GLOBAL_PROPERTY_PATIENT_VIEWING_ATTRIBUTES, GLOBAL_PROPERTY_PATIENT_HEADER_ATTRIBUTES,
 	        GLOBAL_PROPERTY_USER_LISTING_ATTRIBUTES, GLOBAL_PROPERTY_USER_VIEWING_ATTRIBUTES,
-	        GLOBAL_PROPERTY_USER_HEADER_ATTRIBUTES };
+	        GLOBAL_PROPERTY_USER_HEADER_ATTRIBUTES, GLOBAL_PROPERTY_USER_REQUIRE_EMAIL_AS_USERNAME };
 	
 	public static final String GLOBAL_PROPERTY_PATIENT_IDENTIFIER_REGEX = "patient.identifierRegex";
 	
@@ -807,6 +844,8 @@ public final class OpenmrsConstants {
 	public static final String GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST = "locale.allowed.list";
 	
 	public static final String GLOBAL_PROPERTY_IMPLEMENTATION_ID = "implementation_id";
+	
+	public static final String GLOBAL_PROPERTY_NEWPATIENTFORM_SHOW_RELATIONSHIPS = "new_patient_form.showRelationships";
 	
 	public static final String GLOBAL_PROPERTY_NEWPATIENTFORM_RELATIONSHIPS = "newPatientForm.relationships";
 	
@@ -998,7 +1037,7 @@ public final class OpenmrsConstants {
 	/**
 	 * Global property name for the visit type(s) to automatically close
 	 */
-	public static final String GP_VISIT_TYPES_TO_AUTO_CLOSE = "autoCloseVisits.visitType";
+	public static final String GP_VISIT_TYPES_TO_AUTO_CLOSE = "visits.autoCloseVisitType";
 	
 	/**
 	 * The name of the scheduled task that automatically stops the active visits
@@ -1025,7 +1064,7 @@ public final class OpenmrsConstants {
 		        "Indicates whether or not mother's name is able to be added/viewed for a patient", BooleanDatatype.class,
 		        null));
 		
-		props.add(new GlobalProperty("new_patient_form.showRelationships", "false",
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_NEWPATIENTFORM_SHOW_RELATIONSHIPS, "false",
 		        "true/false whether or not to show the relationship editor on the addPatient.htm screen",
 		        BooleanDatatype.class, null));
 		
@@ -1262,6 +1301,12 @@ public final class OpenmrsConstants {
 		                "org.openmrs.api:" + LOG_LEVEL_INFO,
 		                "Logging levels for log4j.xml. Valid format is class:level,class:level. If class not specified, 'org.openmrs.api' presumed. Valid levels are trace, debug, info, warn, error or fatal"));
 		
+		props.add(new GlobalProperty(GP_LOG_LOCATION, "",
+		        "A directory where the OpenMRS log file appender is stored. The log file name is 'openmrs.log'."));
+		
+		props.add(new GlobalProperty(GP_LOG_LAYOUT, "%p - %C{1}.%M(%L) |%d{ISO8601}| %m%n",
+		        "A log layout pattern which is used by the OpenMRS file appender."));
+		
 		props
 		        .add(new GlobalProperty(
 		                GLOBAL_PROPERTY_DEFAULT_PATIENT_IDENTIFIER_VALIDATOR,
@@ -1421,6 +1466,9 @@ public final class OpenmrsConstants {
 		                GP_CASE_SENSITIVE_NAMES_IN_CONCEPT_NAME_TABLE,
 		                "true",
 		                "Indicates whether names in the concept_name table are case sensitive or not. Setting this to false for MySQL with a case insensitive collation improves search performance."));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_USER_REQUIRE_EMAIL_AS_USERNAME, "false",
+		        "Indicates whether a username must be a valid e-mail or not.", BooleanDatatype.class, null));
 		
 		for (GlobalProperty gp : ModuleFactory.getGlobalProperties()) {
 			props.add(gp);
@@ -1617,6 +1665,27 @@ public final class OpenmrsConstants {
 	// Global property key for global logger level
 	public static final String GLOBAL_PROPERTY_LOG_LEVEL = "log.level";
 	
+	/**
+	 * It points to a directory where 'openmrs.log' is stored.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String GP_LOG_LOCATION = "log.location";
+	
+	/**
+	 * It specifies a log layout pattern used by the OpenMRS file appender.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String GP_LOG_LAYOUT = "log.layout";
+	
+	/**
+	 * It specifies a default name of the OpenMRS file appender.
+	 * 
+	 * @since 1.9.2
+	 */
+	public static final String LOG_OPENMRS_FILE_APPENDER = "OPENMRS FILE APPENDER";
+	
 	// Global logger category
 	public static final String LOG_CLASS_DEFAULT = "org.openmrs.api";
 	
@@ -1654,4 +1723,7 @@ public final class OpenmrsConstants {
 	
 	/** The data type to return on failing to load a custom data type. */
 	public static final String DEFAULT_CUSTOM_DATATYPE = FreeTextDatatype.class.getName();
+	
+	/**Prefix followed by registered component name.*/
+	public static final String REGISTERED_COMPONENT_NAME_PREFIX = "bean:";
 }

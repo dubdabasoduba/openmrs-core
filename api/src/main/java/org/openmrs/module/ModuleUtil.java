@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.Daemon;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsUtil;
@@ -792,23 +793,42 @@ public class ModuleUtil {
 		if (log.isDebugEnabled())
 			log.debug("Reloading advice for all started modules: " + ModuleFactory.getStartedModules().size());
 		
-		for (Module module : ModuleFactory.getStartedModules()) {
-			ModuleFactory.loadAdvice(module);
-			try {
-				if (module.getModuleActivator() != null) {
-					module.getModuleActivator().contextRefreshed();
-					//if it is system start up, call the started method for all started modules
-					if (isOpenmrsStartup)
-						module.getModuleActivator().started();
-					//if refreshing the context after a user started or uploaded a new module
-					else if (!isOpenmrsStartup && module.equals(startedModule))
-						module.getModuleActivator().started();
+		try {
+			//The call backs in this block may need lazy loading of objects
+			//which will fail because we use an OpenSessionInViewFilter whose opened session
+			//was closed when the application context was refreshed as above.
+			//So we need to open another session now. TRUNK-3739
+			Context.openSessionWithCurrentUser();
+			
+			for (Module module : ModuleFactory.getStartedModules()) {
+				ModuleFactory.loadAdvice(module);
+				try {
+					ModuleFactory.passDaemonToken(module);
+					
+					if (module.getModuleActivator() != null) {
+						module.getModuleActivator().contextRefreshed();
+						try {
+							//if it is system start up, call the started method for all started modules
+							if (isOpenmrsStartup)
+								module.getModuleActivator().started();
+							//if refreshing the context after a user started or uploaded a new module
+							else if (!isOpenmrsStartup && module.equals(startedModule))
+								module.getModuleActivator().started();
+						}
+						catch (Exception e) {
+							log.warn("Unable to invoke started() method on the module's activator", e);
+							ModuleFactory.stopModule(module);
+						}
+					}
+					
 				}
-				
+				catch (Throwable t) {
+					log.warn("Unable to invoke method on the module's activator ", t);
+				}
 			}
-			catch (Throwable t) {
-				log.warn("Unable to invoke method on the module's activator ", t);
-			}
+		}
+		finally {
+			Context.closeSessionWithCurrentUser();
 		}
 		
 		return ctx;

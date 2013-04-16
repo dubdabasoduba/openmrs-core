@@ -13,6 +13,26 @@
  */
 package org.openmrs.api.db.hibernate;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Expression;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.openmrs.Location;
+import org.openmrs.Patient;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PatientIdentifierType;
+import org.openmrs.Person;
+import org.openmrs.PersonName;
+import org.openmrs.api.context.Context;
+import org.openmrs.api.db.DAOException;
+import org.openmrs.api.db.PatientDAO;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,25 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hibernate.Criteria;
-import org.hibernate.Query;
-import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Expression;
-import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Projections;
-import org.openmrs.Location;
-import org.openmrs.Patient;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.Person;
-import org.openmrs.PersonName;
-import org.openmrs.api.context.Context;
-import org.openmrs.api.db.DAOException;
-import org.openmrs.api.db.PatientDAO;
 
 /**
  * Hibernate specific database methods for the PatientService
@@ -261,6 +262,9 @@ public class HibernatePatientDAO implements PatientDAO {
 		if (patientIdentifierTypes.size() > 0)
 			criteria.add(Expression.in("identifierType", patientIdentifierTypes));
 		
+		if (locations.size() > 0)
+			criteria.add(Expression.in("location", locations));
+		
 		// TODO add junit test for getting by patients
 		if (patients.size() > 0)
 			criteria.add(Expression.in("patient", patients));
@@ -296,6 +300,11 @@ public class HibernatePatientDAO implements PatientDAO {
 	}
 	
 	/**
+	 * @should not return null excluding retired
+	 * @should not return retired
+	 * @should not return null including retired
+	 * @should return all
+	 * @should return ordered
 	 * @see org.openmrs.api.db.PatientDAO#getAllPatientIdentifierTypes(boolean)
 	 */
 	@SuppressWarnings("unchecked")
@@ -304,10 +313,16 @@ public class HibernatePatientDAO implements PatientDAO {
 		// TODO test this method
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(PatientIdentifierType.class);
-		criteria.addOrder(Order.asc("name"));
 		
-		if (includeRetired == false)
-			criteria.add(Expression.eq("retired", false));
+		if (!includeRetired) {
+			criteria.add(Restrictions.eq("retired", false));
+		} else {
+			criteria.addOrder(Order.asc("retired")); //retired last
+		}
+		
+		criteria.addOrder(Order.desc("required")); //required first
+		criteria.addOrder(Order.asc("name"));
+		criteria.addOrder(Order.asc("patientIdentifierTypeId"));
 		
 		return criteria.list();
 	}
@@ -322,21 +337,24 @@ public class HibernatePatientDAO implements PatientDAO {
 		// TODO test this method
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(PatientIdentifierType.class);
-		criteria.addOrder(Order.asc("name"));
 		
 		if (name != null)
-			criteria.add(Expression.eq("name", name));
+			criteria.add(Restrictions.eq("name", name));
 		
 		if (format != null)
-			criteria.add(Expression.eq("format", format));
+			criteria.add(Restrictions.eq("format", format));
 		
 		if (required != null)
-			criteria.add(Expression.eq("required", required));
+			criteria.add(Restrictions.eq("required", required));
 		
 		if (hasCheckDigit != null)
-			criteria.add(Expression.eq("checkDigit", hasCheckDigit));
+			criteria.add(Restrictions.eq("checkDigit", hasCheckDigit));
 		
-		criteria.add(Expression.eq("retired", false));
+		criteria.add(Restrictions.eq("retired", false));
+		
+		criteria.addOrder(Order.desc("required")); //required first
+		criteria.addOrder(Order.asc("name"));
+		criteria.addOrder(Order.asc("patientIdentifierTypeId"));
 		
 		return criteria.list();
 	}

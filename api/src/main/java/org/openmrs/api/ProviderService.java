@@ -148,6 +148,7 @@ public interface ProviderService extends OpenmrsService {
 	 * @param start
 	 * @param length
 	 * @param attributes
+	 * @param includeRetired
 	 * @return the list of Providers given the query , current page and page length
 	 * @should fetch provider with given identifier with case in sensitive
 	 * @should fetch provider with given name with case in sensitive
@@ -164,16 +165,52 @@ public interface ProviderService extends OpenmrsService {
 	@Transactional(readOnly = true)
 	@Authorized( { PrivilegeConstants.VIEW_PROVIDERS })
 	public List<Provider> getProviders(String query, Integer start, Integer length,
+	        Map<ProviderAttributeType, Object> attributes, boolean includeRetired);
+	
+	/**
+	 * @param query
+	 * @param start
+	 * @param length
+	 * @param attributes
+	 * @return the list of Providers given the query , current page and page length
+	 * @should fetch provider with given identifier with case in sensitive
+	 * @should fetch provider with given name with case in sensitive
+	 * @should fetch provider by matching query string with any unVoided PersonName's Given Name
+	 * @should fetch provider by matching query string with any unVoided PersonName's middleName
+	 * @should fetch provider by matching query string with any unVoided Person's familyName
+	 * @should not fetch provider if the query string matches with any voided Person name for that
+	 *         Provider
+	 * @should get all visits with given attribute values
+	 * @should not find any visits if none have given attribute values
+	 * @should return all providers if query is empty
+	 * @should not return retired providers
+	 */
+	@Authorized( { PrivilegeConstants.VIEW_PROVIDERS })
+	public List<Provider> getProviders(String query, Integer start, Integer length,
 	        Map<ProviderAttributeType, Object> attributes);
 	
 	/**
 	 * @param query
 	 * @return Count-Integer
-	 * @should fetch number of provider matching given query.
+	 * @should exclude retired providers
 	 */
 	@Transactional(readOnly = true)
 	@Authorized( { PrivilegeConstants.VIEW_PROVIDERS })
 	public Integer getCountOfProviders(String query);
+	
+	/**
+	 * Gets the count of providers with a person name or identifier or name that matches the
+	 * specified query
+	 * 
+	 * @param query the text to match
+	 * @param includeRetired specifies whether retired providers should be include or not
+	 * @return Count-Integer
+	 * @should fetch number of provider matching given query
+	 * @should include retired providers if includeRetired is set to true
+	 * @since 1.9.4
+	 */
+	@Authorized( { PrivilegeConstants.VIEW_PROVIDERS })
+	public Integer getCountOfProviders(String query, boolean includeRetired);
 	
 	/**
 	 * Gets all provider attribute types including retired provider attribute types. This method
