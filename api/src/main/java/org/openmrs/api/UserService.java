@@ -13,8 +13,6 @@
  */
 package org.openmrs.api;
 
-import java.util.List;
-
 import org.openmrs.Person;
 import org.openmrs.Privilege;
 import org.openmrs.PrivilegeListener;
@@ -26,6 +24,8 @@ import org.openmrs.api.context.UserContext;
 import org.openmrs.util.PersonByNameComparator;
 import org.openmrs.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Contains methods pertaining to Users in the system Use:<br/>
