@@ -24,8 +24,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.Vector;
 import java.util.WeakHashMap;
@@ -73,7 +75,7 @@ public class ModuleFactory {
 	
 	private static final Map<String, DaemonToken> daemonTokens = new WeakHashMap<String, DaemonToken>();
 	
-	private static List<String> actualStartupOrder;
+	private static Set<String> actualStartupOrder;
 	
 	/**
 	 * Add a module (in the form of a jar file) to the list of openmrs modules Returns null if an
@@ -187,7 +189,6 @@ public class ModuleFactory {
 	 * Modules that are already started will be skipped.
 	 */
 	public static void startModules() {
-		List<String> currentStartupOrder = new ArrayList<String>();
 		
 		// loop over and try starting each of the loaded modules
 		if (getLoadedModules().size() > 0) {
@@ -218,7 +219,6 @@ public class ModuleFactory {
 									log.debug("starting module: " + mod.getModuleId());
 								
 								startModule(mod);
-								currentStartupOrder.add(mod.getModuleId());
 							}
 							catch (Exception e) {
 								log.error("Error while starting module: " + mod.getName(), e);
@@ -258,7 +258,6 @@ public class ModuleFactory {
 							// it would only be on the leftover modules list if
 							// it were set to true already
 							startModule(leftoverModule);
-							currentStartupOrder.add(leftoverModule.getModuleId());
 							
 							// set this boolean flag to true so we keep looping over the modules
 							atLeastOneModuleLoaded = true;
@@ -284,16 +283,13 @@ public class ModuleFactory {
 			// if we failed to start all the modules, error out
 			if (leftoverModules.size() > 0)
 				for (Module leftoverModule : leftoverModules) {
-					String message = "Unable to start module '" + leftoverModule.getName()
-					        + "'.  All required modules are not available: "
-					        + OpenmrsUtil.join(getMissingRequiredModules(leftoverModule), ", ");
+					String message = getFailedToStartModuleMessage(leftoverModule);
 					log.error(message);
 					leftoverModule.setStartupErrorMessage(message);
 					notifySuperUsersAboutModuleFailure(leftoverModule);
 				}
 		}
 		
-		actualStartupOrder = currentStartupOrder;
 	}
 	
 	/**
@@ -522,8 +518,7 @@ public class ModuleFactory {
 				
 				// check for required modules
 				if (!requiredModulesStarted(module)) {
-					throw new ModuleException("Not all required modules are started: "
-					        + OpenmrsUtil.join(getMissingRequiredModules(module), ", ") + ". ", module.getName());
+					throw new ModuleException(getFailedToStartModuleMessage(module));
 				}
 				
 				// fire up the classloader for this module
@@ -582,6 +577,10 @@ public class ModuleFactory {
 				
 				// effectively mark this module as started successfully
 				getStartedModulesMap().put(moduleId, module);
+				if (actualStartupOrder == null) {
+					actualStartupOrder = new LinkedHashSet<String>();
+				}
+				actualStartupOrder.add(moduleId);
 				
 				try {
 					// save the state of this module for future restarts
@@ -659,6 +658,18 @@ public class ModuleFactory {
 		// refresh spring service context?
 		
 		return module;
+	}
+	
+	/**
+	 * Gets the error message of a module which fails to start.
+	 * 
+	 * @param module the module that has failed to start.
+	 * @return the message text.
+	 */
+	private static String getFailedToStartModuleMessage(Module module) {
+		String[] params = { module.getName(), OpenmrsUtil.join(getMissingRequiredModules(module), ", ") };
+		return Context.getMessageSourceService().getMessage("Module.error.moduleCannotBeStarted", params,
+		    Context.getLocale());
 	}
 	
 	/**
