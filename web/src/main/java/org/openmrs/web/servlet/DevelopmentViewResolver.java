@@ -18,9 +18,9 @@ import org.springframework.web.servlet.view.AbstractUrlBasedView;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 public class DevelopmentViewResolver extends InternalResourceViewResolver {
-
+	
 	private static Pattern viewNamePattern = Pattern.compile("/?module.*");
-
+	
 	@Override
 	protected AbstractUrlBasedView buildView(String viewName) throws Exception {
 		AbstractUrlBasedView view = super.buildView(viewName);
