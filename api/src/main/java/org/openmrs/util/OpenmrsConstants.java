@@ -203,7 +203,7 @@ public final class OpenmrsConstants {
 	 */
 	public static String APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX = "/var/lib";
 	
-	public static String APPLICATION_DATA_DIRECTORY_FALLBACK_WIN = System.getenv("%appdata%");
+	public static String APPLICATION_DATA_DIRECTORY_FALLBACK_WIN = System.getenv("appdata");
 	
 	/**
 	 * The name of the runtime property that a user can set that will specify where openmrs's
@@ -1102,6 +1102,12 @@ public final class OpenmrsConstants {
 	public static final Integer SEARCH_INDEX_VERSION = 3;
 	
 	/**
+	 * @since 1.12
+	 * Specifies the uuid of the concept which represents drug non coded
+	 */
+	public static final String GP_DRUG_ORDER_DRUG_OTHER = "drugOrder.drugOther";
+	
+	/**
 	 * At OpenMRS startup these global properties/default values/descriptions are inserted into the
 	 * database if they do not exist yet.
 	 * 
@@ -1605,6 +1611,8 @@ public final class OpenmrsConstants {
 		                GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_EXACT,
 		                "Specifies how person attributes are matched while searching person. Valid values are 'ANYWHERE' or 'EXACT'. Defaults to exact if missing or invalid value is present."));
 		
+		props.add(new GlobalProperty(GP_DRUG_ORDER_DRUG_OTHER, "",
+		        "Specifies the uuid of the concept which represents drug other non coded"));
 		for (GlobalProperty gp : ModuleFactory.getGlobalProperties()) {
 			props.add(gp);
 		}
