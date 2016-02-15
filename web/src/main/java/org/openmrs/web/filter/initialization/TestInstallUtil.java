@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter.initialization;
 
@@ -54,13 +50,13 @@ public class TestInstallUtil {
 	
 	/**
 	 * Adds data to the test database from a sql dump file
-	 * 
+	 *
 	 * @param host
 	 * @param port
 	 * @param databaseName
 	 * @param user
 	 * @param pwd
-	 * @return
+	 * @return true if data was added successfully
 	 */
 	protected static boolean addTestData(String host, int port, String databaseName, String user, String pwd, String filePath) {
 		Process proc = null;
@@ -83,7 +79,7 @@ public class TestInstallUtil {
 			try {
 				br = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
 				String line;
-				StringBuffer sb = new StringBuffer();
+				StringBuilder sb = new StringBuilder();
 				while ((line = br.readLine()) != null) {
 					sb.append(System.getProperty("line.separator"));
 					sb.append(line);
@@ -105,12 +101,14 @@ public class TestInstallUtil {
 			}
 			
 			//print out the error messages from the process
-			if (StringUtils.isNotBlank(errorMsg))
+			if (StringUtils.isNotBlank(errorMsg)) {
 				log.error(errorMsg);
+			}
 			
 			if (proc.waitFor() == 0) {
-				if (log.isDebugEnabled())
+				if (log.isDebugEnabled()) {
 					log.debug("Added test data successfully");
+				}
 				return true;
 			}
 			
@@ -132,7 +130,7 @@ public class TestInstallUtil {
 	 * Extracts .omod files from the specified {@link InputStream} and copies them to the module
 	 * repository of the test application data directory, the method always closes the InputStream
 	 * before returning
-	 * 
+	 *
 	 * @param in the {@link InputStream} for the zip file
 	 */
 	@SuppressWarnings("rawtypes")
@@ -151,8 +149,9 @@ public class TestInstallUtil {
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = (ZipEntry) entries.nextElement();
 				if (entry.isDirectory()) {
-					if (log.isDebugEnabled())
+					if (log.isDebugEnabled()) {
 						log.debug("Skipping directory: " + entry.getName());
+					}
 					continue;
 				}
 				
@@ -160,25 +159,29 @@ public class TestInstallUtil {
 				if (fileName.endsWith(".omod")) {
 					//Convert the names of .omod files located in nested directories so that they get
 					//created under the module repo directory when being copied
-					if (fileName.contains(System.getProperty("file.separator")))
+					if (fileName.contains(System.getProperty("file.separator"))) {
 						fileName = new File(entry.getName()).getName();
+					}
 					
-					if (log.isDebugEnabled())
+					if (log.isDebugEnabled()) {
 						log.debug("Extracting module file: " + fileName);
+					}
 					
 					//use the module repository folder GP value if specified
 					String moduleRepositoryFolder = FilterUtil
 					        .getGlobalPropertyValue(ModuleConstants.REPOSITORY_FOLDER_PROPERTY);
-					if (StringUtils.isBlank(moduleRepositoryFolder))
+					if (StringUtils.isBlank(moduleRepositoryFolder)) {
 						moduleRepositoryFolder = ModuleConstants.REPOSITORY_FOLDER_PROPERTY_DEFAULT;
+					}
 					
 					//At this point 'OpenmrsConstants.APPLICATION_DATA_DIRECTORY' is still null so we need check
 					//for the app data directory defined in the runtime props file if any otherwise the logic in
 					//the OpenmrsUtil.getDirectoryInApplicationDataDirectory(String) will default to the other
 					String appDataDirectory = Context.getRuntimeProperties().getProperty(
 					    OpenmrsConstants.APPLICATION_DATA_DIRECTORY_RUNTIME_PROPERTY);
-					if (StringUtils.isNotBlank(appDataDirectory))
-						OpenmrsConstants.APPLICATION_DATA_DIRECTORY = appDataDirectory;
+					if (StringUtils.isNotBlank(appDataDirectory)) {
+						OpenmrsUtil.setApplicationDataDirectory(appDataDirectory);
+					}
 					
 					File moduleRepository = OpenmrsUtil.getDirectoryInApplicationDataDirectory(moduleRepositoryFolder);
 					
@@ -188,8 +191,9 @@ public class TestInstallUtil {
 					OpenmrsUtil.copyFile(zipFile.getInputStream(entry), new BufferedOutputStream(new FileOutputStream(
 					        new File(moduleRepository, fileName))));
 				} else {
-					if (log.isDebugEnabled())
+					if (log.isDebugEnabled()) {
 						log.debug("Ignoring file that is not a .omod '" + fileName);
+					}
 				}
 			}
 		}
@@ -218,7 +222,7 @@ public class TestInstallUtil {
 	
 	/**
 	 * Tests the connection to the specified URL
-	 * 
+	 *
 	 * @param urlString the url to test
 	 * @return true if a connection a established otherwise false
 	 */
@@ -234,22 +238,24 @@ public class TestInstallUtil {
 			return true;
 		}
 		catch (UnknownHostException e) {
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Error generated:", e);
+			}
 		}
 		catch (IOException e) {
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Error generated:", e);
+			}
 		}
 		
 		return false;
 	}
 	
 	/**
-	 * @param url
+	 * @param urlString
 	 * @param openmrsUsername
 	 * @param openmrsPassword
-	 * @return
+	 * @return input stream
 	 * @throws MalformedURLException
 	 * @throws IOException
 	 */
@@ -270,14 +276,16 @@ public class TestInstallUtil {
 		out.flush();
 		out.close();
 		
-		if (log.isInfoEnabled())
+		if (log.isInfoEnabled()) {
 			log.info("Http response message:" + urlConnection.getResponseMessage() + ", Code:"
 			        + urlConnection.getResponseCode());
+		}
 		
-		if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED)
+		if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
 			throw new APIAuthenticationException("Invalid username or password");
-		else if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR)
-			throw new APIException("An error occurred on the remote server");
+		} else if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+			throw new APIException("error.occurred.on.remote.server", (Object[]) null);
+		}
 		
 		return urlConnection.getInputStream();
 	}

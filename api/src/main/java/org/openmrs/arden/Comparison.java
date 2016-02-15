@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.arden;
 
@@ -184,7 +180,7 @@ public class Comparison implements ArdenBaseTreeParserTokenTypes {
 	
 	public void writeComparisonList(Writer w) {
 		try {
-			String retStr = "";
+			StringBuilder retStr = new StringBuilder("");
 			if (this.operator != null && this.operator == org.openmrs.arden.ArdenBaseParserTokenTypes.IN) {
 				if (answerList == null) {
 					return;
@@ -194,27 +190,26 @@ public class Comparison implements ArdenBaseTreeParserTokenTypes {
 				// The first one in the list
 				if (itr.hasNext()) {
 					if (keyList != null) {
-						retStr = "\n\tprivate Result getResultList_" + this.keyList + "(){";
+						retStr.append("\n\tprivate Result getResultList_").append(this.keyList).append("(){");
 					} else {
-						retStr = "\n\tprivate Result getResultList_" + this.key + "(){";
+						retStr.append("\n\tprivate Result getResultList_").append(this.key).append("(){");
 					}
 					
 					while (itr.hasNext()) {
 						answer = itr.next();
 						if (answer instanceof Integer || answer instanceof Double || answer instanceof Float) {
-							retStr += "\n\t\tResult aList = new Result();";
-							retStr += "\n\t\taList.add(new Result(" + answer + "));";
+							retStr.append("\n\t\tResult aList = new Result();").append(
+							    "\n\t\taList.add(new Result(" + answer + "));");
 						} else {
-							retStr += "\n\t\tResult aList = new Result();";
-							retStr += "\n\t\tConcept concept = new Concept();";
-							retStr += "\n\t\tConceptName conceptName = new ConceptName(\"" + answer
-							        + "\", Context.getLocale());";
-							retStr += "concept.addName(conceptName);";
-							retStr += "\n\t\taList.add(new Result(concept));";
+							retStr.append("\n\t\tResult aList = new Result();").append(
+							    "\n\t\tConcept concept = new Concept();").append(
+							    "\n\t\tConceptName conceptName = new ConceptName(\"").append(answer).append(
+							    "\", Context.getLocale());").append("concept.addName(conceptName);").append(
+							    "\n\t\taList.add(new Result(concept));");
 						}
 					}
 					
-					retStr += "\n\t\treturn aList;\n\t}\n";
+					retStr.append("\n\t\treturn aList;\n\t}\n");
 				}
 			}
 			w.append(retStr);

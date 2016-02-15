@@ -1,20 +1,15 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 import java.util.Date;
-import java.util.Locale;
 
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
@@ -27,38 +22,7 @@ import org.simpleframework.xml.Root;
 public class ConceptNameTag extends BaseOpenmrsObject implements Auditable, Voidable, java.io.Serializable {
 	
 	public static final long serialVersionUID = 33226787L;
-	
-	// well-known tags
-	
-	/**
-	 * Name to use when nothing else is available.
-	 * @deprecated since OpenMRS 1.7 we use ConceptNameType to mark these types of concept names.
-	 */
-	@Deprecated
-	public static final String DEFAULT = "default";
-	
-	/**
-	 * Short name for a concept. Does not indicate any preference for the name.
-	 * @deprecated since OpenMRS 1.7 we use ConceptNameType to mark these types of concept names.
-	 */
-	@Deprecated
-	public static final String SHORT = "short";
-	
-	/**
-	 * A different word with similar meaning.
-	 * @deprecated since OpenMRS 1.7 we use ConceptNameType to mark these types of concept names.
-	 */
-	@Deprecated
-	public static final String SYNONYM = "synonym";
-	
-	/**
-	 * Preferred name for a language. Can be applied to only one name within the set of names within
-	 * a language.
-	 * @deprecated since OpenMRS 1.7 we use ConceptNameType to mark these types of concept names.
-	 */
-	@Deprecated
-	public static final String PREFERRED = "preferred";
-	
+		
 	// Fields
 	private Integer conceptNameTagId;
 	
@@ -278,94 +242,6 @@ public class ConceptNameTag extends BaseOpenmrsObject implements Auditable, Void
 	@Attribute
 	public void setConceptNameTagId(Integer conceptNameTagId) {
 		this.conceptNameTagId = conceptNameTagId;
-	}
-	
-	/**
-	 * A factory method for generating a tag which indicates that a name is the preferred term
-	 * within a particular language.
-	 * 
-	 * @param locale locale from which the language component will be used
-	 * @return concept-name-tag
-	 */
-	public static ConceptNameTag preferredLanguageTagFor(Locale locale) {
-		return preferredLanguageTagFor(locale.getLanguage());
-	}
-	
-	/**
-	 * A factory method which generates a preferred country tag from the country-code portion of a
-	 * locale.
-	 * 
-	 * @param locale locale from which the country-code will be used
-	 * @return concept-name-tag for country, or null if country component wasn't specified in locale
-	 */
-	public static ConceptNameTag preferredCountryTagFor(Locale locale) {
-		ConceptNameTag preferredCountryTag = null;
-		String country = locale.getCountry();
-		if (!"".equals(country)) {
-			preferredCountryTag = preferredCountryTagFor(locale.getCountry());
-		}
-		return preferredCountryTag;
-	}
-	
-	/**
-	 * A factory method that generates strings for preferred country tags.
-	 * 
-	 * @param country ISO-3166 two letter country code
-	 * @return Returns the ConceptNameTag for the specified country.
-	 */
-	public static ConceptNameTag preferredCountryTagFor(String country) {
-		return new ConceptNameTag(PREFERRED + "_" + country, "");
-	}
-	
-	/**
-	 * A factory method that generates strings for preferred language tags. The tag will have no
-	 * description.
-	 * 
-	 * @param language ISO-639 two letter language code
-	 * @return Returns the ConceptNameTag for the specified language.
-	 */
-	public static ConceptNameTag preferredLanguageTagFor(String language) {
-		return new ConceptNameTag(PREFERRED + "_" + language, "");
-	}
-	
-	/**
-	 * Method that generates a concept name tag based on a specific locale's language.
-	 * 
-	 * @param locale
-	 * @return Returns the short language tag for the specified locale's language.
-	 */
-	public static ConceptNameTag shortLanguageTagFor(Locale locale) {
-		return shortLanguageTagFor(locale.getLanguage());
-	}
-	
-	/**
-	 * Method that generates a concept name tag based on a specified locale's country code.
-	 * 
-	 * @param locale
-	 * @return Returns the short country Name tag for the specified locale's country.
-	 */
-	public static ConceptNameTag shortCountryTagFor(Locale locale) {
-		return shortCountryTagFor(locale.getCountry());
-	}
-	
-	/**
-	 * A factory method that generates strings for short country tags.
-	 * 
-	 * @param country ISO-3166 two letter country code
-	 * @return Returns the Name Tag for the specified country code.
-	 */
-	public static ConceptNameTag shortCountryTagFor(String country) {
-		return new ConceptNameTag(SHORT + "_" + country, "");
-	}
-	
-	/**
-	 * A factory method that generates strings for short language tags.
-	 * 
-	 * @param language ISO-639 two letter language code
-	 * @return Returns the short language tag for the specified language.
-	 */
-	public static ConceptNameTag shortLanguageTagFor(String language) {
-		return new ConceptNameTag(SHORT + "_" + language, "");
 	}
 	
 	/**

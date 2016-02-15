@@ -1,19 +1,16 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
 import java.util.List;
+import java.util.Map;
 
 import org.openmrs.Address;
 import org.openmrs.Location;
@@ -26,11 +23,11 @@ import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.PrivilegeConstants;
 
 /**
- * API methods for managing Locations <br/>
- * <br/>
- * Example Usage: <br/>
+ * API methods for managing Locations <br>
+ * <br>
+ * Example Usage: <br>
  * <code>
- *   List<Location> locations = Context.getLocationService().getAllLocations();
+ *   List&lt;Location&gt; locations = Context.getLocationService().getAllLocations();
  * </code>
  * 
  * @see org.openmrs.api.context.Context
@@ -150,20 +147,24 @@ public interface LocationService extends OpenmrsService {
 	public List<Location> getLocations(String nameFragment) throws APIException;
 	
 	/**
-	 * Returns a specific number locations from the specified starting position that match the
-	 * beginning of the given string. A null list will never be returned. An empty list will be
-	 * returned if there are no locations. Search is case insensitive. matching this
-	 * <code>nameFragment</code>. If start and length are not specified, then all matches are
-	 * returned
-	 * 
-	 * @param nameFragment is the string used to search for locations
-	 * @param includeRetired Specifies if retired locations should be returned
-	 * @param start the beginning index
-	 * @param length the number of matching locations to return
-	 * @since 1.8
+	 * Gets the locations matching the specified arguments. A null list will never be returned. An empty list will be
+	 * returned if there are no locations. Search is case insensitive. matching this <code>nameFragment</code>. If start
+	 * and length are not specified, then all matches are returned.
+	 *
+	 * @param nameFragment    is the string used to search for locations
+	 * @param parent          only return children of this parent
+	 * @param attributeValues the attribute values
+	 * @param includeRetired  specifies if retired locations should also be returned
+	 * @param start           the beginning index
+	 * @param length          the number of matching locations to return
+	 * @return the list of locations
+	 * @should return empty list when no location has matching attribute values
+	 * @should get locations having all matching attribute values
+	 * @since 1.10
 	 */
 	@Authorized( { PrivilegeConstants.GET_LOCATIONS })
-	public List<Location> getLocations(String nameFragment, boolean includeRetired, Integer start, Integer length)
+	public List<Location> getLocations(String nameFragment, Location parent,
+	        Map<LocationAttributeType, Object> attributeValues, boolean includeRetired, Integer start, Integer length)
 	        throws APIException;
 	
 	/**
@@ -182,7 +183,6 @@ public interface LocationService extends OpenmrsService {
 	 * 
 	 * @param tags Set of LocationTag criteria
 	 * @should get locations having all tags
-	 * @should return empty list when no location has the given tags
 	 * @should return all unretired locations given an empty tag list
 	 * @since 1.5
 	 */
@@ -373,7 +373,7 @@ public interface LocationService extends OpenmrsService {
 	 * the Address Hierarchy module.
 	 * 
 	 * @param incomplete the incomplete address
-	 * @param field the address field we are looking for possible values for
+	 * @param fieldName the address field we are looking for possible values for
 	 * @return a list of possible address values for the specified field
 	 * @should return empty list if no possible address matches
 	 * @should return null if method not implemented
@@ -488,4 +488,15 @@ public interface LocationService extends OpenmrsService {
 	@Authorized(PrivilegeConstants.GET_LOCATIONS)
 	LocationAttribute getLocationAttributeByUuid(String uuid);
 	
+	/**
+	 * Retrieves a LocationAttributeType object based on the name provided
+	 *
+	 * @param locationAttributeTypeName
+	 * @return the {@link LocationAttributeType} with the specified name
+	 * @since 1.10.0
+	 * @should return the location attribute type with the specified name
+	 * @should return null if no location attribute type exists with the specified name
+	 */
+	@Authorized(PrivilegeConstants.GET_LOCATION_ATTRIBUTE_TYPES)
+	LocationAttributeType getLocationAttributeTypeByName(String locationAttributeTypeName);
 }

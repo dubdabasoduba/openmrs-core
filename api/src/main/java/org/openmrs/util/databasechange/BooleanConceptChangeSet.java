@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util.databasechange;
 
@@ -27,9 +23,9 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.CustomChangeException;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.SetupException;
-
 import liquibase.exception.ValidationErrors;
 import liquibase.resource.ResourceAccessor;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.util.OpenmrsConstants;
@@ -79,17 +75,20 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 		falseConceptId = findConceptByName(connection, falseNames);
 		
 		// if they don't exist, create them
-		if (trueConceptId == null)
+		if (trueConceptId == null) {
 			trueConceptId = createConcept(connection, trueNames);
-		if (falseConceptId == null)
+		}
+		if (falseConceptId == null) {
 			falseConceptId = createConcept(connection, falseNames);
+		}
 		
 		// create the global properties
 		final boolean trueFalseGlobalPropertiesPresent = getInt(connection,
 		    "SELECT COUNT(*) FROM global_property WHERE property IN ('" + OpenmrsConstants.GLOBAL_PROPERTY_TRUE_CONCEPT
 		            + "', '" + OpenmrsConstants.GLOBAL_PROPERTY_FALSE_CONCEPT + "')") == 2;
-		if (!trueFalseGlobalPropertiesPresent)
+		if (!trueFalseGlobalPropertiesPresent) {
 			createGlobalProperties(connection, trueConceptId, falseConceptId);
+		}
 		
 		// now change all the existing obs
 		changeObs(connection);
@@ -98,7 +97,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	/**
 	 * Finds a concept that has any of the the given names in the given locale. If you have a
 	 * concept named 'True' in 'en_US' and you search for 'True' in 'en' this will be returned.
-	 * 
+	 *
 	 * @param connection
 	 * @param names a Map from (2-letter) locale to all possible names in that locale
 	 * @return a concept id.
@@ -110,8 +109,9 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 			for (String name : e.getValue()) {
 				Integer ret = getInt(connection, "select concept_id from concept_name where name = '" + name
 				        + "' and locale like '" + locale + "%'");
-				if (ret != null)
+				if (ret != null) {
 					return ret;
+				}
 			}
 		}
 		return null;
@@ -119,7 +119,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	
 	/**
 	 * creates a concept
-	 * 
+	 *
 	 * @param connection a DatabaseConnection
 	 * @param names a Map from locale to names in that locale, which will be added to the new
 	 *            concept
@@ -195,7 +195,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	/**
 	 * changes all obs which have boolean values to the new (coded) representation of boolean
 	 * values.
-	 * 
+	 *
 	 * @param connection a DatabaseConnection
 	 * @param trueConceptName the concept name for boolean true values
 	 * @param falseConceptName the concept name for boolean false values
@@ -235,7 +235,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	
 	/**
 	 * Inserts global properties 'Concept.true' and 'Concept.false' into the global_property table
-	 * 
+	 *
 	 * @param connection a DatabaseConnection
 	 * @param trueConceptId the concept id for true boolean concept
 	 * @param falseConceptId the concept id for false boolean concept
@@ -243,8 +243,9 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	 */
 	private void createGlobalProperties(JdbcConnection connection, Integer trueConceptId, Integer falseConceptId)
 	        throws CustomChangeException {
-		if (trueConceptId == null || trueConceptId < 1 || falseConceptId == null || falseConceptId < 1)
+		if (trueConceptId == null || trueConceptId < 1 || falseConceptId == null || falseConceptId < 1) {
 			throw new CustomChangeException("Can't create global properties for true/false concepts with invalid conceptIds");
+		}
 		PreparedStatement updateStatement = null;
 		
 		try {
@@ -282,7 +283,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	
 	/**
 	 * returns an integer resulting from the execution of an sql statement
-	 * 
+	 *
 	 * @param connection a DatabaseConnection
 	 * @param sql the sql statement to execute
 	 * @return integer resulting from the execution of the sql statement
@@ -333,7 +334,7 @@ public class BooleanConceptChangeSet implements CustomTaskChange {
 	}
 	
 	/**
-	 * @see liquibase.change.custom.CustomChange#setFileOpener(liquibase.ResourceAccessor)
+	 * @see liquibase.change.custom.CustomChange#setFileOpener(ResourceAccessor)
 	 */
 	@Override
 	public void setFileOpener(ResourceAccessor fileOpener) {

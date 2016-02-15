@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
 
@@ -22,7 +18,7 @@ import org.openmrs.Provider;
 public class ProviderByPersonNameComparatorTest {
 	
 	/**
-	 * @see {@link PersonByNameComparator#comparePersonsByName(org.openmrs.Person, org.openmrs.Person)}
+	 * @see PersonByNameComparator#comparePersonsByName(org.openmrs.Person, org.openmrs.Person)
 	 */
 	@Test
 	public void compareProvidersByPersonsName_shouldReturnNegativeIfPersonNameForProvider1ComesBeforeThatOfProvider2()
@@ -42,7 +38,7 @@ public class ProviderByPersonNameComparatorTest {
 	}
 	
 	/**
-	 * @see {@link PersonByNameComparator#comparePersonsByName(Person,Person)}
+	 * @see PersonByNameComparator#comparePersonsByName(Person,Person)
 	 */
 	@Test
 	public void compareProvidersByPersonName_shouldReturnPositiveIfPersonNameForProvider1ComesAfterThatOfProvider2()
@@ -62,7 +58,7 @@ public class ProviderByPersonNameComparatorTest {
 	}
 	
 	/**
-	 * @see {@link PersonByNameComparator#comparePersonsByName(Person,Person)}
+	 * @see PersonByNameComparator#comparePersonsByName(Person,Person)
 	 */
 	@Test
 	public void compareProvidersByPersonName_shouldReturnZeroIfTheGivenNameMiddleNameAndFamilyNameMatch() throws Exception {

@@ -1,20 +1,16 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import static org.apache.commons.lang.StringUtils.defaultString;
+
 import java.util.Calendar;
 import java.util.Date;
 
@@ -26,8 +22,6 @@ import org.openmrs.util.OpenmrsUtil;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
-
-import static org.apache.commons.lang.StringUtils.defaultString;
 
 /**
  * This class is the representation of a person's address. This class is many-to-one to the Person
@@ -105,7 +99,7 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	 * {@link #equals(Object)} in that this method compares the inner fields of each address for
 	 * equality. Note: Null/empty fields on <code>otherAddress</code> /will not/ cause a false value
 	 * to be returned
-	 * 
+	 *
 	 * @param otherAddress PersonAddress with which to compare
 	 * @return boolean true/false whether or not they are the same addresses
 	 */
@@ -131,7 +125,7 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	 * bitwise copy of the personAddress object. NOTICE: THIS WILL NOT COPY THE PATIENT OBJECT. The
 	 * PersonAddress.person object in this object AND the cloned object will point at the same
 	 * person
-	 * 
+	 *
 	 * @return New PersonAddress object
 	 */
 	public Object clone() {
@@ -211,8 +205,9 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	 * @return Returns the preferred.
 	 */
 	public Boolean isPreferred() {
-		if (preferred == null)
+		if (preferred == null) {
 			return new Boolean(false);
+		}
 		return preferred;
 	}
 	
@@ -342,28 +337,8 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	}
 	
 	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress3()}
-	 * @return Returns the neighborhoodCell.
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public String getNeighborhoodCell() {
-		return getAddress3();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress3(String)}
-	 * @param address3 The neighborhoodCell to set.
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public void setNeighborhoodCell(String address3) {
-		this.setAddress3(address3);
-	}
-	
-	/**
 	 * Convenience method to test whether any of the fields in this address are set
-	 * 
+	 *
 	 * @return whether any of the address fields (address1, address2, cityVillage, stateProvince,
 	 *         country, countyDistrict, neighborhoodCell, postalCode, latitude, longitude, etc) are
 	 *         whitespace, empty ("") or null.
@@ -379,86 +354,32 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 		        && StringUtils.isBlank(getLongitude());
 		
 	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress6()}
-	 * @return the region
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public String getRegion() {
-		return getAddress6();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress6(String)}
-	 * @param address6 the region to set
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public void setRegion(String address6) {
-		this.setAddress6(address6);
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress5()}
-	 * @return the subregion
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public String getSubregion() {
-		return getAddress5();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress5(String)}
-	 * @param address5 the subregion to set
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public void setSubregion(String address5) {
-		this.setAddress5(address5);
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress4()}
-	 * @return the townshipDivision
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public String getTownshipDivision() {
-		return getAddress4();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress4(String)}
-	 * @param address4 the address4 to set
-	 */
-	@Deprecated
-	@Element(data = true, required = false)
-	public void setTownshipDivision(String address4) {
-		this.setAddress4(address4);
-	}
-	
+			
 	/**
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 * Note: this comparator imposes orderings that are inconsistent with equals.
 	 */
+	@SuppressWarnings("squid:S1210")
 	public int compareTo(PersonAddress other) {
 		int retValue = 0;
 		if (other != null) {
 			retValue = isVoided().compareTo(other.isVoided());
-			if (retValue == 0)
+			if (retValue == 0) {
 				retValue = other.isPreferred().compareTo(isPreferred());
-			if (retValue == 0 && getDateCreated() != null)
+			}
+			if (retValue == 0 && getDateCreated() != null) {
 				retValue = OpenmrsUtil.compareWithNullAsLatest(getDateCreated(), other.getDateCreated());
-			if (retValue == 0)
+			}
+			if (retValue == 0) {
 				retValue = OpenmrsUtil.compareWithNullAsGreatest(getPersonAddressId(), other.getPersonAddressId());
+			}
 			
 			// if we've gotten this far, just check all address values. If they are
 			// equal, leave the objects at 0. If not, arbitrarily pick retValue=1
 			// and return that (they are not equal).
-			if (retValue == 0 && !equalsContent(other))
+			if (retValue == 0 && !equalsContent(other)) {
 				retValue = 1;
+			}
 		}
 		return retValue;
 	}
@@ -579,17 +500,17 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	
 	/**
 	 * Returns true if the address' endDate is null
-	 * 
+	 *
 	 * @return true or false
 	 * @since 1.9
 	 */
 	public Boolean isActive() {
-		return (this.endDate == null);
+		return this.endDate == null;
 	}
 	
 	/**
 	 * Makes an address inactive by setting its endDate to the current time
-	 * 
+	 *
 	 * @since 1.9
 	 */
 	public void deactivate() {
@@ -598,7 +519,7 @@ public class PersonAddress extends BaseOpenmrsData implements java.io.Serializab
 	
 	/**
 	 * Makes an address active by setting its endDate to null
-	 * 
+	 *
 	 * @since 1.9
 	 */
 	public void activate() {

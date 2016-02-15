@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter.util;
 
@@ -73,8 +69,8 @@ public class CustomResourceLoader {
 	
 	/**
 	 * Returns singleton instance of custom resource loader
-	 * 
-	 * @param basedir <b>(optional)</b> the absolute path to directory, that contains resources to
+	 *
+	 * @param httpRequest <b>(optional)</b> the absolute path to directory, that contains resources to
 	 *            be loaded. If this isn't specified then <code>${CONTEXT-ROOT}/WEB-INF/</code> will
 	 *            be used
 	 * @return the singleton instance of {@link CustomResourceLoader}
@@ -89,7 +85,7 @@ public class CustomResourceLoader {
 	/**
 	 * This method is intended to load resource bundle from the file system by specified messages
 	 * properties file path and for specified locale
-	 * 
+	 *
 	 * @param path location of the resource on the file system
 	 * @param basename the name prefix for resource file
 	 * @param locale the location parameter
@@ -110,13 +106,13 @@ public class CustomResourceLoader {
 	
 	/**
 	 * Searches under the base directory on the file system for possible message properties files
-	 * and loads them. <br />
-	 * <br />
+	 * and loads them. <br>
+	 * <br>
 	 * It iterates over each file, nested to the base directory, and decides if this file is a
 	 * messages properties. Then, if file is suitable, it parses the locale from its name. And
 	 * finally, it loads resource bundle for that file and associates it with locale, derived from
 	 * the file's name.
-	 * 
+	 *
 	 * @param basedir the absolute path of base directory to search files (e.g. $CONTEXT_ROOT +
 	 *            /WEB_INF/)
 	 */
@@ -139,19 +135,20 @@ public class CustomResourceLoader {
 	
 	/**
 	 * Utility method for deriving a locale from a filename.
-	 * 
+	 *
 	 * @param filename the name to parse
 	 * @return Locale derived from the given string
 	 */
 	private Locale parseLocaleFrom(String filename, String basename) {
 		Locale result = null;
 		
-		if (filename.startsWith(basename))
+		if (filename.startsWith(basename)) {
 			filename = filename.substring(basename.length());
+		}
 		
 		String localespec = filename.substring(0, filename.indexOf('.'));
 		
-		if (localespec.equals("")) {
+		if ("".equals(localespec)) {
 			result = Locale.ENGLISH;
 		} else {
 			localespec = localespec.substring(1);

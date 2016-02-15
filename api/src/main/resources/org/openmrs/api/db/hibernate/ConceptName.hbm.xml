@@ -1,4 +1,15 @@
 <?xml version="1.0"?>
+<!--
+
+    This Source Code Form is subject to the terms of the Mozilla Public License,
+    v. 2.0. If a copy of the MPL was not distributed with this file, You can
+    obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+    the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+
+    Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+    graphic logo is a trademark of OpenMRS Inc.
+
+-->
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.1//EN"
         "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
@@ -38,8 +49,9 @@
 		</set>
 		
 		<property name="conceptNameType" column="concept_name_type" length="50">
-			<type name="org.openmrs.util.HibernateEnumType">
-				<param name="enumClassName">org.openmrs.api.ConceptNameType</param>
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">org.openmrs.api.ConceptNameType</param>
+				<param name="type">12</param>
 			</type>
 		</property>
 		

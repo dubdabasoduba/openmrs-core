@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -23,14 +19,14 @@ import org.openmrs.aop.RequiredDataAdvice;
 /**
  * This handler makes sure the when a retired object is saved with the retired bit set to true, the
  * other required values (like dateRetired and retiredBy) are filled in. It also makes sure the
- * retired attributes are cleared out if the retired bit is set to false. <br/>
- * <br/>
+ * retired attributes are cleared out if the retired bit is set to false. <br>
+ * <br>
  * The {@link RequiredDataAdvice} class uses AOP around each method in every service to check to see
  * if its a save* method. If it is a save* method, and the object being saved implements
  * {@link Retireable}, this class is called to handle setting the
  * {@link Retireable#setRetiredBy(User)}, and {@link Retireable#setDateRetired(Date)} if not set
- * already. <br/>
- * <br/>
+ * already. <br>
+ * <br>
  * Note: The {@link RequiredDataAdvice} class will loop over child collections on this
  * {@link Retireable} that are themselves a {@link Retireable} and retiredBy/dateRetired are set,
  * but <b>ONLY IF</b> the retired bit was set on them as well. Using the associated retire* method
@@ -46,8 +42,8 @@ public class RetireSaveHandler implements SaveHandler<Retireable> {
 	
 	/**
 	 * This method does not set "retired" to true, but rather only sets the retiredBy/dateRetired if
-	 * they are null and retired==true. <br/>
-	 * <br/>
+	 * they are null and retired==true. <br>
+	 * <br>
 	 * If retired is set to false, the retired attributes are cleared nullified.
 	 * 
 	 * @see org.openmrs.api.handler.RequiredDataHandler#handle(org.openmrs.OpenmrsObject,

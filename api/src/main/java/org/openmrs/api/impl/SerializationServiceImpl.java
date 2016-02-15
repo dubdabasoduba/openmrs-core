@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.impl;
 
@@ -92,8 +88,8 @@ public class SerializationServiceImpl extends BaseOpenmrsService implements Seri
 		try {
 			return serializer.serialize(o);
 		}
-		catch (Throwable t) {
-			throw new SerializationException("An error occurred during serialization of object <" + o + ">", t);
+		catch (Exception e) {
+			throw new SerializationException("An error occurred during serialization of object <" + o + ">", e);
 		}
 	}
 	
@@ -107,16 +103,16 @@ public class SerializationServiceImpl extends BaseOpenmrsService implements Seri
 		// Get appropriate OpenmrsSerializer implementation
 		OpenmrsSerializer serializer = getSerializer(serializerClass);
 		if (serializer == null) {
-			throw new APIException("OpenmrsSerializer of class <" + serializerClass + "> not found.");
+			throw new APIException("serializer.not.found", new Object[] { serializerClass });
 		}
 		
 		// Attempt to Deserialize the object
 		try {
 			return (T) serializer.deserialize(serializedObject, objectClass);
 		}
-		catch (Throwable t) {
+		catch (Exception e) {
 			String msg = "An error occurred during deserialization of data <" + serializedObject + ">";
-			throw new SerializationException(msg, t);
+			throw new SerializationException(msg, e);
 		}
 	}
 	
@@ -132,13 +128,17 @@ public class SerializationServiceImpl extends BaseOpenmrsService implements Seri
 		return new ArrayList<OpenmrsSerializer>(serializerMap.values());
 	}
 	
+	public static void setSerializerMap(Map<Class<? extends OpenmrsSerializer>, OpenmrsSerializer> serializerMap) {
+		SerializationServiceImpl.serializerMap = serializerMap;
+	}
+	
 	/**
 	 * @param serializers the serializers to set
 	 * @should not reset serializers list when called multiple times
 	 */
 	public void setSerializers(List<? extends OpenmrsSerializer> serializers) {
 		if (serializers == null || serializerMap == null) {
-			serializerMap = new LinkedHashMap<Class<? extends OpenmrsSerializer>, OpenmrsSerializer>();
+			setSerializerMap(new LinkedHashMap<Class<? extends OpenmrsSerializer>, OpenmrsSerializer>());
 		}
 		if (serializers != null) {
 			for (OpenmrsSerializer s : serializers) {

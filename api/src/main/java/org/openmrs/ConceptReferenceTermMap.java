@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -19,7 +15,7 @@ import java.io.Serializable;
  * The concept Reference Term map object represents a mapping between two Concept Reference Terms. A
  * concept reference term can have 0 to N concept reference term mappings to any or all Concept
  * Reference Terms
- * 
+ *
  * @since 1.9
  */
 public class ConceptReferenceTermMap extends BaseConceptMap implements Serializable {
@@ -45,7 +41,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	
 	/**
 	 * Convenience constructor that takes the term to be mapped to and the type of the map
-	 * 
+	 *
 	 * @param termB the other concept reference term to map to
 	 * @param conceptMapType the concept map type for this concept reference term map
 	 */
@@ -118,8 +114,9 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 			return false;
 		}
 		ConceptReferenceTermMap rhs = (ConceptReferenceTermMap) obj;
-		if (this.conceptReferenceTermMapId != null && rhs.conceptReferenceTermMapId != null)
-			return (this.conceptReferenceTermMapId.equals(rhs.conceptReferenceTermMapId));
+		if (this.conceptReferenceTermMapId != null && rhs.conceptReferenceTermMapId != null) {
+			return this.conceptReferenceTermMapId.equals(rhs.conceptReferenceTermMapId);
+		}
 		
 		return this == obj;
 	}
@@ -128,8 +125,9 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		if (this.conceptReferenceTermMapId == null)
+		if (this.conceptReferenceTermMapId == null) {
 			return super.hashCode();
+		}
 		int hash = 3;
 		hash = hash + 31 * this.conceptReferenceTermMapId;
 		return hash;
@@ -139,8 +137,9 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		if (conceptReferenceTermMapId == null)
+		if (conceptReferenceTermMapId == null) {
 			return "";
+		}
 		return conceptReferenceTermMapId.toString();
 	}
 	

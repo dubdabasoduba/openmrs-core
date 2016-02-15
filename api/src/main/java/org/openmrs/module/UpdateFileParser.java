@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.module;
 
@@ -26,11 +22,12 @@ import org.openmrs.util.OpenmrsConstants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
 /**
  * This class will parse an xml update.rdf file
- * 
+ *
  * @version 1.0
  */
 public class UpdateFileParser {
@@ -48,7 +45,7 @@ public class UpdateFileParser {
 	
 	/**
 	 * Default constructor
-	 * 
+	 *
 	 * @param s String to parse (Contents of update.rdf file)
 	 */
 	public UpdateFileParser(String s) {
@@ -57,7 +54,7 @@ public class UpdateFileParser {
 	
 	/**
 	 * Parse the contents of the update.rdf file.
-	 * 
+	 *
 	 * @throws ModuleException
 	 */
 	public void parse() throws ModuleException {
@@ -71,6 +68,15 @@ public class UpdateFileParser {
 				
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				DocumentBuilder db = dbf.newDocumentBuilder();
+				
+				// Disable resolution of external entities. See TRUNK-3942 
+				db.setEntityResolver(new EntityResolver() {
+					
+					public InputSource resolveEntity(String publicId, String systemId) {
+						return new InputSource(new StringReader(""));
+					}
+				});
+				
 				updateDoc = db.parse(inputSource);
 			}
 			catch (Exception e) {
@@ -82,8 +88,9 @@ public class UpdateFileParser {
 			
 			String configVersion = rootNode.getAttribute("configVersion");
 			
-			if (!validConfigVersions().contains(configVersion))
+			if (!validConfigVersions().contains(configVersion)) {
 				throw new ModuleException("Invalid configVersion: '" + configVersion + "' found In content: " + content);
+			}
 			
 			if ("1.0".equals(configVersion)) {
 				// the only update in the xml file is the 'best fit'
@@ -120,29 +127,31 @@ public class UpdateFileParser {
 			throw e;
 		}
 		finally {
-			if (stringReader != null)
+			if (stringReader != null) {
 				stringReader.close();
+			}
 		}
 		
 	}
 	
 	/**
 	 * Generic method to get a module tag
-	 * 
+	 *
 	 * @param element
 	 * @param version
 	 * @param tag
 	 * @return
 	 */
 	private static String getElement(Element element, String version, String tag) {
-		if (element.getElementsByTagName(tag).getLength() > 0)
+		if (element.getElementsByTagName(tag).getLength() > 0) {
 			return element.getElementsByTagName(tag).item(0).getTextContent();
+		}
 		return "";
 	}
 	
 	/**
 	 * List of the valid sqldiff versions
-	 * 
+	 *
 	 * @return
 	 */
 	private static List<String> validConfigVersions() {

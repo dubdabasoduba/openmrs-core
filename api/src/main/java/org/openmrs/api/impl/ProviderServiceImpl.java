@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.impl;
 
@@ -24,8 +20,10 @@ import org.openmrs.ProviderAttribute;
 import org.openmrs.ProviderAttributeType;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ProviderService;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.db.ProviderDAO;
 import org.openmrs.customdatatype.CustomDatatypeUtil;
+import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +54,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	@Override
 	@Transactional(readOnly = true)
 	public List<Provider> getAllProviders() {
-		return getAllProviders(true);
+		return Context.getProviderService().getAllProviders(true);
 	}
 	
 	/**
@@ -131,7 +129,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	@Transactional(readOnly = true)
 	public Collection<Provider> getProvidersByPerson(Person person) {
 		Validate.notNull(person, "Person must not be null");
-		return getProvidersByPerson(person, true);
+		return Context.getProviderService().getProvidersByPerson(person, true);
 	}
 	
 	/**
@@ -140,7 +138,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	@Override
 	@Transactional(readOnly = true)
 	public Integer getCountOfProviders(String query) {
-		return getCountOfProviders(query, false);
+		return Context.getProviderService().getCountOfProviders(query, false);
 	}
 	
 	/**
@@ -171,7 +169,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	@Transactional(readOnly = true)
 	public List<Provider> getProviders(String query, Integer start, Integer length,
 	        Map<ProviderAttributeType, Object> attributeValues) {
-		return getProviders(query, start, length, attributeValues, true);
+		return Context.getProviderService().getProviders(query, start, length, attributeValues, true);
 	}
 	
 	/**
@@ -244,7 +242,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	 */
 	@Override
 	public ProviderAttributeType retireProviderAttributeType(ProviderAttributeType providerAttributeType, String reason) {
-		return saveProviderAttributeType(providerAttributeType);
+		return Context.getProviderService().saveProviderAttributeType(providerAttributeType);
 	}
 	
 	/**
@@ -252,7 +250,7 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	 */
 	@Override
 	public ProviderAttributeType unretireProviderAttributeType(ProviderAttributeType providerAttributeType) {
-		return saveProviderAttributeType(providerAttributeType);
+		return Context.getProviderService().saveProviderAttributeType(providerAttributeType);
 	}
 	
 	/**
@@ -279,5 +277,15 @@ public class ProviderServiceImpl extends BaseOpenmrsService implements ProviderS
 	@Transactional(readOnly = true)
 	public Provider getProviderByIdentifier(String identifier) {
 		return dao.getProviderByIdentifier(identifier);
+	}
+	
+	/**
+	 * @see org.openmrs.api.ProviderService#getUnknownProvider()
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public Provider getUnknownProvider() {
+		return getProviderByUuid(Context.getAdministrationService().getGlobalProperty(
+		    OpenmrsConstants.GP_UNKNOWN_PROVIDER_UUID));
 	}
 }

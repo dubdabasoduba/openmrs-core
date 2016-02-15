@@ -1,27 +1,24 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification;
 
 import java.io.Serializable;
 import java.util.Date;
 
+import org.openmrs.BaseOpenmrsData;
 import org.openmrs.Patient;
 
 /**
  * Not currently used.
  */
-public class Note implements Serializable {
+public class Note extends BaseOpenmrsData implements Serializable {
 	
 	/**
 	 * 
@@ -29,7 +26,11 @@ public class Note implements Serializable {
 	private static final long serialVersionUID = -5392076713513109152L;
 	
 	// Data
-	private Integer id;
+	
+	/**
+	 * noteId, an identifier for a patient note.
+	 */
+	private Integer noteId;
 	
 	private String text;
 	
@@ -54,12 +55,18 @@ public class Note implements Serializable {
 	public Note() {
 	}
 	
+	/**
+	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
+	 */
 	public void setId(Integer id) {
-		this.id = id;
+		setNoteId(noteId);
 	}
 	
+	/**
+	 * @see org.openmrs.OpenmrsObject#getId()
+	 */
 	public Integer getId() {
-		return this.id;
+		return getNoteId();
 	}
 	
 	public Date getDateChanged() {
@@ -118,4 +125,17 @@ public class Note implements Serializable {
 		this.weight = weight;
 	}
 	
+	/**
+	 * @return Returns the noteId.
+	 */
+	public Integer getNoteId() {
+		return noteId;
+	}
+	
+	/**
+	 * @param noteId the noteId to set.
+	 */
+	public void setNoteId(Integer noteId) {
+		this.noteId = noteId;
+	}
 }

@@ -1,20 +1,15 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter;
 
 import java.io.IOException;
-import java.util.Date;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -54,7 +49,7 @@ public class OpenmrsFilter extends OncePerRequestFilter {
 	 * This method is called for every request for a page/image/javascript file/etc The main point
 	 * of this is to make sure the user's current userContext is on the session and on the current
 	 * thread
-	 * 
+	 *
 	 * @see org.springframework.web.filter.OncePerRequestFilter#doFilterInternal(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse, javax.servlet.FilterChain)
 	 */
@@ -87,14 +82,16 @@ public class OpenmrsFilter extends OncePerRequestFilter {
 			userContext = new UserContext();
 			httpSession.setAttribute(WebConstants.OPENMRS_USER_CONTEXT_HTTPSESSION_ATTR, userContext);
 			
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Just set user context " + userContext + " as attribute on session");
+			}
 		} else {
 			// set username as attribute on session so parent servlet container 
 			// can identify sessions easier
 			User user = userContext.getAuthenticatedUser();
-			if (user != null)
+			if (user != null) {
 				httpSession.setAttribute("username", user.getUsername());
+			}
 		}
 		
 		// set the locale on the session (for the servlet container as well)

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -30,7 +26,6 @@ import org.hibernate.SQLQuery;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Conjunction;
 import org.hibernate.criterion.Disjunction;
-import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
@@ -50,11 +45,12 @@ import org.openmrs.api.EncounterService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.DAOException;
 import org.openmrs.api.db.EncounterDAO;
+import org.openmrs.parameter.EncounterSearchCriteria;
 
 /**
  * Hibernate specific dao for the {@link EncounterService} All calls should be made on the
  * Context.getEncounterService() object
- * 
+ *
  * @see EncounterDAO
  * @see EncounterService
  */
@@ -69,7 +65,7 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	
 	/**
 	 * Set session factory
-	 * 
+	 *
 	 * @param sessionFactory
 	 */
 	public void setSessionFactory(SessionFactory sessionFactory) {
@@ -104,56 +100,62 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	@SuppressWarnings("unchecked")
 	public List<Encounter> getEncountersByPatientId(Integer patientId) throws DAOException {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(Encounter.class).createAlias("patient", "p").add(
-		    Expression.eq("p.patientId", patientId)).add(Expression.eq("voided", false)).addOrder(
+		    Restrictions.eq("p.patientId", patientId)).add(Restrictions.eq("voided", false)).addOrder(
 		    Order.desc("encounterDatetime"));
 		
 		return crit.list();
 	}
 	
 	/**
-	 * @see org.openmrs.api.db.EncounterDAO#getEncounters(org.openmrs.Patient, org.openmrs.Location,
-	 *      java.util.Date, java.util.Date, java.util.Collection, java.util.Collection,
-	 *      java.util.Collection, boolean)
+	 * @see org.openmrs.api.db.EncounterDAO#getEncounters(org.openmrs.parameter.EncounterSearchCriteria)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Encounter> getEncounters(Patient patient, Location location, Date fromDate, Date toDate,
-	        Collection<Form> enteredViaForms, Collection<EncounterType> encounterTypes, Collection<Provider> providers,
-	        Collection<VisitType> visitTypes, Collection<Visit> visits, boolean includeVoided) {
-		
+	public List<Encounter> getEncounters(EncounterSearchCriteria searchCriteria) {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(Encounter.class);
 		
-		if (patient != null && patient.getPatientId() != null) {
-			crit.add(Expression.eq("patient", patient));
+		if (searchCriteria.getPatient() != null && searchCriteria.getPatient().getPatientId() != null) {
+			crit.add(Restrictions.eq("patient", searchCriteria.getPatient()));
 		}
-		if (location != null && location.getLocationId() != null) {
-			crit.add(Expression.eq("location", location));
+		if (searchCriteria.getLocation() != null && searchCriteria.getLocation().getLocationId() != null) {
+			crit.add(Restrictions.eq("location", searchCriteria.getLocation()));
 		}
-		if (fromDate != null) {
-			crit.add(Expression.ge("encounterDatetime", fromDate));
+		if (searchCriteria.getFromDate() != null) {
+			crit.add(Restrictions.ge("encounterDatetime", searchCriteria.getFromDate()));
 		}
-		if (toDate != null) {
-			crit.add(Expression.le("encounterDatetime", toDate));
+		if (searchCriteria.getToDate() != null) {
+			crit.add(Restrictions.le("encounterDatetime", searchCriteria.getToDate()));
 		}
-		if (enteredViaForms != null && enteredViaForms.size() > 0) {
-			crit.add(Expression.in("form", enteredViaForms));
+		if (searchCriteria.getDateChanged() != null) {
+			crit.add(
+					Restrictions.or(
+							Restrictions.and(
+									Restrictions.isNull("dateChanged"),
+									Restrictions.ge("dateCreated", searchCriteria.getDateChanged())
+							),
+							Restrictions.ge("dateChanged", searchCriteria.getDateChanged())
+					)
+			);
 		}
-		if (encounterTypes != null && encounterTypes.size() > 0) {
-			crit.add(Expression.in("encounterType", encounterTypes));
+		if (searchCriteria.getEnteredViaForms() != null && searchCriteria.getEnteredViaForms().size() > 0) {
+			crit.add(Restrictions.in("form", searchCriteria.getEnteredViaForms()));
 		}
-		if (providers != null && providers.size() > 0) {
+		if (searchCriteria.getEncounterTypes() != null && searchCriteria.getEncounterTypes().size() > 0) {
+			crit.add(Restrictions.in("encounterType", searchCriteria.getEncounterTypes()));
+		}
+		if (searchCriteria.getProviders() != null && searchCriteria.getProviders().size() > 0) {
 			crit.createAlias("encounterProviders", "ep");
-			crit.add(Expression.in("ep.provider", providers));
+			crit.add(Restrictions.in("ep.provider", searchCriteria.getProviders()));
 		}
-		if (visitTypes != null && visitTypes.size() > 0) {
+		if (searchCriteria.getVisitTypes() != null && searchCriteria.getVisitTypes().size() > 0) {
 			crit.createAlias("visit", "v");
-			crit.add(Expression.in("v.visitType", visitTypes));
+			crit.add(Restrictions.in("v.visitType", searchCriteria.getVisitTypes()));
 		}
-		if (visits != null && visits.size() > 0) {
-			crit.add(Expression.in("visit", visits));
+		if (searchCriteria.getVisits() != null && searchCriteria.getVisits().size() > 0) {
+			crit.add(Restrictions.in("visit", searchCriteria.getVisits()));
 		}
-		if (!includeVoided) {
-			crit.add(Expression.eq("voided", false));
+		if (!searchCriteria.getIncludeVoided()) {
+			crit.add(Restrictions.eq("voided", false));
 		}
 		crit.addOrder(Order.asc("encounterDatetime"));
 		return crit.list();
@@ -186,8 +188,8 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	 */
 	public EncounterType getEncounterType(String name) throws DAOException {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(EncounterType.class);
-		crit.add(Expression.eq("retired", false));
-		crit.add(Expression.eq("name", name));
+		crit.add(Restrictions.eq("retired", false));
+		crit.add(Restrictions.eq("name", name));
 		EncounterType encounterType = (EncounterType) crit.uniqueResult();
 		
 		return encounterType;
@@ -203,8 +205,9 @@ public class HibernateEncounterDAO implements EncounterDAO {
 		
 		criteria.addOrder(Order.asc("name"));
 		
-		if (includeRetired == false)
-			criteria.add(Expression.eq("retired", false));
+		if (!includeRetired) {
+			criteria.add(Restrictions.eq("retired", false));
+		}
 		
 		return criteria.list();
 	}
@@ -216,7 +219,7 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	public List<EncounterType> findEncounterTypes(String name) throws DAOException {
 		return sessionFactory.getCurrentSession().createCriteria(EncounterType.class)
 		// 'ilike' case insensitive search
-		        .add(Expression.ilike("name", name, MatchMode.START)).addOrder(Order.asc("name")).addOrder(
+		        .add(Restrictions.ilike("name", name, MatchMode.START)).addOrder(Order.asc("name")).addOrder(
 		            Order.asc("retired")).list();
 	}
 	
@@ -257,10 +260,12 @@ public class HibernateEncounterDAO implements EncounterDAO {
 		
 		Criteria criteria = createEncounterByQueryCriteria(query, patientId, includeVoided, true);
 		
-		if (start != null)
+		if (start != null) {
 			criteria.setFirstResult(start);
-		if (length != null && length > 0)
+		}
+		if (length != null && length > 0) {
 			criteria.setMaxResults(length);
+		}
 		
 		return criteria.list();
 	}
@@ -280,7 +285,7 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	 */
 	@Override
 	public Map<Integer, List<Encounter>> getAllEncounters(Cohort patients) {
-		HashMap<Integer, List<Encounter>> encountersBypatient = new HashMap<Integer, List<Encounter>>();
+		Map<Integer, List<Encounter>> encountersBypatient = new HashMap<Integer, List<Encounter>>();
 		
 		@SuppressWarnings("unchecked")
 		List<Encounter> allEncounters = createEncounterCriteria(patients).list();
@@ -304,7 +309,7 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	
 	/**
 	 * Create the criteria for fetching all encounters based on cohort
-	 * 
+	 *
 	 * @param patients
 	 * @return a map of patient with their encounters
 	 */
@@ -313,8 +318,9 @@ public class HibernateEncounterDAO implements EncounterDAO {
 		criteria.setCacheMode(org.hibernate.CacheMode.IGNORE);
 		
 		// only include this where clause if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
@@ -338,7 +344,7 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	/**
 	 * Utility method that returns a criteria for searching for patient encounters that match the
 	 * specified search phrase
-	 * 
+	 *
 	 * @param query patient name or identifier
 	 * @param patientId the patient id
 	 * @param includeVoided Specifies whether voided encounters should be included
@@ -348,8 +354,9 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	private Criteria createEncounterByQueryCriteria(String query, Integer patientId, boolean includeVoided,
 	        boolean orderByNames) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Encounter.class, "enc");
-		if (!includeVoided)
+		if (!includeVoided) {
 			criteria.add(Restrictions.eq("enc.voided", false));
+		}
 		
 		criteria = criteria.createCriteria("patient", "pat");
 		if (patientId != null) {
@@ -409,22 +416,22 @@ public class HibernateEncounterDAO implements EncounterDAO {
 				name = query;
 			}
 			criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(name, identifier,
-			    new ArrayList<PatientIdentifierType>(), false, orderByNames);
+			    new ArrayList<PatientIdentifierType>(), false, orderByNames, false);
 		}
 		
 		return criteria;
 	}
 	
 	/**
-	 * @see org.openmrs.api.db.EncounterDAO#getEncountersByVisit(Visit)
+	 * @see org.openmrs.api.db.EncounterDAO#getEncountersByVisit(Visit, boolean)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<Encounter> getEncountersByVisit(Visit visit, boolean includeVoided) {
-		Criteria crit = sessionFactory.getCurrentSession().createCriteria(Encounter.class)
-		        .add(Expression.eq("visit", visit));
+		Criteria crit = sessionFactory.getCurrentSession().createCriteria(Encounter.class).add(
+		    Restrictions.eq("visit", visit));
 		if (!includeVoided) {
-			crit.add(Expression.eq("voided", false));
+			crit.add(Restrictions.eq("voided", false));
 		}
 		crit.addOrder(Order.asc("encounterDatetime"));
 		
@@ -474,8 +481,18 @@ public class HibernateEncounterDAO implements EncounterDAO {
 	}
 	
 	/**
+	 * @see org.openmrs.api.db.EncounterDAO#getEncounterRoleByName(String)
+	 */
+	@Override
+	public EncounterRole getEncounterRoleByName(String name) throws DAOException {
+		return (EncounterRole) sessionFactory.getCurrentSession().createCriteria(EncounterRole.class).add(
+		    Restrictions.eq("name", name)).uniqueResult();
+		
+	}
+	
+	/**
 	 * Convenience method since this DAO fetches several different domain objects by uuid
-	 * 
+	 *
 	 * @param uuid uuid to fetch
 	 * @param table a simple classname (e.g. "Encounter")
 	 * @return
@@ -614,5 +631,15 @@ public class HibernateEncounterDAO implements EncounterDAO {
 		criteria.addOrder(Order.desc("visit.visitId"));
 		criteria.addOrder(Order.desc("encounterDatetime"));
 		criteria.addOrder(Order.desc("encounterId"));
+	}
+	
+	/**
+	 * @see org.openmrs.api.db.EncounterDAO#getEncounterRolesByName(String)
+	 */
+	
+	@Override
+	public List<EncounterRole> getEncounterRolesByName(String name) throws DAOException {
+		return sessionFactory.getCurrentSession().createCriteria(EncounterRole.class).add(Restrictions.eq("name", name))
+		        .list();
 	}
 }

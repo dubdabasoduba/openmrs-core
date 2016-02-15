@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.context;
 
@@ -24,7 +20,6 @@ import org.openmrs.module.ModuleConstants;
 import org.openmrs.module.ModuleInteroperabilityTest;
 import org.openmrs.module.ModuleUtil;
 import org.openmrs.test.BaseContextSensitiveTest;
-import org.openmrs.test.SkipBaseSetup;
 import org.openmrs.test.Verifies;
 
 /**
@@ -59,19 +54,18 @@ public class ContextWithModuleTest extends BaseContextSensitiveTest {
 		// the "/metadata/sqldiff.xml" file has been deleted in order to load the modules into hsql.
 		//    (the sql tables are built from hibernate mapping files automatically in unit tests)
 		props.setProperty(ModuleConstants.RUNTIMEPROPERTY_MODULE_LIST_TO_LOAD,
-		    "org/openmrs/module/include/logic-0.2.omod org/openmrs/module/include/dssmodule-1.44.omod");
+		    "org/openmrs/module/include/test1-1.0-SNAPSHOT.omod org/openmrs/module/include/test2-1.0-SNAPSHOT.omod");
 		
 		return props;
 	}
 	
 	/**
-	 * @see {@link Context#loadClass(String)}
+	 * @see Context#loadClass(String)
 	 */
 	@Test
-	@SkipBaseSetup
 	@Verifies(value = "should load class with the OpenmrsClassLoader", method = "loadClass(String)")
 	public void loadClass_shouldLoadClassWithOpenmrsClassLoader() throws Exception {
-		Class<?> c = Context.loadClass("org.openmrs.module.dssmodule.DssService");
+		Class<?> c = Context.loadClass("org.openmrs.module.test1.api.Test1Service");
 		Assert.assertTrue("Should be loaded by OpenmrsClassLoader", c.getClassLoader() instanceof ModuleClassLoader);
 	}
 	

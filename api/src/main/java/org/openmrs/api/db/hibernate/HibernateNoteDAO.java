@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -19,6 +15,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SessionFactory;
+import org.openmrs.api.APIException;
 import org.openmrs.api.db.DAOException;
 import org.openmrs.api.db.NoteDAO;
 import org.openmrs.notification.Note;
@@ -45,16 +42,12 @@ public class HibernateNoteDAO implements NoteDAO {
 	}
 	
 	/**
-	 * @return List<Note> object of all Notes from the database
+	 * @return List&lt;Note&gt; object of all Notes from the database
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Note> getNotes() {
 		log.info("Getting all notes from the database");
-		List<Note> notes = new ArrayList<Note>();
-		
-		notes = sessionFactory.getCurrentSession().createQuery("from Note").list();
-		
-		return notes;
+		return sessionFactory.getCurrentSession().createQuery("from Note").list();
 	}
 	
 	/**
@@ -80,4 +73,12 @@ public class HibernateNoteDAO implements NoteDAO {
 		sessionFactory.getCurrentSession().delete(note);
 	}
 	
+	/**
+	 * @see org.openmrs.api.db.NoteDAO#voidNote(org.openmrs.notification.Note, java.lang.String)
+	 */
+	public Note voidNote(Note note, String reason) throws APIException {
+		log.debug("voiding note because " + reason);
+		sessionFactory.getCurrentSession().save(note);
+		return note;
+	}
 }

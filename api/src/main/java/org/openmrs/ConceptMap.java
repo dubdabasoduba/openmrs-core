@@ -1,18 +1,17 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
+import org.hibernate.search.annotations.ContainedIn;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.IndexedEmbedded;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
@@ -27,11 +26,13 @@ public class ConceptMap extends BaseConceptMap implements java.io.Serializable {
 	public static final long serialVersionUID = 754677L;
 	
 	// Fields
-	
+	@DocumentId
 	private Integer conceptMapId;
 	
+	@ContainedIn
 	private Concept concept;
 	
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	private ConceptReferenceTerm conceptReferenceTerm;
 	
 	// Constructors
@@ -47,7 +48,7 @@ public class ConceptMap extends BaseConceptMap implements java.io.Serializable {
 	
 	/**
 	 * Convenience constructor that takes the term to be mapped to and the type of the map
-	 * 
+	 *
 	 * @param conceptReferenceTerm the concept reference term to map to
 	 * @param conceptMapType the concept map type for this concept reference term map
 	 */
@@ -61,8 +62,9 @@ public class ConceptMap extends BaseConceptMap implements java.io.Serializable {
 	 */
 	@Override
 	public String toString() {
-		if (conceptMapId == null)
+		if (conceptMapId == null) {
 			return "";
+		}
 		return conceptMapId.toString();
 	}
 	
@@ -81,31 +83,7 @@ public class ConceptMap extends BaseConceptMap implements java.io.Serializable {
 	public void setConcept(Concept concept) {
 		this.concept = concept;
 	}
-	
-	/**
-	 * Comments on concept maps are no longer supported since version 1.9, therefore a call to this
-	 * methods is useless
-	 * 
-	 * @return Returns the comment.
-	 * @deprecated
-	 */
-	@Deprecated
-	public String getComment() {
-		return getConceptReferenceTerm().getDescription();
-	}
-	
-	/**
-	 * Comments on concept maps are no longer supported since version 1.9, therefore a call to this
-	 * results in setting the description of the associated reference term to the specified value
-	 * 
-	 * @param comment The comment to set.
-	 * @deprecated
-	 */
-	@Deprecated
-	public void setComment(String comment) {
-		getConceptReferenceTerm().setDescription(comment);
-	}
-	
+
 	/**
 	 * @return Returns the conceptMapId.
 	 */
@@ -123,61 +101,13 @@ public class ConceptMap extends BaseConceptMap implements java.io.Serializable {
 	}
 	
 	/**
-	 * The conceptSource should be accessed from the associated ConceptReferenceTerm since version
-	 * 1.9
-	 * 
-	 * @return Returns the source.
-	 * @deprecated
-	 * @see ConceptReferenceTerm#getConceptSource()
-	 */
-	@Deprecated
-	public ConceptSource getSource() {
-		return getConceptReferenceTerm().getConceptSource();
-	}
-	
-	/**
-	 * The conceptSource should be set on the associated ConceptReferenceTerm since version 1.9
-	 * 
-	 * @param source The source to set.
-	 * @deprecated
-	 * @see ConceptReferenceTerm#setConceptSource(ConceptSource)
-	 */
-	@Deprecated
-	public void setSource(ConceptSource source) {
-		getConceptReferenceTerm().setConceptSource(source);
-	}
-	
-	/**
-	 * The sourceCode should be accessed from the associated ConceptReferenceTerm since version 1.9
-	 * 
-	 * @return Returns the sourceCode.
-	 * @deprecated
-	 * @see ConceptReferenceTerm#getCode()
-	 */
-	@Deprecated
-	public String getSourceCode() {
-		return getConceptReferenceTerm().getCode();
-	}
-	
-	/**
-	 * The sourceCode should be set on the associated ConceptReferenceTerm since version 1.9
-	 * 
-	 * @param sourceCode The sourceCode to set.
-	 * @deprecated
-	 * @see ConceptReferenceTerm#setCode(String)
-	 */
-	@Deprecated
-	public void setSourceCode(String sourceCode) {
-		getConceptReferenceTerm().setCode(sourceCode);
-	}
-	
-	/**
 	 * @return the conceptReferenceTerm
 	 * @since 1.9
 	 */
 	public ConceptReferenceTerm getConceptReferenceTerm() {
-		if (conceptReferenceTerm == null)
+		if (conceptReferenceTerm == null) {
 			conceptReferenceTerm = new ConceptReferenceTerm();
+		}
 		return conceptReferenceTerm;
 	}
 	

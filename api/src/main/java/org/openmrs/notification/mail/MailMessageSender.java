@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification.mail;
 
@@ -45,7 +41,7 @@ public class MailMessageSender implements MessageSender {
 	
 	/**
 	 * Public constructor.
-	 * 
+	 *
 	 * @param session
 	 */
 	public MailMessageSender(Session session) {
@@ -54,7 +50,7 @@ public class MailMessageSender implements MessageSender {
 	
 	/**
 	 * Set javamail session.
-	 * 
+	 *
 	 * @param session
 	 */
 	public void setMailSession(Session session) {
@@ -63,7 +59,7 @@ public class MailMessageSender implements MessageSender {
 	
 	/**
 	 * Send the message.
-	 * 
+	 *
 	 * @param message the message to be sent
 	 */
 	public void send(Message message) throws MessageException {
@@ -81,14 +77,15 @@ public class MailMessageSender implements MessageSender {
 	
 	/**
 	 * Converts the message object to a mime message in order to prepare it to be sent.
-	 * 
+	 *
 	 * @param message
 	 * @return MimeMessage
 	 */
 	public MimeMessage createMimeMessage(Message message) throws Exception {
 		
-		if (message.getRecipients() == null)
+		if (message.getRecipients() == null) {
 			throw new MessageException("Message must contain at least one recipient");
+		}
 		
 		// set the content-type to the default if it isn't defined in Message
 		if (!StringUtils.hasText(message.getContentType())) {
@@ -100,24 +97,26 @@ public class MailMessageSender implements MessageSender {
 		
 		// TODO Need to test the null case.  
 		// Transport should use default mail.from value defined in properties.
-		if (message.getSender() != null)
+		if (message.getSender() != null) {
 			mimeMessage.setSender(new InternetAddress(message.getSender()));
+		}
 		
 		mimeMessage
 		        .setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(message.getRecipients(), false));
 		mimeMessage.setSubject(message.getSubject());
 		
-		if (!message.hasAttachment())
+		if (!message.hasAttachment()) {
 			mimeMessage.setContent(message.getContent(), message.getContentType());
-		else
+		} else {
 			mimeMessage.setContent(createMultipart(message));
+		}
 		
 		return mimeMessage;
 	}
 	
 	/**
 	 * Creates a MimeMultipart, so that we can have an attachment.
-	 * 
+	 *
 	 * @param message
 	 * @return
 	 */

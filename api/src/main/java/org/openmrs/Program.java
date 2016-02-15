@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -61,7 +57,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Constructor with name
-	 * 
+	 *
 	 * @since 1.10
 	 */
 	public Program(String name) {
@@ -74,7 +70,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Adds a new {@link ProgramWorkflow} to this Program
-	 * 
+	 *
 	 * @param workflow - the {@link ProgramWorkflow} to add
 	 */
 	public void addWorkflow(ProgramWorkflow workflow) {
@@ -84,7 +80,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Removes a {@link ProgramWorkflow} from this Program
-	 * 
+	 *
 	 * @param workflow - the {@link ProgramWorkflow} to remove
 	 */
 	public void removeWorkflow(ProgramWorkflow workflow) {
@@ -96,7 +92,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Retires a {@link ProgramWorkflow}
-	 * 
+	 *
 	 * @param workflow - the {@link ProgramWorkflow} to retire
 	 */
 	public void retireWorkflow(ProgramWorkflow workflow) {
@@ -105,8 +101,8 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Returns a {@link ProgramWorkflow} whose {@link Concept} has any {@link ConceptName} that
-	 * matches the given <code>name</name>
-	 * 
+	 * matches the given <code>name</code>
+	 *
 	 * @param name the {@link ProgramWorkflow} name, in any {@link Locale}
 	 * @return a {@link ProgramWorkflow} which has the passed <code>name</code> in any
 	 *         {@link Locale}
@@ -157,37 +153,40 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	
 	/**
 	 * Get only the non-retired workflows
-	 * 
-	 * @return Returns a Set<ProgramWorkflow> of all non-retired workflows
+	 *
+	 * @return Returns a Set&lt;ProgramWorkflow&gt; of all non-retired workflows
 	 */
 	public Set<ProgramWorkflow> getWorkflows() {
 		Set<ProgramWorkflow> ret = new HashSet<ProgramWorkflow>();
 		for (ProgramWorkflow workflow : getAllWorkflows()) {
-			if (workflow.isRetired() == false)
+			if (!workflow.isRetired()) {
 				ret.add(workflow);
+			}
 		}
 		return ret;
 	}
 	
 	/**
 	 * Get the workflow with the specified ID
-	 * 
+	 *
 	 * @return the workflow matching the given id or null if none found
 	 * @since 1.6
 	 */
 	public ProgramWorkflow getWorkflow(Integer programWorkflowId) {
 		if (getWorkflows() != null) {
-			for (ProgramWorkflow wf : getWorkflows())
-				if (wf.getId().equals(programWorkflowId))
+			for (ProgramWorkflow wf : getWorkflows()) {
+				if (wf.getId().equals(programWorkflowId)) {
 					return wf;
+				}
+			}
 		}
 		return null;
 	}
 	
 	/**
 	 * Get all workflows...including the retired ones
-	 * 
-	 * @return Returns a Set<ProgramWorkflow> of all workflows
+	 *
+	 * @return Returns a Set&lt;ProgramWorkflow&gt; of all workflows
 	 */
 	public Set<ProgramWorkflow> getAllWorkflows() {
 		if (allWorkflows == null) {

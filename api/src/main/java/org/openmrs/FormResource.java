@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -59,7 +55,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * Create a copy of a provided FormResource, ignoring the uuid and id of the original
-	 * 
+	 *
 	 * @param old the original FormResource to be copied
 	 */
 	public FormResource(FormResource old) {
@@ -90,7 +86,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * gets the form
-	 * 
+	 *
 	 * @return the form
 	 */
 	public Form getForm() {
@@ -99,7 +95,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * sets the form
-	 * 
+	 *
 	 * @param form the form
 	 */
 	public void setForm(Form form) {
@@ -108,7 +104,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * gets the form resource id
-	 * 
+	 *
 	 * @return the form resource's id
 	 */
 	public Integer getFormResourceId() {
@@ -117,7 +113,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * sets the form resource id
-	 * 
+	 *
 	 * @param formResourceId the form resource's id
 	 */
 	public void setFormResourceId(Integer formResourceId) {
@@ -126,7 +122,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * gets the name of the resource
-	 * 
+	 *
 	 * @return the name of the resource
 	 */
 	public String getName() {
@@ -135,7 +131,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * sets the name of the resource
-	 * 
+	 *
 	 * @param name the name of the resource
 	 */
 	public void setName(String name) {
@@ -215,10 +211,11 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	 */
 	@Override
 	public String getValueReference() {
-		if (valueReference == null)
+		if (valueReference == null) {
 			throw new NotYetPersistedException();
-		else
+		} else {
 			return valueReference;
+		}
 	}
 	
 	/**
@@ -226,8 +223,9 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	 */
 	@Override
 	public Object getValue() throws InvalidCustomValueException {
-		if (typedValue == null)
+		if (typedValue == null) {
 			typedValue = CustomDatatypeUtil.getDatatype(this).fromReferenceString(getValueReference());
+		}
 		return typedValue;
 	}
 	
@@ -241,7 +239,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	}
 	
 	/**
-	 * @see org.openmrs.customdatatype.SingleCustomValue#setValueReferenceInternal(java.lang.String) 
+	 * @see org.openmrs.customdatatype.SingleCustomValue#setValueReferenceInternal(java.lang.String)
 	 */
 	@Override
 	public void setValueReferenceInternal(String valueToPersist) throws InvalidCustomValueException {
@@ -249,7 +247,7 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	}
 	
 	/**
-	 * @see org.openmrs.customdatatype.SingleCustomValue#isDirty() 
+	 * @see org.openmrs.customdatatype.SingleCustomValue#isDirty()
 	 */
 	@Override
 	public boolean isDirty() {

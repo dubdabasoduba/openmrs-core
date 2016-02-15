@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter.update;
 
@@ -74,14 +70,14 @@ public class UpdateFilter extends StartupFilter {
 	/**
 	 * The velocity macro page to redirect to if an error occurs or on initial startup
 	 */
-	private final String DEFAULT_PAGE = "maintenance.vm";
+	private static final String DEFAULT_PAGE = "maintenance.vm";
 	
 	/**
 	 * The page that lists off all the currently unexecuted changes
 	 */
-	private final String REVIEW_CHANGES = "reviewchanges.vm";
+	private static final String REVIEW_CHANGES = "reviewchanges.vm";
 	
-	private final String PROGRESS_VM_AJAXREQUEST = "updateProgress.vm.ajaxRequest";
+	private static final String PROGRESS_VM_AJAXREQUEST = "updateProgress.vm.ajaxRequest";
 	
 	/**
 	 * The model object behind this set of screens
@@ -117,7 +113,7 @@ public class UpdateFilter extends StartupFilter {
 	
 	/**
 	 * Called by {@link #doFilter(ServletRequest, ServletResponse, FilterChain)} on GET requests
-	 * 
+	 *
 	 * @param httpRequest
 	 * @param httpResponse
 	 */
@@ -139,19 +135,20 @@ public class UpdateFilter extends StartupFilter {
 	
 	/**
 	 * Called by {@link #doFilter(ServletRequest, ServletResponse, FilterChain)} on POST requests
-	 * 
+	 *
 	 * @see org.openmrs.web.filter.StartupFilter#doPost(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse)
 	 */
 	@Override
-	protected void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException,
+	protected synchronized void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException,
 	        ServletException {
 		
 		String page = httpRequest.getParameter("page");
 		Map<String, Object> referenceMap = new HashMap<String, Object>();
-		if (httpRequest.getSession().getAttribute(FilterUtil.LOCALE_ATTRIBUTE) != null)
+		if (httpRequest.getSession().getAttribute(FilterUtil.LOCALE_ATTRIBUTE) != null) {
 			referenceMap
 			        .put(FilterUtil.LOCALE_ATTRIBUTE, httpRequest.getSession().getAttribute(FilterUtil.LOCALE_ATTRIBUTE));
+		}
 		
 		// step one
 		if (DEFAULT_PAGE.equals(page)) {
@@ -259,8 +256,9 @@ public class UpdateFilter extends StartupFilter {
 					result.put("hasWarnings", updateJob.hasWarnings());
 					StringBuilder sb = new StringBuilder("<ul>");
 					
-					for (String warning : updateJob.getUpdateWarnings())
+					for (String warning : updateJob.getUpdateWarnings()) {
 						sb.append("<li>" + warning + "</li>");
+					}
 					
 					sb.append("</ul>");
 					result.put("updateWarnings", sb.toString());
@@ -279,8 +277,9 @@ public class UpdateFilter extends StartupFilter {
 					MemoryAppender memoryAppender = (MemoryAppender) appender;
 					List<String> logLines = memoryAppender.getLogLines();
 					// truncate the list to the last five so we don't overwhelm jquery
-					if (logLines.size() > 5)
+					if (logLines.size() > 5) {
 						logLines = logLines.subList(logLines.size() - 5, logLines.size());
+					}
 					result.put("logLines", logLines);
 				} else {
 					result.put("logLines", new ArrayList<String>());
@@ -297,7 +296,7 @@ public class UpdateFilter extends StartupFilter {
 	 * to application. It retrieves user locale from request object and checks if this locale is
 	 * supported by application. If not, it tries to load system default locale. If it's not specified it 
 	 * uses {@link Locale#ENGLISH} by default
-	 * 
+	 *
 	 * @param httpRequest the http request object
 	 */
 	public void checkLocaleAttributesForFirstTime(HttpServletRequest httpRequest) {
@@ -318,7 +317,7 @@ public class UpdateFilter extends StartupFilter {
 	/**
 	 * Look in the users table for a user with this username and password and see if they have a
 	 * role of {@link OpenmrsConstants#SUPERUSER_ROLE}.
-	 * 
+	 *
 	 * @param usernameOrSystemId user entered username
 	 * @param password user entered password
 	 * @return true if this user has the super user role
@@ -335,60 +334,116 @@ public class UpdateFilter extends StartupFilter {
 			connection = DatabaseUpdater.getConnection();
 			
 			String select = "select user_id, password, salt from users where (username = ? or system_id = ?) and retired = '0'";
-			PreparedStatement statement = connection.prepareStatement(select);
-			statement.setString(1, usernameOrSystemId);
-			statement.setString(2, usernameOrSystemId);
-			
-			if (statement.execute()) {
-				ResultSet results = statement.getResultSet();
-				if (results.next()) {
-					Integer userId = results.getInt(1);
-					DatabaseUpdater.setAuthenticatedUserId(userId);
-					String storedPassword = results.getString(2);
-					String salt = results.getString(3);
-					String passwordToHash = password + salt;
-					return Security.hashMatches(storedPassword, passwordToHash) && isSuperUser(connection, userId);
-				}
-			}
-		}
-		catch (Throwable t) {
-			log
-			        .error(
-			            "Error while trying to authenticate as super user. Ignore this if you are upgrading from OpenMRS 1.5 to 1.6",
-			            t);
-			
-			// we may not have upgraded User to have retired instead of voided yet, so if the query above fails, we try
-			// again the old way
+			PreparedStatement statement = null;
 			try {
-				String select = "select user_id, password, salt from users where (username = ? or system_id = ?) and voided = '0'";
-				PreparedStatement statement = connection.prepareStatement(select);
+				statement = connection.prepareStatement(select);
 				statement.setString(1, usernameOrSystemId);
 				statement.setString(2, usernameOrSystemId);
 				
 				if (statement.execute()) {
-					ResultSet results = statement.getResultSet();
-					if (results.next()) {
-						Integer userId = results.getInt(1);
-						DatabaseUpdater.setAuthenticatedUserId(userId);
-						String storedPassword = results.getString(2);
-						String salt = results.getString(3);
-						String passwordToHash = password + salt;
-						return Security.hashMatches(storedPassword, passwordToHash) && isSuperUser(connection, userId);
+					ResultSet results = null;
+					try {
+						results = statement.getResultSet();
+						if (results.next()) {
+							Integer userId = results.getInt(1);
+							DatabaseUpdater.setAuthenticatedUserId(userId);
+							String storedPassword = results.getString(2);
+							String salt = results.getString(3);
+							String passwordToHash = password + salt;
+							boolean result = Security.hashMatches(storedPassword, passwordToHash)
+							        && isSuperUser(connection, userId);
+							return result;
+						}
+					}
+					finally {
+						if (results != null) {
+							try {
+								results.close();
+							}
+							catch (Exception resultsCloseEx) {
+								log.error("Failed to quietly close ResultSet", resultsCloseEx);
+							}
+						}
 					}
 				}
 			}
-			catch (Throwable t2) {
-				log.error("Error while trying to authenticate as super user (voided version)", t);
+			finally {
+				if (statement != null) {
+					try {
+						statement.close();
+					}
+					catch (Exception statementCloseEx) {
+						log.error("Failed to quietly close Statement", statementCloseEx);
+					}
+				}
+			}
+		}
+		catch (Exception connectionEx) {
+			log
+			        .error(
+			            "Error while trying to authenticate as super user. Ignore this if you are upgrading from OpenMRS 1.5 to 1.6",
+			            connectionEx);
+			
+			// we may not have upgraded User to have retired instead of voided yet, so if the query above fails, we try
+			// again the old way
+			if (connection != null) {
+				String select = "select user_id, password, salt from users where (username = ? or system_id = ?) and voided = '0'";
+				PreparedStatement statement = null;
+				try {
+					statement = connection.prepareStatement(select);
+					statement.setString(1, usernameOrSystemId);
+					statement.setString(2, usernameOrSystemId);
+					if (statement.execute()) {
+						ResultSet results = null;
+						try {
+							results = statement.getResultSet();
+							if (results.next()) {
+								Integer userId = results.getInt(1);
+								DatabaseUpdater.setAuthenticatedUserId(userId);
+								String storedPassword = results.getString(2);
+								String salt = results.getString(3);
+								String passwordToHash = password + salt;
+								boolean result = Security.hashMatches(storedPassword, passwordToHash)
+								        && isSuperUser(connection, userId);
+								return result;
+							}
+						}
+						finally {
+							if (results != null) {
+								try {
+									results.close();
+								}
+								catch (Exception resultsCloseEx) {
+									log.error("Failed to quietly close ResultSet", resultsCloseEx);
+								}
+							}
+						}
+					}
+				}
+				catch (Exception unhandeledEx) {
+					log.error("Error while trying to authenticate as super user (voided version)", unhandeledEx);
+				}
+				finally {
+					if (statement != null) {
+						try {
+							statement.close();
+						}
+						catch (Exception statementCloseEx) {
+							log.error("Failed to quietly close Statement", statementCloseEx);
+						}
+					}
+				}
 			}
 		}
 		finally {
-			if (connection != null)
+			if (connection != null) {
 				try {
 					connection.close();
 				}
 				catch (SQLException e) {
 					log.debug("Error while closing the database", e);
 				}
+			}
 		}
 		
 		return false;
@@ -397,7 +452,7 @@ public class UpdateFilter extends StartupFilter {
 	/**
 	 * Checks the given user to see if they have been given the
 	 * {@link OpenmrsConstants#SUPERUSER_ROLE} role. This method does not look at child roles.
-	 * 
+	 *
 	 * @param connection the java sql connection to use
 	 * @param userId the user id to look at
 	 * @return true if the given user is a super user
@@ -424,11 +479,11 @@ public class UpdateFilter extends StartupFilter {
 	
 	/**``
 	 * Do everything to get openmrs going.
-	 * 
+	 *
 	 * @param servletContext the servletContext from the filterconfig
 	 * @see Listener#startOpenmrs(ServletContext)
 	 */
-	private void startOpenmrs(ServletContext servletContext) throws IOException, ServletException {
+	private void startOpenmrs(ServletContext servletContext) throws Exception {
 		// start spring
 		// after this point, all errors need to also call: contextLoader.closeWebApplicationContext(event.getServletContext())
 		// logic copied from org.springframework.web.context.ContextLoaderListener
@@ -438,9 +493,9 @@ public class UpdateFilter extends StartupFilter {
 		try {
 			WebDaemon.startOpenmrs(servletContext);
 		}
-		catch (ServletException servletException) {
+		catch (Exception exception) {
 			contextLoader.closeWebApplicationContext(servletContext);
-			throw servletException;
+			throw exception;
 		}
 	}
 	
@@ -453,7 +508,7 @@ public class UpdateFilter extends StartupFilter {
 		
 		log.debug("Initializing the UpdateFilter");
 		
-		if (!InitializationFilter.initializationRequired()) {
+		if (!InitializationFilter.initializationRequired() || (Listener.isSetupNeeded() && Listener.runtimePropertiesFound())) {
 			model = new UpdateFilterModel();
 			/*
 			 * In this case, Listener#runtimePropertiesFound == true and InitializationFilter Wizard is skipped,
@@ -462,15 +517,16 @@ public class UpdateFilter extends StartupFilter {
 			try {
 				// this pings the DatabaseUpdater.updatesRequired which also
 				// considers a db lock to be a 'required update'
-				if (model.updateRequired)
-					updatesRequired = true;
-				else if (model.changes == null)
-					updatesRequired = false;
-				else {
-					if (log.isDebugEnabled())
+				if (model.updateRequired) {
+					setUpdatesRequired(true);
+				} else if (model.changes == null) {
+					setUpdatesRequired(false);
+				} else {
+					if (log.isDebugEnabled()) {
 						log.debug("Setting updates required to " + (model.changes.size() > 0)
 						        + " because of the size of unrun changes");
-					updatesRequired = model.changes.size() > 0;
+					}
+					setUpdatesRequired(model.changes.size() > 0);
 				}
 			}
 			catch (Exception e) {
@@ -497,7 +553,7 @@ public class UpdateFilter extends StartupFilter {
 	}
 	
 	/**
-	 * @see org.openmrs.web.filter.StartupFilter#skipFilter()
+	 * @see org.openmrs.web.filter.StartupFilter#skipFilter(HttpServletRequest)
 	 */
 	@Override
 	public boolean skipFilter(HttpServletRequest httpRequest) {
@@ -506,7 +562,7 @@ public class UpdateFilter extends StartupFilter {
 	
 	/**
 	 * Used by the Listener to know if this filter wants to do its magic
-	 * 
+	 *
 	 * @return true if updates have been determined to be required
 	 * @see #init(FilterConfig)
 	 * @see Listener#setupNeeded
@@ -647,7 +703,7 @@ public class UpdateFilter extends StartupFilter {
 				
 				/**
 				 * TODO split this up into multiple testable methods
-				 * 
+				 *
 				 * @see java.lang.Runnable#run()
 				 */
 				public void run() {
@@ -709,9 +765,9 @@ public class UpdateFilter extends StartupFilter {
 						try {
 							startOpenmrs(filterConfig.getServletContext());
 						}
-						catch (Throwable t) {
-							log.error("Unable to complete the startup.", t);
-							reportError(ErrorMessageConstants.UPDATE_ERROR_COMPLETE_STARTUP, t.getMessage());
+						catch (Exception e) {
+							log.error("Unable to complete the startup.", e);
+							reportError(ErrorMessageConstants.UPDATE_ERROR_COMPLETE_STARTUP, e.getMessage());
 							return;
 						}
 						

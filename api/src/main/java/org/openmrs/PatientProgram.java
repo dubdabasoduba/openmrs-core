@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -19,8 +15,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.openmrs.util.OpenmrsUtil;
 
@@ -190,7 +184,7 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 		newState.setState(programWorkflowState);
 		newState.setStartDate(onDate);
 		
-		if (programWorkflowState.getTerminal() == Boolean.TRUE) {
+		if (programWorkflowState.getTerminal()) {
 			setDateCompleted(onDate);
 		}
 		
@@ -259,17 +253,10 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 	}
 	
 	/**
-	 * @deprecated use {@link #getCurrentState(ProgramWorkflow)}
-	 */
-	public PatientState getCurrentState() {
-		return getCurrentState(null);
-	}
-	
-	/**
-	 * Returns a Set<PatientState> of all current {@link PatientState}s for the
+	 * Returns a Set&lt;PatientState&gt; of all current {@link PatientState}s for the
 	 * {@link PatientProgram}
 	 * 
-	 * @return Set<PatientState> of all current {@link PatientState}s for the {@link PatientProgram}
+	 * @return Set&lt;PatientState&gt; of all current {@link PatientState}s for the {@link PatientProgram}
 	 */
 	public Set<PatientState> getCurrentStates() {
 		Set<PatientState> ret = new HashSet<PatientState>();
@@ -283,13 +270,13 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 	}
 	
 	/**
-	 * Returns a List<PatientState> of all {@link PatientState}s in the passed
+	 * Returns a List&lt;PatientState&gt; of all {@link PatientState}s in the passed
 	 * {@link ProgramWorkflow} for the {@link PatientProgram}
 	 * 
 	 * @param programWorkflow - The {@link ProgramWorkflow} to check
 	 * @param includeVoided - If true, return voided {@link PatientState}s in the returned
 	 *            {@link List}
-	 * @return List<PatientState> of all {@link PatientState}s in the passed {@link ProgramWorkflow}
+	 * @return List&lt;PatientState&gt; of all {@link PatientState}s in the passed {@link ProgramWorkflow}
 	 *         for the {@link PatientProgram}
 	 */
 	public List<PatientState> statesInWorkflow(ProgramWorkflow programWorkflow, boolean includeVoided) {

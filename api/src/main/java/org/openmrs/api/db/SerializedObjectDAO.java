@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db;
 
@@ -117,6 +113,7 @@ public interface SerializedObjectDAO {
 	 * @throws DAOException
 	 * @should save the passed object if supported
 	 * @should throw an exception if object not supported
+	 * @should set auditable fields before serializing
 	 */
 	public <T extends OpenmrsObject> T saveObject(T object, OpenmrsSerializer serializer) throws DAOException;
 	
@@ -126,7 +123,7 @@ public interface SerializedObjectDAO {
 	 * 
 	 * @param type The class of the object to retrieve
 	 * @param includeRetired if true includes retired/voided objects, otherwise does not
-	 * @return <List> T A list of all the saved objects that match the passed type
+	 * @return &lt;List&gt; T A list of all the saved objects that match the passed type
 	 * @throws DAOException
 	 * @should return all objects of the passed type
 	 */
@@ -137,7 +134,7 @@ public interface SerializedObjectDAO {
 	 * through serialization
 	 * 
 	 * @param type The class of the object to retrieve
-	 * @return <List> T A list of all the saved objects that match the passed type
+	 * @return &lt;List&gt; T A list of all the saved objects that match the passed type
 	 * @throws DAOException
 	 * @should return all non-retired objects of the passed type
 	 */
@@ -150,7 +147,7 @@ public interface SerializedObjectDAO {
 	 * 
 	 * @param type The class of the object to retrieve
 	 * @param includeRetired includeRetired If true, returns voided/retired objects as well
-	 * @return <List> T A list of all the saved objects that match the passed type
+	 * @return &lt;List&gt; T A list of all the saved objects that match the passed type
 	 * @throws DAOException
 	 * @should return all saved objects of the passed type if includeRetired
 	 * @should return only non-retired objects of the passed type if not includeRetired
@@ -163,7 +160,7 @@ public interface SerializedObjectDAO {
 	 * @param type The class of the object to retrieve
 	 * @param name the name of the item to retrieve
 	 * @param exactMatchOnly if true will only return exact matches
-	 * @return <List> T A list of all the saved objects that match the passed type and name
+	 * @return &lt;List&gt; T A list of all the saved objects that match the passed type and name
 	 * @throws DAOException
 	 * @should return all saved objects with the given type and exact name
 	 * @should return all saved objects with the given type and partial name
@@ -178,7 +175,7 @@ public interface SerializedObjectDAO {
 	 * @param type The class of the object to retrieve
 	 * @param name the name of the item to retrieve
 	 * @param exactMatchOnly if true will only return exact matches
-	 * @return <List> T A list of all the saved objects that match the passed type and name
+	 * @return &lt;List&gt; T A list of all the saved objects that match the passed type and name
 	 * @throws DAOException
 	 * @should return all saved objects with the given type and exact name
 	 * @should return all saved objects with the given type and partial name

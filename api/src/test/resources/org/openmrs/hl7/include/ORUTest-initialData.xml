@@ -1,4 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!--
+
+    This Source Code Form is subject to the terms of the Mozilla Public License,
+    v. 2.0. If a copy of the MPL was not distributed with this file, You can
+    obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+    the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+
+    Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+    graphic logo is a trademark of OpenMRS Inc.
+
+-->
 <dataset>
   <concept concept_id="1" retired="false" datatype_id="1" class_id="1" is_set="false" creator="1" date_created="2005-01-01 00:00:00.0" uuid="273e52a1-22a1-400a-9cbb-02177554786c"/>
   <concept concept_id="905" retired="false" datatype_id="2" class_id="4" is_set="false" creator="1" date_created="2004-06-30 00:00:00.0" version="" changed_by="1" date_changed="2005-02-18 15:44:23.0" uuid="6e8cb900-63b2-46a5-a832-97752ce24827"/>
@@ -52,7 +63,7 @@
   <patient patient_id="3" creator="1" date_created="2005-01-01 00:00:00.0" voided="false"/>
   <patient_identifier patient_identifier_id="1" patient_id="2" identifier="1234" identifier_type="1" preferred="1" location_id="1" creator="1" date_created="2005-01-01 00:00:00.0" voided="false" uuid="c0f4c2de-c4d1-4803-be36-42784854e3a4"/>
   <patient_identifier patient_identifier_id="2" patient_id="3" identifier="12345" identifier_type="1" preferred="1" location_id="1" creator="1" date_created="2005-01-01 00:00:00.0" voided="false" uuid="bcad3a53-2f78-4db1-9fea-0164156dbbe8"/>
-  <patient_identifier_type patient_identifier_type_id="1" name="Test Identifier Type" description="Test description" check_digit="false" creator="1" date_created="2005-01-01 00:00:00.0" required="false" retired="false" uuid="569466d4-5eb1-497a-b0bf-c95602ff5442"/>
+  <patient_identifier_type patient_identifier_type_id="1" name="Test Identifier Type" description="Test description" creator="1" date_created="2005-01-01 00:00:00.0" required="false" retired="false" uuid="569466d4-5eb1-497a-b0bf-c95602ff5442"/>
   <relationship_type relationship_type_id="2" preferred="0" weight="0" creator="1" date_created="2007-05-04 00:00:00.0" retired="0" uuid="8d91a01c-c2cc-11de-8d13-0010c6dffd0f" a_is_to_b="Sibling" b_is_to_a="Sibling" description="Relationship between brother/sister, brother/brother, and sister/sister"/>
   <relationship_type relationship_type_id="3" preferred="0" weight="0" creator="1" date_created="2007-05-04 00:00:00.0" retired="0" uuid="8d91a210-c2cc-11de-8d13-0010c6dffd0f" a_is_to_b="Parent" b_is_to_a="Child" description="Relationship from a mother/father to the child"/>
   
@@ -70,5 +81,13 @@
   
   <!-- A bad hl7 message -->
   <hl7_in_queue hl7_in_queue_id="2" hl7_source="1" hl7_source_key="asdf" message_state="0" date_created="2004-08-12 00:00:00.0" uuid="cccc7348-5bf2-4050-b824-0aa009490000" hl7_data="a malformed hl7 message" />
-  
+
+
+  <form form_id="16" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="1" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="c156e1a8-6731-4ebd-89ff-d0d1c45eb000"/>
+  <form form_id="66" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="1" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="c156e1a8-6731-4ebd-89ff-d0d1c45eb001"/>
+  <form form_id="3" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="2" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="c156e1a8-6731-4ebd-89ff-d0d1c45eb002"/>
+  <form form_id="15" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="2" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="c156e1a8-6731-4ebd-89ff-d0d1c45eb003"/>
+  <form form_id="4" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="2" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="c156e1a8-6731-4ebd-89ff-d0d1c45eb004"/>
+  <form form_id="1" name="Basic Form" version="0.1" build="0" published="0" description="Test form" encounter_type="2" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="d9218f76-6c39-45f4-8efa-4c5c6c199f50"/>
+
 </dataset>

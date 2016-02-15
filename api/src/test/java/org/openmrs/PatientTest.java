@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -22,6 +18,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.test.Verifies;
 
+import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertThat;
+
 /**
  * This class should test all methods on the patient object. It should not worry about the extended
  * Person object -- that testing is done by {@link org.openmrs.PersonTest} This class does not touch
@@ -33,7 +32,7 @@ public class PatientTest {
 	/**
 	 * Test the add/removeIdentifiers method in the patient object
 	 * 
-	 * @see {@link Patient#addIdentifier(PatientIdentifier)}
+	 * @see Patient#addIdentifier(PatientIdentifier)
 	 */
 	@Test
 	@Verifies(value = "should add identifier to current list", method = "addIdentifier(PatientIdentifier)")
@@ -140,7 +139,7 @@ public class PatientTest {
 	}
 	
 	/**
-	 * @see {@link Patient#addIdentifier(PatientIdentifier)}
+	 * @see Patient#addIdentifier(PatientIdentifier)
 	 */
 	@Test
 	@Verifies(value = "should not fail with null identifiers list", method = "addIdentifier(PatientIdentifier)")
@@ -151,7 +150,7 @@ public class PatientTest {
 	}
 	
 	/**
-	 * @see {@link Patient#getIdentifiers()}
+	 * @see Patient#getIdentifiers()
 	 */
 	@Test
 	@Verifies(value = "should not return null", method = "getIdentifiers()")
@@ -162,7 +161,7 @@ public class PatientTest {
 	}
 	
 	/**
-	 * @see {@link Patient#addIdentifier(PatientIdentifier)}
+	 * @see Patient#addIdentifier(PatientIdentifier)
 	 */
 	@Test
 	@Verifies(value = "should not add identifier that is in list already", method = "addIdentifier(PatientIdentifier)")
@@ -188,7 +187,7 @@ public class PatientTest {
 	}
 	
 	/**
-	 * @see {@link Patient#removeIdentifier(PatientIdentifier)}
+	 * @see Patient#removeIdentifier(PatientIdentifier)
 	 */
 	@Test
 	@Verifies(value = "should remove identifier if exists", method = "removeIdentifier(PatientIdentifier)")
@@ -271,9 +270,11 @@ public class PatientTest {
 		assertTrue(p.getIdentifiers().contains(pa3)); //this works
 		
 		//now change voided on 3rd-date; that should move it to last position: voided IDs are the last in order
+		p.removeIdentifier((pa3));
 		pa3.setVoided(true);
-		pis = p.getIdentifiers().toArray(pis); //THIS IS WRONG
-		assertTrue(p.getIdentifiers().contains(pa3)); //this fails
+		p.addIdentifier((pa3));
+		pis = p.getIdentifiers().toArray(pis);
+		assertThat(p.getIdentifiers(), contains(pa1, pa2, pa4, pa3));
 		
 		//THIS IS RIGHT
 		pa3.setVoided(false); //set it back to false so we can remove it
@@ -286,7 +287,7 @@ public class PatientTest {
 	}
 	
 	/**
-	 * @see {@link Patient#getActiveIdentifiers()}
+	 * @see Patient#getActiveIdentifiers()
 	 */
 	@Test
 	@Verifies(value = "should return preferred identifiers first in the list", method = "getActiveIdentifiers()")

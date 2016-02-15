@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -23,6 +19,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
@@ -113,13 +110,16 @@ public class HibernateUserDAO implements UserDAO {
 	 * @see org.openmrs.api.UserService#hasDuplicateUsername(org.openmrs.User)
 	 */
 	public boolean hasDuplicateUsername(String username, String systemId, Integer userId) {
-		if (username == null || username.length() == 0)
+		if (username == null || username.length() == 0) {
 			username = "-";
-		if (systemId == null || systemId.length() == 0)
+		}
+		if (systemId == null || systemId.length() == 0) {
 			systemId = "-";
+		}
 		
-		if (userId == null)
-			userId = new Integer(-1);
+		if (userId == null) {
+			userId = Integer.valueOf(-1);
+		}
 		
 		String usernameWithCheckDigit = username;
 		try {
@@ -247,12 +247,13 @@ public class HibernateUserDAO implements UserDAO {
 	public void changePassword(User u, String pw) throws DAOException {
 		User authUser = Context.getAuthenticatedUser();
 		
-		if (authUser == null)
+		if (authUser == null) {
 			authUser = u;
+		}
 		
 		log.debug("updating password");
 		//update the user with the new password
-		String salt = Security.getRandomToken();
+		String salt = getLoginCredential(u).getSalt();
 		String newHashedPassword = Security.encodeString(pw + salt);
 		
 		updateUserPassword(newHashedPassword, salt, authUser.getUserId(), new Date(), u.getUserId());
@@ -277,10 +278,11 @@ public class HibernateUserDAO implements UserDAO {
 	private void updateUserPassword(String newHashedPassword, String salt, Integer changedBy, Date dateChanged,
 	        Integer userIdToChange) {
 		User changeForUser = getUser(userIdToChange);
-		if (changeForUser == null)
+		if (changeForUser == null) {
 			throw new DAOException("Couldn't find user to set password for userId=" + userIdToChange);
+		}
 		User changedByUser = getUser(changedBy);
-		LoginCredential credentials = new LoginCredential();
+		LoginCredential credentials = getLoginCredential(changeForUser);
 		credentials.setUserId(userIdToChange);
 		credentials.setHashedPassword(newHashedPassword);
 		credentials.setSalt(salt);
@@ -310,7 +312,7 @@ public class HibernateUserDAO implements UserDAO {
 		log.info("updating password for " + u.getUsername());
 		
 		// update the user with the new password
-		String salt = Security.getRandomToken();
+		String salt = getLoginCredential(u).getSalt();
 		String newHashedPassword = Security.encodeString(pw2 + salt);
 		updateUserPassword(newHashedPassword, salt, u.getUserId(), new Date(), u.getUserId());
 	}
@@ -339,7 +341,8 @@ public class HibernateUserDAO implements UserDAO {
 		
 		LoginCredential credentials = getLoginCredential(u);
 		credentials.setSecretQuestion(question);
-		credentials.setSecretAnswer(answer);
+		String hashedAnswer = Security.encodeString(answer.toLowerCase() + credentials.getSalt());
+		credentials.setSecretAnswer(hashedAnswer);
 		credentials.setDateChanged(new Date());
 		credentials.setChangedBy(u);
 		
@@ -351,11 +354,14 @@ public class HibernateUserDAO implements UserDAO {
 	 */
 	public boolean isSecretAnswer(User u, String answer) throws DAOException {
 		
-		if (answer == null || answer.equals(""))
+		if (StringUtils.isEmpty(answer)) {
 			return false;
+		}
 		
-		String answerOnRecord = getLoginCredential(u).getSecretAnswer();
-		return (answer.equals(answerOnRecord));
+		LoginCredential credentials = getLoginCredential(u);
+		String answerOnRecord = credentials.getSecretAnswer();
+		String hashedAnswer = Security.encodeString(answer.toLowerCase() + credentials.getSalt());
+		return (hashedAnswer.equals(answerOnRecord));
 	}
 	
 	/**
@@ -367,15 +373,18 @@ public class HibernateUserDAO implements UserDAO {
 		String hqlSelectStart = "select distinct user from User as user inner join user.person.names as name ";
 		Query query = createUserSearchQuery(name, roles, includeRetired, hqlSelectStart);
 		
-		if (start != null)
+		if (start != null) {
 			query.setFirstResult(start);
-		if (length != null && length > 0)
+		}
+		if (length != null && length > 0) {
 			query.setMaxResults(length);
+		}
 		
 		List<User> returnList = query.list();
 		
-		if (!CollectionUtils.isEmpty(returnList))
+		if (!CollectionUtils.isEmpty(returnList)) {
 			Collections.sort(returnList, new UserByNameComparator());
+		}
 		
 		return returnList;
 	}
@@ -392,9 +401,9 @@ public class HibernateUserDAO implements UserDAO {
 		Object object = query.uniqueResult();
 		
 		Integer id = null;
-		if (object instanceof Number)
+		if (object instanceof Number) {
 			id = ((Number) query.uniqueResult()).intValue() + 1;
-		else {
+		} else {
 			log.warn("What is being returned here? Definitely nothing expected object value: '" + object + "' of class: "
 			        + object.getClass());
 			id = 1;
@@ -414,8 +423,9 @@ public class HibernateUserDAO implements UserDAO {
 		crit.add(Restrictions.eq("names.givenName", givenName));
 		crit.add(Restrictions.eq("names.familyName", familyName));
 		crit.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
-		if (!includeRetired)
+		if (!includeRetired) {
 			crit.add(Restrictions.eq("retired", false));
+		}
 		for (User u : (List<User>) crit.list()) {
 			users.add(u);
 		}
@@ -464,15 +474,16 @@ public class HibernateUserDAO implements UserDAO {
 	 * @see org.openmrs.api.db.UserDAO#getLoginCredential(org.openmrs.User)
 	 */
 	public LoginCredential getLoginCredentialByUuid(String uuid) {
-		if (uuid == null)
+		if (uuid == null) {
 			return null;
-		else
+		} else {
 			return (LoginCredential) sessionFactory.getCurrentSession().createQuery(
 			    "from LoginCredential where uuid = :uuid").setString("uuid", uuid.trim()).uniqueResult();
+		}
 	}
 	
 	/**
-	 * @see org.openmrs.api.db.UserDAO#updateLoginCredential(org.openmrs.LoginCredential)
+	 * @see org.openmrs.api.db.UserDAO#updateLoginCredential(LoginCredential)
 	 */
 	public void updateLoginCredential(LoginCredential credential) {
 		sessionFactory.getCurrentSession().update(credential);
@@ -484,10 +495,12 @@ public class HibernateUserDAO implements UserDAO {
 	@SuppressWarnings("unchecked")
 	public List<User> getUsersByPerson(Person person, boolean includeRetired) {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(User.class);
-		if (person != null)
+		if (person != null) {
 			crit.add(Restrictions.eq("person", person));
-		if (!includeRetired)
+		}
+		if (!includeRetired) {
 			crit.add(Restrictions.eq("retired", false));
+		}
 		return (List<User>) crit.list();
 	}
 	
@@ -546,38 +559,42 @@ public class HibernateUserDAO implements UserDAO {
 			}
 		}
 		
-		if (includeRetired == false)
+		if (!includeRetired) {
 			criteria.add("user.retired = false");
+		}
 		
 		// build the hql query
-		String hql = hqlSelectStart;
+		StringBuilder hql = new StringBuilder(hqlSelectStart);
 		boolean searchOnRoles = false;
 		
 		if (CollectionUtils.isNotEmpty(roles)) {
-			hql += "inner join user.roles as role ";
+			hql.append("inner join user.roles as role ");
 			searchOnRoles = true;
 		}
 		
-		if (criteria.size() > 0 || searchOnRoles)
-			hql += "where ";
+		if (criteria.size() > 0 || searchOnRoles) {
+			hql.append("where ");
+		}
 		for (Iterator<String> i = criteria.iterator(); i.hasNext();) {
-			hql += i.next() + " ";
-			if (i.hasNext())
-				hql += "and ";
+			hql.append(i.next()).append(" ");
+			if (i.hasNext()) {
+				hql.append("and ");
+			}
 		}
 		
 		//Match against the specified roles
 		if (searchOnRoles) {
 			if (criteria.size() > 0) {
-				hql += " and ";
+				hql.append(" and ");
 			}
-			hql += " role in (:roleList)";
+			hql.append(" role in (:roleList)");
 		}
 		
-		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		Query query = sessionFactory.getCurrentSession().createQuery(hql.toString());
 		
-		for (Map.Entry<String, String> e : namesMap.entrySet())
+		for (Map.Entry<String, String> e : namesMap.entrySet()) {
 			query.setString(e.getKey(), e.getValue());
+		}
 		
 		if (searchOnRoles) {
 			query.setParameterList("roleList", roles);

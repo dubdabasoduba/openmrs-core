@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification;
 
@@ -24,7 +20,7 @@ import org.openmrs.notification.db.AlertDAO;
 import org.openmrs.util.PrivilegeConstants;
 
 /**
- * Contains methods pertaining to creating/deleting/voiding Alerts in the system Use:<br/>
+ * Contains methods pertaining to creating/deleting/voiding Alerts in the system Use:<br>
  * 
  * <pre>
  *   Alert alert = new Alert();
@@ -56,28 +52,6 @@ public interface AlertService extends OpenmrsService {
 	public Alert saveAlert(Alert alert) throws APIException;
 	
 	/**
-	 * @deprecated use {@link #saveAlert(Alert)}
-	 */
-	@Deprecated
-	public void createAlert(Alert alert) throws APIException;
-	
-	/**
-	 * Use AlertService.saveAlert(new Alert(text, user))
-	 * 
-	 * @deprecated use {@link #saveAlert(Alert)}
-	 */
-	@Deprecated
-	public void createAlert(String text, User user) throws APIException;
-	
-	/**
-	 * Use AlertService.saveAlert(new Alert(text, users))
-	 * 
-	 * @deprecated use {@link #saveAlert(Alert)}
-	 */
-	@Deprecated
-	public void createAlert(String text, Collection<User> users) throws APIException;
-	
-	/**
 	 * Get alert by internal identifier
 	 * 
 	 * @param alertId internal alert identifier
@@ -87,12 +61,6 @@ public interface AlertService extends OpenmrsService {
 	public Alert getAlert(Integer alertId) throws APIException;
 	
 	/**
-	 * @deprecated use {@link #saveAlert(Alert)}
-	 */
-	@Deprecated
-	public void updateAlert(Alert alert) throws APIException;
-	
-	/**
 	 * Completely delete the given alert from the database
 	 * 
 	 * @param alert the Alert to purge/delete
@@ -100,20 +68,6 @@ public interface AlertService extends OpenmrsService {
 	 */
 	@Authorized(PrivilegeConstants.MANAGE_ALERTS)
 	public void purgeAlert(Alert alert) throws APIException;
-	
-	/**
-	 * Use AlertService.saveAlert(alert.markAlertRead())
-	 * 
-	 * @deprecated use {@link #saveAlert(Alert)}
-	 */
-	@Deprecated
-	public void markAlertRead(Alert alert) throws APIException;
-	
-	/**
-	 * @deprecated use #getAlerts(User, boolean, boolean)
-	 */
-	@Deprecated
-	public List<Alert> getAllAlerts(User user) throws APIException;
 	
 	/**
 	 * Find all alerts for a user that have not expired
@@ -126,12 +80,6 @@ public interface AlertService extends OpenmrsService {
 	public List<Alert> getAllActiveAlerts(User user) throws APIException;
 	
 	/**
-	 * @deprecated use {@link #getAlertsByUser(User)}
-	 */
-	@Deprecated
-	public List<Alert> getAlerts(User user) throws APIException;
-	
-	/**
 	 * Find the alerts that are not read and have not expired for a user This will probably be the
 	 * most commonly called method If null is passed in for <code>user</code>, find alerts for the
 	 * currently authenticated user. If no user is authenticated, search on "new
@@ -142,13 +90,6 @@ public interface AlertService extends OpenmrsService {
 	 * @throws APIException
 	 */
 	public List<Alert> getAlertsByUser(User user) throws APIException;
-	
-	/**
-	 * @deprecated use {@link #getAlertsByUser(User)} and pass "null" as the parameter for
-	 *             <code>user</code>
-	 */
-	@Deprecated
-	public List<Alert> getAlerts() throws APIException;
 	
 	/**
 	 * Finds alerts for the given user with the given status
@@ -184,6 +125,8 @@ public interface AlertService extends OpenmrsService {
 	 * @param messageCode The alert message code from messages.properties
 	 * @param cause The exception that was thrown, method will work if cause is null
 	 * @param messageArguments The arguments for the coded message
+	 * @should add an alert with message of length equals Text Max Length
+	 * @should add an alert with message text if cause is null
 	 * @should add an alert to the database
 	 */
 	@Authorized(PrivilegeConstants.MANAGE_ALERTS)

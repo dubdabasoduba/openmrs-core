@@ -1,27 +1,25 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 import java.io.Serializable;
 
+import org.hibernate.search.annotations.Indexed;
 import org.openmrs.obs.ComplexObsHandler;
 
 /**
  * Child class of Concept that has a {@link ComplexObsHandler} associated with the Concept.
- * 
+ *
  * @since 1.5
  */
+@Indexed
 public class ConceptComplex extends Concept implements Serializable {
 	
 	public static final long serialVersionUID = 473231233L;
@@ -43,7 +41,7 @@ public class ConceptComplex extends Concept implements Serializable {
 	
 	/**
 	 * Constructor with conceptId and ConceptComplexHandler
-	 * 
+	 *
 	 * @param conceptId
 	 * @param handler
 	 */
@@ -54,7 +52,7 @@ public class ConceptComplex extends Concept implements Serializable {
 	
 	/**
 	 * Constructor from Concept.
-	 * 
+	 *
 	 * @param c
 	 */
 	public ConceptComplex(Concept c) {
@@ -80,20 +78,21 @@ public class ConceptComplex extends Concept implements Serializable {
 	
 	/**
 	 * Overrides parent method and returns true if this Concept.getDatatype() equals "Complex"..
-	 * 
+	 *
 	 * @see org.openmrs.Concept#isComplex()
 	 */
 	@Override
 	public boolean isComplex() {
-		if (getDatatype() == null || getDatatype().getHl7Abbreviation() == null)
+		if (getDatatype() == null || getDatatype().getHl7Abbreviation() == null) {
 			return false;
+		}
 		
 		return getDatatype().getHl7Abbreviation().equals("ED");
 	}
 	
 	/**
 	 * Set the ConceptComplexHandler. This should be the ComplexObsHandler key
-	 * 
+	 *
 	 * @param handler
 	 */
 	public void setHandler(String handler) {

@@ -1,17 +1,15 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
+
+import org.springframework.validation.Errors;
 
 /**
  * Represents often fatal errors that occur when an object fails validation
@@ -21,6 +19,13 @@ package org.openmrs.api;
 public class ValidationException extends APIException {
 	
 	public static final long serialVersionUID = 1L;
+	
+	/**
+	 * Spring Errors object associated with the validation failure
+	 * @since 1.11
+	 */
+	
+	private Errors errors;
 	
 	/**
 	 * Default empty constructor. If at all possible, don't use this one, but use the
@@ -56,5 +61,41 @@ public class ValidationException extends APIException {
 	 */
 	public ValidationException(Throwable cause) {
 		super(cause);
+	}
+	
+	/**
+	 * Constructor used to associate an Spring Errors object with a ValidationException
+	 *
+	 * @param errors
+	 * @since 1.11
+	 */
+	public ValidationException(Errors errors) {
+		this.errors = errors;
+	}
+	
+	/**
+	 * Constructor to give the end user a helpful message and to associate an Spring Errors object
+	 * with a ValidationException
+	 *
+	 * @param errors
+	 * @since 1.11
+	 */
+	public ValidationException(String message, Errors errors) {
+		super(message);
+		this.errors = errors;
+	}
+	
+	/**
+	 * @since 1.11
+	 */
+	public Errors getErrors() {
+		return errors;
+	}
+	
+	/**
+	 * @since 1.11
+	 */
+	public void setErrors(Errors errors) {
+		this.errors = errors;
 	}
 }

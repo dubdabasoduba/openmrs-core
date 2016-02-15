@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.context;
 
@@ -32,7 +28,6 @@ import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.validation.Validator;
 
 /**
@@ -52,7 +47,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#authenticate(String,String)}
+	 * @see Context#authenticate(String,String)
 	 */
 	@Test(expected = ContextAuthenticationException.class)
 	@Verifies(value = "should not authenticate with null password", method = "authenticate(String,String)")
@@ -61,7 +56,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#authenticate(String,String)}
+	 * @see Context#authenticate(String,String)
 	 */
 	@Test(expected = ContextAuthenticationException.class)
 	@Verifies(value = "should not authenticate with null password and proper system id", method = "authenticate(String,String)")
@@ -70,7 +65,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#authenticate(String,String)}
+	 * @see Context#authenticate(String,String)
 	 */
 	@Test(expected = ContextAuthenticationException.class)
 	@Verifies(value = "should not authenticate with null password and proper username", method = "authenticate(String,String)")
@@ -79,7 +74,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#authenticate(String,String)}
+	 * @see Context#authenticate(String,String)
 	 */
 	@Test(expected = ContextAuthenticationException.class)
 	@Verifies(value = "should not authenticate with null username", method = "authenticate(String,String)")
@@ -88,7 +83,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#authenticate(String,String)}
+	 * @see Context#authenticate(String,String)
 	 */
 	@Test(expected = ContextAuthenticationException.class)
 	@Verifies(value = "should not authenticate with null username and password", method = "authenticate(String,String)")
@@ -97,7 +92,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getLocale()}
+	 * @see Context#getLocale()
 	 */
 	@Test
 	@Verifies(value = "should not fail if session hasnt been opened", method = "getLocale()")
@@ -107,7 +102,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getUserContext()}
+	 * @see Context#getUserContext()
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should fail if session hasnt been opened", method = "getUserContext()")
@@ -117,7 +112,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#logout()}
+	 * @see Context#logout()
 	 */
 	@Test
 	@Verifies(value = "should not fail if session hasnt been opened yet", method = "logout()")
@@ -127,7 +122,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#isSessionOpen()}
+	 * @see Context#isSessionOpen()
 	 */
 	@Test
 	@Verifies(value = "should return true if session is closed", method = "isSessionOpen()")
@@ -138,7 +133,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#refreshAuthenticatedUser()}
+	 * @see Context#refreshAuthenticatedUser()
 	 */
 	@Test
 	@Verifies(value = "should get fresh values from the database", method = "refreshAuthenticatedUser()")
@@ -149,7 +144,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 		User fetchedUser = Context.getUserService().getUser(evictedUser.getUserId());
 		fetchedUser.getPersonName().setGivenName("new username");
 		
-		Context.getUserService().saveUser(fetchedUser, null);
+		Context.getUserService().saveUser(fetchedUser);
 		
 		// sanity check to make sure the cached object wasn't updated already
 		Assert.assertNotSame(Context.getAuthenticatedUser().getGivenName(), fetchedUser.getGivenName());
@@ -160,7 +155,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getRegisteredComponents(Class)}
+	 * @see Context#getRegisteredComponents(Class)
 	 */
 	@Test
 	@Verifies(value = "should return a list of all registered beans of the passed type", method = "getRegisteredComponents(Class)")
@@ -171,7 +166,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getRegisteredComponents(Class)}
+	 * @see Context#getRegisteredComponents(Class)
 	 */
 	@Test
 	@Verifies(value = "should return an empty list if no beans have been registered of the passed type", method = "getRegisteredComponents(Class)")
@@ -182,7 +177,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getRegisteredComponent(String,Class)}
+	 * @see Context#getRegisteredComponent(String,Class)
 	 */
 	@Test
 	@Verifies(value = "return bean of the correct type", method = "getRegisteredComponent(String, Class)")
@@ -195,7 +190,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#getRegisteredComponent(String, Class)}
+	 * @see Context#getRegisteredComponent(String, Class)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "fail for bean with the given type but different name", method = "getRegisteredComponent(String, Class)")
@@ -211,7 +206,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	 * Prevents regression after patch from #2174:
 	 * "Prevent duplicate proxies and AOP in context services"
 	 * 
-	 * @see {@link Context#getService(Class)}
+	 * @see Context#getService(Class)
 	 */
 	@Test
 	@Verifies(value = "should return the same object when called multiple times for the same class", method = "getService(Class)")
@@ -222,7 +217,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link Context#becomeUser(String)}
+	 * @see Context#becomeUser(String)
 	 */
 	@Test
 	@Verifies(value = "change locale when become another user", method = "becomeUser(String)")
@@ -233,7 +228,7 @@ public class ContextTest extends BaseContextSensitiveTest {
 		user.addName(new PersonName("givenName", "middleName", "familyName"));
 		user.getPerson().setGender("M");
 		user.setUserProperty(OpenmrsConstants.USER_PROPERTY_DEFAULT_LOCALE, "pt_BR");
-		userService.saveUser(user, "TestPass123");
+		userService.createUser(user, "TestPass123");
 		
 		Context.becomeUser(user.getSystemId());
 		

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.controller;
 
@@ -31,9 +27,9 @@ import org.springframework.web.servlet.mvc.LastModified;
 /**
  * This controller basically passes requests straight through to their views. When interpretJstl is
  * enabled, ".withjstl" is appended to the view name. (This allows us to use jstl (such as the
- * spring:message tag) in some javascript files.) <br/>
- * If you specify any 'rewrites' then the specified paths are remapped, e.g:<br/>
- * /scripts/jquery/jquery-1.3.2.min.js -> /scripts/jquery/jquery.min.js <br/>
+ * spring:message tag) in some javascript files.) <br>
+ * If you specify any 'rewrites' then the specified paths are remapped, e.g:<br>
+ * /scripts/jquery/jquery-1.3.2.min.js -&gt; /scripts/jquery/jquery.min.js <br>
  * All jstl files are cached in the browser until a server restart or a global property is
  * added/changed/deleted
  */
@@ -67,10 +63,12 @@ public class PseudoStaticContentController implements Controller, LastModified, 
 	        IOException {
 		String path = request.getServletPath() + request.getPathInfo();
 		
-		if (rewrites != null && rewrites.containsKey(path))
+		if (rewrites != null && rewrites.containsKey(path)) {
 			path = rewrites.get(path);
-		if (interpretJstl)
+		}
+		if (interpretJstl) {
 			path += ".withjstl";
+		}
 		
 		return new ModelAndView(path);
 	}
@@ -82,8 +80,9 @@ public class PseudoStaticContentController implements Controller, LastModified, 
 		// through the jsp (.withjstl) servlet
 		// this allows the files to cache until we say so
 		if (interpretJstl) {
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("returning last modified date of : " + lastModified + " for : " + request.getPathInfo());
+			}
 			return lastModified;
 		}
 		
@@ -92,16 +91,20 @@ public class PseudoStaticContentController implements Controller, LastModified, 
 		return -1;
 	}
 	
+	public static void setLastModified(Long lastModified) {
+		PseudoStaticContentController.lastModified = lastModified;
+	}
+	
 	@Override
 	public void globalPropertyChanged(GlobalProperty newValue) {
 		// reset for every global property change
-		lastModified = System.currentTimeMillis();
+		setLastModified(System.currentTimeMillis());
 	}
 	
 	@Override
 	public void globalPropertyDeleted(String propertyName) {
 		// reset for every global property change
-		lastModified = System.currentTimeMillis();
+		setLastModified(System.currentTimeMillis());
 	}
 	
 	@Override
@@ -110,6 +113,6 @@ public class PseudoStaticContentController implements Controller, LastModified, 
 	}
 	
 	public static void invalidateCachedResources(Map<String, String> newValue) {
-		lastModified = System.currentTimeMillis();
+		setLastModified(System.currentTimeMillis());
 	}
 }

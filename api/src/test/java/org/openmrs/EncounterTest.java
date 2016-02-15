@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -17,11 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -32,33 +24,28 @@ import java.util.Set;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.ProviderService;
-import org.openmrs.api.context.Context;
+import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * This class tests the all of the {@link Encounter} non-trivial object methods.
  * 
  * @see Encounter
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Context.class)
-public class EncounterTest {
+public class EncounterTest extends BaseContextSensitiveTest {
 	
-	@Before
-	public void before() {
-		mockStatic(Context.class);
-		when(Context.getAuthenticatedUser()).thenReturn(new User());
-	}
+	@Mock
+	EncounterService encounterService;
+	
+	@Mock
+	ProviderService providerService;
 	
 	/**
-	 * @see {@link Encounter#toString()}
+	 * @see Encounter#toString()
 	 */
 	@Test
 	@Verifies(value = "should not fail with empty object", method = "toString()")
@@ -69,7 +56,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeObs(Obs)}
+	 * @see Encounter#removeObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should remove obs successfully", method = "removeObs(Obs)")
@@ -91,7 +78,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeObs(Obs)}
+	 * @see Encounter#removeObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should not throw error when removing null obs from empty set", method = "removeObs(Obs)")
@@ -101,7 +88,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeObs(Obs)}
+	 * @see Encounter#removeObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should not throw error when removing null obs from non empty set", method = "removeObs(Obs)")
@@ -117,7 +104,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should not return null with null obs set", method = "getObs()")
@@ -129,7 +116,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should not return null with null obs set", method = "getAllObs(null)")
@@ -142,7 +129,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should not return null with null obs set", method = "getObsAtTopLevel(null)")
@@ -155,7 +142,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should get obs", method = "getObs()")
@@ -171,7 +158,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should get obs", method = "getObsAtTopLevel(null)")
@@ -189,7 +176,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should get obs", method = "getAllObs(null)")
@@ -207,7 +194,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should not get voided obs", method = "getObs()")
@@ -223,7 +210,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should not get voided obs", method = "getObsAtTopLevel(null)")
@@ -242,7 +229,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should not get voided obs", method = "getAllObs(null)")
@@ -261,7 +248,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should only get child obs", method = "getObs()")
@@ -285,7 +272,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should only get parents obs", method = "getObsAtTopLevel(null)")
@@ -312,7 +299,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should get both parent and child obs", method = "getAllObs(null)")
@@ -337,7 +324,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should not get child obs if child also on encounter", method = "getObs()")
@@ -363,7 +350,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should only return the grouped top level obs", method = "getObsAtTopLevel(null)")
@@ -389,7 +376,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should get both parent and child with child directly on encounter", method = "getAllObs(null)")
@@ -425,7 +412,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getAllObs(null)}
+	 * @see Encounter#getAllObs(null)
 	 */
 	@Test
 	@Verifies(value = "should get both child and parent obs after removing child from parent grouping", method = "getAllObs(null)")
@@ -451,7 +438,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should get both child and parent obs after removing child from parent grouping", method = "getObs()")
@@ -478,7 +465,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObsAtTopLevel(null)}
+	 * @see Encounter#getObsAtTopLevel(null)
 	 */
 	@Test
 	@Verifies(value = "should get both child and parent obs after removing child from parent grouping", method = "getObsAtTopLevel(null)")
@@ -504,7 +491,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should get obs with two levels of hierarchy", method = "getObs()")
@@ -558,7 +545,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should get obs with three levels of hierarchy", method = "getObs()")
@@ -601,7 +588,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getObs()}
+	 * @see Encounter#getObs()
 	 */
 	@Test
 	@Verifies(value = "should not get voided obs with three layers of hierarchy", method = "getObs()")
@@ -648,7 +635,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#Encounter(Integer)}
+	 * @see Encounter#Encounter(Integer)
 	 */
 	@Test
 	@Verifies(value = "should set encounter id", method = "Encounter(Integer)")
@@ -658,7 +645,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should add obs with null values", method = "addObs(Obs)")
@@ -669,7 +656,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should not fail with null obs", method = "addObs(Obs)")
@@ -680,7 +667,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should set encounter attribute on obs", method = "addObs(Obs)")
@@ -692,7 +679,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should add obs to non null initial obs set", method = "addObs(Obs)")
@@ -708,7 +695,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should add encounter attrs to obs if attributes are null", method = "addObs(Obs)")
@@ -739,7 +726,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addObs(Obs)}
+	 * @see Encounter#addObs(Obs)
 	 */
 	@Test
 	@Verifies(value = "should add encounter attrs to obs if attributes are null", method = "addObs(Obs)")
@@ -781,7 +768,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addOrder(Order)}
+	 * @see Encounter#addOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should add order with null values", method = "addOrder(Order)")
@@ -792,7 +779,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addOrder(Order)}
+	 * @see Encounter#addOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should not fail with null obs passed to add order", method = "addOrder(Order)")
@@ -803,7 +790,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addOrder(Order)}
+	 * @see Encounter#addOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should set encounter attribute", method = "addOrder(Order)")
@@ -815,7 +802,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#addOrder(Order)}
+	 * @see Encounter#addOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should add order to non null initial order set", method = "addOrder(Order)")
@@ -831,7 +818,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#getOrders()}
+	 * @see Encounter#getOrders()
 	 */
 	@Test
 	@Verifies(value = "should add order to encounter when adding order to set returned from getOrders", method = "getOrders()")
@@ -844,7 +831,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeOrder(Order)}
+	 * @see Encounter#removeOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should remove order from encounter", method = "removeOrder(Order)")
@@ -859,7 +846,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeOrder(Order)}
+	 * @see Encounter#removeOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should not fail when removing null order", method = "removeOrder(Order)")
@@ -869,7 +856,7 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see {@link Encounter#removeOrder(Order)}
+	 * @see Encounter#removeOrder(Order)
 	 */
 	@Test
 	@Verifies(value = "should not fail when removing non existent order", method = "removeOrder(Order)")
@@ -938,123 +925,6 @@ public class EncounterTest {
 		    "encounterProviders", true);
 		Assert.assertEquals(1, providers.size());
 		Assert.assertTrue(encounter.getProvidersByRole(role).contains(provider1));
-	}
-	
-	/**
-	 * @see Encounter#getProvider()
-	 * @verifies return null if there is no provider for person
-	 */
-	@Test
-	public void getProvider_shouldReturnNullIfThereIsNoProviderForPerson() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole role = new EncounterRole();
-		Provider provider = new Provider();
-		encounter.addProvider(role, provider);
-		
-		//when
-		Person result = encounter.getProvider();
-		
-		//then
-		Assert.assertNull(result);
-	}
-	
-	/**
-	 * @see Encounter#getProvider()
-	 * @verifies return null if there is no providers
-	 */
-	@Test
-	public void getProvider_shouldReturnNullIfThereIsNoProviders() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		
-		//when
-		Person result = encounter.getProvider();
-		
-		//then
-		Assert.assertNull(result);
-	}
-	
-	/**
-	 * @see Encounter#getProvider()
-	 * @verifies return provider for person
-	 */
-	@Test
-	public void getProvider_shouldReturnProviderForPerson() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole role = new EncounterRole();
-		Provider provider = new Provider();
-		Person person = new Person();
-		provider.setPerson(person);
-		encounter.addProvider(role, provider);
-		
-		//when
-		Person result = encounter.getProvider();
-		
-		//then
-		Assert.assertEquals(person, result);
-	}
-	
-	/**
-	 * @see Encounter#getProvider()
-	 * @verifies should exclude voided providers
-	 */
-	@Test
-	public void getProvider_shouldExcludeVoidedProviders() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole role = new EncounterRole();
-		
-		Provider provider = new Provider();
-		Provider anotherProvider = new Provider();
-		
-		Person person = new Person();
-		Person anotherPerson = new Person();
-		
-		provider.setPerson(person);
-		anotherProvider.setPerson(anotherPerson);
-		
-		// add the first provider
-		encounter.setProvider(role, provider);
-		
-		// replace with the second provider
-		encounter.setProvider(role, anotherProvider);
-		
-		//when
-		Person result = encounter.getProvider();
-		
-		//then
-		Assert.assertEquals(anotherPerson, result);
-		
-	}
-	
-	/**
-	 * @see Encounter#getProvider()
-	 * @verifies return same provider for person if called twice
-	 */
-	@Test
-	public void getProvider_shouldReturnSameProviderForPersonIfCalledTwice() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole role = new EncounterRole();
-		
-		Provider provider = new Provider();
-		Person person = new Person();
-		provider.setPerson(person);
-		encounter.addProvider(role, provider);
-		
-		Provider provider2 = new Provider();
-		Person person2 = new Person();
-		provider2.setPerson(person2);
-		encounter.addProvider(role, provider2);
-		
-		//when
-		Person result = encounter.getProvider();
-		Person result2 = encounter.getProvider();
-		
-		//then
-		Assert.assertEquals(result, result2);
 	}
 	
 	/**
@@ -1221,39 +1091,6 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see Encounter#setProvider(Person)
-	 * @verifies set existing provider for unknown role
-	 */
-	@Test
-	public void setProvider_shouldSetExistingProviderForUnknownRole() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole unknownRole = new EncounterRole();
-		Person person = new Person();
-		Provider provider = new Provider();
-		provider.setPerson(person);
-		List<Provider> providers = new ArrayList<Provider>();
-		providers.add(provider);
-		
-		EncounterService encounterService = mock(EncounterService.class);
-		when(encounterService.getEncounterRoleByUuid(EncounterRole.UNKNOWN_ENCOUNTER_ROLE_UUID)).thenReturn(unknownRole);
-		
-		ProviderService providerService = mock(ProviderService.class);
-		when(providerService.getProvidersByPerson(person)).thenReturn(providers);
-		
-		when(Context.getEncounterService()).thenReturn(encounterService);
-		when(Context.getProviderService()).thenReturn(providerService);
-		
-		//when
-		encounter.setProvider(person);
-		
-		//then
-		assertEquals(1, encounter.getProvidersByRoles().size());
-		assertEquals(1, encounter.getProvidersByRole(unknownRole).size());
-		assertEquals(provider, encounter.getProvidersByRole(unknownRole).iterator().next());
-	}
-	
-	/**
 	 * @see Encounter#setProvider(EncounterRole,Provider)
 	 * @verifies void existing EncounterProvider
 	 */
@@ -1281,41 +1118,6 @@ public class EncounterTest {
 	}
 	
 	/**
-	 * @see Encounter#setProvider(EncounterRole,Provider)
-	 * @verifies previously voided provider correctly re-added
-	 */
-	@Test
-	public void setProvider_shouldAddPreviouslyVoidedProviderAgain() throws Exception {
-		//given
-		Encounter encounter = new Encounter();
-		EncounterRole role = new EncounterRole();
-		
-		Provider provider = new Provider();
-		Provider anotherProvider = new Provider();
-		
-		Person person = new Person();
-		Person anotherPerson = new Person();
-		
-		provider.setPerson(person);
-		anotherProvider.setPerson(anotherPerson);
-		
-		// add the first provider
-		encounter.setProvider(role, provider);
-		
-		// replace with the second provider
-		encounter.setProvider(role, anotherProvider);
-		
-		// now replace back with the first provider
-		encounter.setProvider(role, provider);
-		
-		//when
-		Person result = encounter.getProvider();
-		
-		//then
-		Assert.assertEquals(person, result);
-	}
-	
-	/**
 	 * @see Encounter#removeProvider(EncounterRole,Provider)
 	 * @verifies void existing EncounterProvider
 	 */
@@ -1340,5 +1142,70 @@ public class EncounterTest {
 		
 		//should contain the voided provider
 		Assert.assertTrue(encounter.getProvidersByRole(role, true).contains(provider));
+	}
+	
+	/**
+	 * @see Encounter#copyAndAssignToAnotherPatient(org.openmrs.Patient)
+	 */
+	@Test
+	@Verifies(value = "should copy all Encounter data except visit and assign copied Encounter to given Patient", method = "copy()")
+	public void copy_shouldCopyAllEncounterDataExceptVisitAndAssignCopiedEncounterToGivenPatient() throws Exception {
+		Encounter encounter = new Encounter();
+		
+		encounter.setCreator(new User());
+		encounter.setDateCreated(new Date());
+		encounter.setChangedBy(new User());
+		encounter.setDateChanged(new Date());
+		encounter.setVoided(true);
+		encounter.setVoidReason("void");
+		encounter.setDateVoided(new Date());
+		
+		encounter.setEncounterDatetime(new Date());
+		encounter.setEncounterType(new EncounterType());
+		encounter.setForm(new Form());
+		encounter.setLocation(new Location());
+		encounter.setPatient(new Patient());
+		
+		encounter.addObs(new Obs());
+		encounter.addOrder(new Order());
+		
+		EncounterRole encounterRole = new EncounterRole();
+		encounter.addProvider(encounterRole, new Provider());
+		
+		encounter.setVisit(new Visit());
+		
+		Patient patient = new Patient(7);
+		
+		Encounter encounterCopy = encounter.copyAndAssignToAnotherPatient(patient);
+		
+		Assert.assertNotEquals(encounter, encounterCopy);
+		
+		Assert.assertEquals(encounter.getCreator(), encounterCopy.getCreator());
+		Assert.assertEquals(encounter.getDateCreated(), encounterCopy.getDateCreated());
+		Assert.assertEquals(encounter.getChangedBy(), encounterCopy.getChangedBy());
+		Assert.assertEquals(encounter.getDateChanged(), encounterCopy.getDateChanged());
+		Assert.assertEquals(encounter.getVoided(), encounterCopy.getVoided());
+		Assert.assertEquals(encounter.getVoidReason(), encounterCopy.getVoidReason());
+		Assert.assertEquals(encounter.getDateVoided(), encounterCopy.getDateVoided());
+		
+		Assert.assertEquals(encounter.getEncounterDatetime(), encounterCopy.getEncounterDatetime());
+		Assert.assertEquals(encounter.getEncounterType(), encounterCopy.getEncounterType());
+		Assert.assertEquals(encounter.getForm(), encounterCopy.getForm());
+		Assert.assertEquals(encounter.getLocation(), encounterCopy.getLocation());
+		
+		Assert.assertEquals(1, encounter.getObs().size());
+		Assert.assertEquals(1, encounterCopy.getObs().size());
+		Assert.assertEquals(1, encounter.getOrders().size());
+		Assert.assertEquals(0, encounterCopy.getOrders().size());
+		
+		Assert.assertEquals(1, encounter.getProvidersByRole(encounterRole).size());
+		Assert.assertEquals(1, encounterCopy.getProvidersByRole(encounterRole).size());
+		Assert.assertEquals(true, encounter.getProvidersByRole(encounterRole).containsAll(
+		    encounterCopy.getProvidersByRole(encounterRole)));
+		
+		Assert.assertNotNull(encounter.getVisit());
+		Assert.assertNull(encounterCopy.getVisit());
+		
+		Assert.assertEquals(patient, encounterCopy.getPatient());
 	}
 }

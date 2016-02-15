@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.scheduler;
 
@@ -109,7 +105,7 @@ public class TaskDefinition extends BaseOpenmrsMetadata {
 	 * Set the properties of the task. This overrides any properties previously set with the
 	 * setProperty(String, String) method.
 	 * 
-	 * @param properties <code>Map<String, String></code> of the properties to set
+	 * @param properties <code>Map&lt;String, String&gt;</code> of the properties to set
 	 */
 	public void setProperties(Map<String, String> properties) {
 		this.properties = properties;
@@ -299,21 +295,4 @@ public class TaskDefinition extends BaseOpenmrsMetadata {
 	public void setTaskInstance(Task taskInstance) {
 		this.taskInstance = taskInstance;
 	}
-	
-	/**
-	 * @deprecated use {@link #getCreator()}
-	 */
-	public Object getCreatedBy() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	/**
-	 * @deprecated use {@link #setCreator(User)}
-	 */
-	public void setCreatedBy(User authenticatedUser) {
-		// TODO Auto-generated method stub
-		
-	}
-	
 }

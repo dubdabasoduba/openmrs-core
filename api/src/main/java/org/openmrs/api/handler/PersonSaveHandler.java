@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -27,8 +23,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * This class deals with {@link Person} objects when they are saved via a save* method in an Openmrs
- * Service. This handler is automatically called by the {@link RequiredDataAdvice} AOP class. <br/>
- * 
+ * Service. This handler is automatically called by the {@link RequiredDataAdvice} AOP class. <br>
+ *
  * @see RequiredDataHandler
  * @see SaveHandler
  * @see Person
@@ -42,28 +38,6 @@ public class PersonSaveHandler implements SaveHandler<Person> {
 	 *      java.util.Date, java.lang.String)
 	 */
 	public void handle(Person person, User creator, Date dateCreated, String other) {
-		
-		// only set the creator and date created if they weren't set by the developer already
-		if (person.getPersonCreator() == null) {
-			person.setPersonCreator(creator);
-		}
-		
-		if (person.getPersonDateCreated() == null) {
-			person.setPersonDateCreated(dateCreated);
-		}
-		
-		// if there is an id already, we assume its been saved before and so set personChanged*
-		boolean hasId;
-		try {
-			hasId = person.getId() != null;
-		}
-		catch (UnsupportedOperationException e) {
-			hasId = true; // if no "id" to check, just go ahead and set them
-		}
-		if (hasId) {
-			person.setPersonChangedBy(creator);
-			person.setPersonDateChanged(dateCreated);
-		}
 		
 		// address collection
 		if (person.getAddresses() != null && person.getAddresses().size() > 0) {
@@ -87,15 +61,16 @@ public class PersonSaveHandler implements SaveHandler<Person> {
 		}
 		
 		//if the patient was marked as dead and reversed, drop the cause of death
-		if (!person.isDead() && person.getCauseOfDeath() != null)
+		if (!person.isDead() && person.getCauseOfDeath() != null) {
 			person.setCauseOfDeath(null);
+		}
 		
 		// do the checks for voided attributes (also in PersonVoidHandler)
 		if (person.isPersonVoided()) {
 			
-			if (!StringUtils.hasLength(person.getPersonVoidReason()))
-				throw new APIException(
-				        "The voided bit was set to true, so a void reason is required at save time for person: " + person);
+			if (!StringUtils.hasLength(person.getPersonVoidReason())) {
+				throw new APIException("Person.voided.bit", new Object[] { person });
+			}
 			
 			if (person.getPersonVoidedBy() == null) {
 				person.setPersonVoidedBy(creator);

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.hl7;
 
@@ -25,7 +21,7 @@ import ca.uhn.hl7v2.HL7Exception;
  * table depending on success or failure of the processing. You may, however, set a global property
  * that causes the processor to ignore messages regarding unknown patients from a non-local HL7
  * source. (i.e. those messages neither go to the archive or the error table.)
- * 
+ *
  * @version 1.0
  */
 @Transactional
@@ -46,16 +42,21 @@ public class HL7InQueueProcessor /* implements Runnable */{
 	public HL7InQueueProcessor() {
 	}
 	
+	public static void setCount(Integer count) {
+		HL7InQueueProcessor.count = count;
+	}
+	
 	/**
 	 * Process a single queue entry from the inbound HL7 queue
-	 * 
+	 *
 	 * @param hl7InQueue queue entry to be processed
 	 */
 	public void processHL7InQueue(HL7InQueue hl7InQueue) {
 		
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Processing HL7 inbound queue (id=" + hl7InQueue.getHL7InQueueId() + ",key="
 			        + hl7InQueue.getHL7SourceKey() + ")");
+		}
 		
 		try {
 			Context.getHL7Service().processHL7InQueue(hl7InQueue);
@@ -63,8 +64,8 @@ public class HL7InQueueProcessor /* implements Runnable */{
 		catch (HL7Exception e) {
 			log.error("Unable to process hl7 in queue", e);
 		}
-		
-		if (++count > 25) {
+		setCount(count + 1);
+		if (count > 25) {
 			// clean up memory after processing each queue entry (otherwise, the
 			// memory-intensive process may crash or eat up all our memory)
 			try {
@@ -80,7 +81,7 @@ public class HL7InQueueProcessor /* implements Runnable */{
 	/**
 	 * Transform the next pending HL7 inbound queue entry. If there are no pending items in the
 	 * queue, this method simply returns quietly.
-	 * 
+	 *
 	 * @return true if a queue entry was processed, false if queue was empty
 	 */
 	public boolean processNextHL7InQueue() {

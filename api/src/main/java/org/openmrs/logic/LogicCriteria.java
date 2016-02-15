@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.logic;
 
@@ -190,11 +186,11 @@ public interface LogicCriteria {
 	public LogicCriteria asOf(Date value);
 	
 	/**
-	 * Add a {@link Before} expression to the current LogicCriteria
+	 * Add a {@link org.openmrs.logic.op.Before} expression to the current LogicCriteria
 	 * 
 	 * @param value the operand for the Before operator
 	 * @return LogicCriteria with Before expression
-	 * @see Before
+	 * @see org.openmrs.logic.op.Before
 	 */
 	public LogicCriteria before(Date value);
 	
@@ -208,11 +204,11 @@ public interface LogicCriteria {
 	public LogicCriteria after(Date value);
 	
 	/**
-	 * Add a {@link After} expression to the current LogicCriteria
+	 * Add a {@link org.openmrs.logic.op.After} expression to the current LogicCriteria
 	 * 
 	 * @param value the operand for the After operator
 	 * @return LogicCriteria with After expression
-	 * @see After
+	 * @see org.openmrs.logic.op.After
 	 */
 	public LogicCriteria in(Collection<?> value);
 	
@@ -237,11 +233,11 @@ public interface LogicCriteria {
 	public LogicCriteria contains(double value);
 	
 	/**
-	 * Add a {@link Contains} expression to the current LogicCriteria
+	 * Add a {@link org.openmrs.logic.op.Contains} expression to the current LogicCriteria
 	 * 
 	 * @param value the operand for the Contains operator
 	 * @return LogicCriteria with Contains expression
-	 * @see Contains
+	 * @see org.openmrs.logic.op.Contains
 	 */
 	public LogicCriteria contains(String value);
 	
@@ -266,11 +262,11 @@ public interface LogicCriteria {
 	public LogicCriteria equalTo(double value);
 	
 	/**
-	 * Add a {@link Equals} expression to the current LogicCriteria
+	 * Add a {@link org.openmrs.logic.op.Equals} expression to the current LogicCriteria
 	 * 
 	 * @param value the operand for the Equals operator
 	 * @return LogicCriteria with Equals expression
-	 * @see Equals
+	 * @see org.openmrs.logic.op.Equals
 	 */
 	public LogicCriteria equalTo(String value);
 	
@@ -380,7 +376,7 @@ public interface LogicCriteria {
 	public LogicCriteria within(Duration duration);
 	
 	/**
-	 * @return
+	 * @return logic parameters
 	 */
 	public Map<String, Object> getLogicParameters();
 	

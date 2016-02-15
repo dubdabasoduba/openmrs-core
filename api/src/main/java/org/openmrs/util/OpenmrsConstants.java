@@ -1,21 +1,17 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -23,10 +19,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
-import org.openmrs.api.ConceptService;
 import org.openmrs.api.handler.ExistingVisitAssignmentHandler;
 import org.openmrs.customdatatype.datatype.BooleanDatatype;
 import org.openmrs.customdatatype.datatype.FreeTextDatatype;
@@ -44,13 +40,7 @@ import org.openmrs.scheduler.SchedulerConstants;
  */
 public final class OpenmrsConstants {
 	
-	private static Log log = LogFactory.getLog(OpenmrsConstants.class);
-	
-	/**
-	 * This is the hard coded primary key of the order type for DRUG. This has to be done because
-	 * some logic in the API acts on this order type
-	 */
-	public static final int ORDERTYPE_DRUG = 2;
+	private static final Log log = LogFactory.getLog(OpenmrsConstants.class);
 	
 	/**
 	 * This is the hard coded primary key of the concept class for DRUG. This has to be done because
@@ -67,139 +57,75 @@ public final class OpenmrsConstants {
 	
 	/**
 	 * This holds the current openmrs code version. This version is a string containing spaces and
-	 * words.<br/>
-	 * The format is:<br/>
+	 * words.<br>
+	 * The format is:<br>
 	 * <i>major</i>.<i>minor</i>.<i>maintenance</i> <i>suffix</i> Build <i>buildNumber</i>
 	 */
 	public static final String OPENMRS_VERSION = THIS_PACKAGE.getSpecificationVendor() != null ? THIS_PACKAGE
 	        .getSpecificationVendor() : (getBuildVersion() != null ? getBuildVersion() : getVersion());
 	
 	/**
-	 * This holds the current openmrs code version in a short space-less string.<br/>
-	 * The format is:<br/>
-	 * <i>major</i>.<i>minor</i>.<i>maintenance</i>.<i>revision</i>-<i>suffix</i >
+	 * This holds the current openmrs code version in a short space-less string.<br>
+	 * The format is:<br>
+	 * <i>major</i>.<i>minor</i>.<i>maintenance</i>.<i>revision</i>-<i>suffix</i>
 	 */
 	public static final String OPENMRS_VERSION_SHORT = THIS_PACKAGE.getSpecificationVersion() != null ? THIS_PACKAGE
 	        .getSpecificationVersion() : (getBuildVersionShort() != null ? getBuildVersionShort() : getVersion());
 	
 	/**
-	 * @return build version with alpha characters (eg:1.10.0 SNAPSHOT Build 24858) defined in
-	 *         MANIFEST.MF(specification-Vendor)
+	 * @return build version with alpha characters (eg:1.10.0 SNAPSHOT Build 24858)
+	 * defined in MANIFEST.MF(specification-Vendor)
+	 *
 	 * @see #OPENMRS_VERSION_SHORT
 	 * @see #OPENMRS_VERSION
 	 */
 	private static String getBuildVersion() {
-		
-		Properties props = new Properties();
-		
-		java.net.URL url = OpenmrsConstants.class.getClassLoader().getResource("META-INF/MANIFEST.MF");
-		
-		if (url == null) {
-			log.error("Unable to find MANIFEST.MF file built by maven");
-			return null;
-		}
-		
-		// Load the file
-		try {
-			props.load(url.openStream());
-			
-			return props.getProperty("Specification-Vendor");
-		}
-		catch (IOException e) {
-			log.error("Unable to get MANIFEST.MF file into manifest object");
-		}
-		
-		return null;
+		return getOpenmrsProperty("openmrs.version.long");
 	}
 	
 	/**
-	 * @return build version without alpha characters (eg: 1.10.0.24858) defined in MANIFEST.MF
-	 *         (specification-Version)
+	 * @return build version without alpha characters (eg: 1.10.0.24858)
+	 * defined in MANIFEST.MF (specification-Version)
+	 *
 	 * @see #OPENMRS_VERSION_SHORT
 	 * @see #OPENMRS_VERSION
 	 */
 	private static String getBuildVersionShort() {
-		
-		Properties props = new Properties();
-		
-		java.net.URL url = OpenmrsConstants.class.getClassLoader().getResource("META-INF/MANIFEST.MF");
-		
-		if (url == null) {
-			log.error("Unable to find MANIFEST.MF file built by maven");
-			return null;
-		}
-		
-		// Load the file
-		try {
-			props.load(url.openStream());
-			
-			return props.getProperty("Specification-Version");
-		}
-		catch (IOException e) {
-			log.error("Unable to get MANIFEST.MF file into manifest object");
-		}
-		
-		return null;
+		return getOpenmrsProperty("openmrs.version.short");
 	}
-	
-	/**
-	 * Somewhat hacky method to fetch the version from the maven pom.properties file. <br/>
-	 * This method should not be used unless in a dev environment. The preferred way to get the
-	 * version is from the manifest in the api jar file. More detail is included in the properties
-	 * there.
-	 * 
-	 * @return version number defined in maven pom.xml file(s)
-	 * @see #OPENMRS_VERSION_SHORT
-	 * @see #OPENMRS_VERSION
-	 */
 	
 	private static String getVersion() {
-		Properties props = new Properties();
-		
-		// Get hold of the path to the properties file
-		// (Maven will make sure it's on the class path)
-		java.net.URL url = OpenmrsConstants.class.getClassLoader().getResource(
-		    "META-INF/maven/org.openmrs.api/openmrs-api/pom.properties");
-		if (url == null) {
-			log.error("Unable to find pom.properties file built by maven");
+		return getOpenmrsProperty("openmrs.version");
+	}
+	
+	public static String getOpenmrsProperty(String property) {
+		InputStream file = OpenmrsConstants.class.getClassLoader().getResourceAsStream("org/openmrs/api/openmrs.properties");
+		if (file == null) {
+			log.error("Unable to find the openmrs.properties file");
 			return null;
 		}
 		
-		// Load the file
 		try {
-			props.load(url.openStream());
-			return props.getProperty("version"); // this will return something like "1.9.0-SNAPSHOT" in dev environments
+			Properties props = new Properties();
+			props.load(file);
+			
+			file.close();
+			
+			return props.getProperty(property);
 		}
 		catch (IOException e) {
-			log.error("Unable to get pom.properties file into Properties object");
+			log.error("Unable to parse the openmrs.properties file", e);
+		}
+		finally {
+			IOUtils.closeQuietly(file);
 		}
 		
 		return null;
 	}
-	
-	/**
-	 * See {@link DatabaseUpdater#updatesRequired()} to see what changesets in the
-	 * liquibase-update-to-latest.xml file in the openmrs api jar file need to be run to bring the
-	 * db up to date with what the api requires.
-	 * 
-	 * @deprecated the database doesn't have just one main version now that we are using liquibase.
-	 */
-	@Deprecated
-	public static final String DATABASE_VERSION_EXPECTED = THIS_PACKAGE.getImplementationVersion();
-	
+		
 	public static String DATABASE_NAME = "openmrs";
 	
 	public static String DATABASE_BUSINESS_NAME = "openmrs";
-	
-	/**
-	 * See {@link DatabaseUpdater#updatesRequired()} to see what changesets in the
-	 * liquibase-update-to-latest.xml file in the openmrs api jar file need to be run to bring the
-	 * db up to date with what the api requires.
-	 * 
-	 * @deprecated the database doesn't have just one main version now that we are using liquibase.
-	 */
-	@Deprecated
-	public static String DATABASE_VERSION = null;
 	
 	/**
 	 * Set true from runtime configuration to obscure patients for system demonstrations
@@ -219,19 +145,16 @@ public final class OpenmrsConstants {
 	public static final Integer CIVIL_STATUS_CONCEPT_ID = 1054;
 	
 	/**
-	 * The directory that will store filesystem data about openmrs like module omods, generated data
-	 * exports, etc. This shouldn't be accessed directory, the
-	 * OpenmrsUtil.getApplicationDataDirectory() should be used. This should be null here. This
-	 * constant will hold the value of the user's runtime property for the
-	 * application_data_directory and is set programmatically at startup. This value is set in the
-	 * openmrs startup method. If this is null, the getApplicationDataDirectory() uses some OS
-	 * heuristics to determine where to put an app data dir.
-	 * 
+	 * The directory which OpenMRS should attempt to use as its application data directory
+	 * in case the current users home dir is not writeable (e.g. when using application servers
+	 * like tomcat to deploy OpenMRS).
+	 *
 	 * @see #APPLICATION_DATA_DIRECTORY_RUNTIME_PROPERTY
 	 * @see OpenmrsUtil#getApplicationDataDirectory()
-	 * @see OpenmrsUtil#startup(java.util.Properties)
 	 */
-	public static String APPLICATION_DATA_DIRECTORY = null;
+	public static String APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX = "/var/lib";
+	
+	public static String APPLICATION_DATA_DIRECTORY_FALLBACK_WIN = System.getenv("appdata");
 	
 	/**
 	 * The name of the runtime property that a user can set that will specify where openmrs's
@@ -250,7 +173,7 @@ public final class OpenmrsConstants {
 	/**
 	 * These words are ignored in concept and patient searches
 	 * 
-	 * @return Collection<String> of words that are ignored
+	 * @return Collection&lt;String&gt; of words that are ignored
 	 */
 	public static final Collection<String> STOP_WORDS() {
 		List<String> stopWords = new Vector<String>();
@@ -269,10 +192,10 @@ public final class OpenmrsConstants {
 	}
 	
 	/**
-	 * A gender character to gender name map<br/>
+	 * A gender character to gender name map<br>
 	 * TODO issues with localization. How should this be handled?
 	 * 
-	 * @return Map<String, String> of gender character to gender name
+	 * @return Map&lt;String, String&gt; of gender character to gender name
 	 */
 	public static final Map<String, String> GENDER() {
 		Map<String, String> genders = new LinkedHashMap<String, String>();
@@ -280,491 +203,17 @@ public final class OpenmrsConstants {
 		genders.put("F", "Female");
 		return genders;
 	}
-	
-	// Baked in Privileges:
-	@Deprecated
-	public static final String PRIV_VIEW_CONCEPTS = PrivilegeConstants.VIEW_CONCEPTS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_CONCEPTS = PrivilegeConstants.MANAGE_CONCEPTS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_CONCEPTS = PrivilegeConstants.PURGE_CONCEPTS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_CONCEPT_NAME_TAGS = PrivilegeConstants.MANAGE_CONCEPT_NAME_TAGS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_CONCEPT_PROPOSALS = PrivilegeConstants.VIEW_CONCEPT_PROPOSALS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_CONCEPT_PROPOSALS = PrivilegeConstants.ADD_CONCEPT_PROPOSALS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_CONCEPT_PROPOSALS = PrivilegeConstants.EDIT_CONCEPT_PROPOSALS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_CONCEPT_PROPOSALS = PrivilegeConstants.DELETE_CONCEPT_PROPOSALS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_CONCEPT_PROPOSALS = PrivilegeConstants.PURGE_CONCEPT_PROPOSALS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_USERS = PrivilegeConstants.VIEW_USERS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_USERS = PrivilegeConstants.ADD_USERS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_USERS = PrivilegeConstants.EDIT_USERS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_USERS = PrivilegeConstants.DELETE_USERS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_USERS = PrivilegeConstants.PURGE_USERS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_USER_PASSWORDS = PrivilegeConstants.EDIT_USER_PASSWORDS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ENCOUNTERS = PrivilegeConstants.VIEW_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_ENCOUNTERS = PrivilegeConstants.ADD_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_ENCOUNTERS = PrivilegeConstants.EDIT_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_ENCOUNTERS = PrivilegeConstants.DELETE_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_ENCOUNTERS = PrivilegeConstants.PURGE_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ENCOUNTER_TYPES = PrivilegeConstants.VIEW_ENCOUNTER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_ENCOUNTER_TYPES = PrivilegeConstants.MANAGE_ENCOUNTER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_ENCOUNTER_TYPES = PrivilegeConstants.PURGE_ENCOUNTER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_LOCATIONS = PrivilegeConstants.VIEW_LOCATIONS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_LOCATIONS = PrivilegeConstants.MANAGE_LOCATIONS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_LOCATIONS = PrivilegeConstants.PURGE_LOCATIONS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_LOCATION_TAGS = PrivilegeConstants.MANAGE_LOCATION_TAGS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_LOCATION_TAGS = PrivilegeConstants.PURGE_LOCATION_TAGS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_OBS = PrivilegeConstants.VIEW_OBS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_OBS = PrivilegeConstants.ADD_OBS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_OBS = PrivilegeConstants.EDIT_OBS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_OBS = PrivilegeConstants.DELETE_OBS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_OBS = PrivilegeConstants.PURGE_OBS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_MIME_TYPES = "View Mime Types";
-	
-	@Deprecated
-	public static final String PRIV_PURGE_MIME_TYPES = "Purge Mime Types";
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PATIENTS = PrivilegeConstants.VIEW_PATIENTS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_PATIENTS = PrivilegeConstants.ADD_PATIENTS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_PATIENTS = PrivilegeConstants.EDIT_PATIENTS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_PATIENTS = PrivilegeConstants.DELETE_PATIENTS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PATIENTS = PrivilegeConstants.PURGE_PATIENTS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PATIENT_IDENTIFIERS = PrivilegeConstants.VIEW_PATIENT_IDENTIFIERS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_PATIENT_IDENTIFIERS = PrivilegeConstants.ADD_PATIENT_IDENTIFIERS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_PATIENT_IDENTIFIERS = PrivilegeConstants.EDIT_PATIENT_IDENTIFIERS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_PATIENT_IDENTIFIERS = PrivilegeConstants.DELETE_PATIENT_IDENTIFIERS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PATIENT_IDENTIFIERS = PrivilegeConstants.PURGE_PATIENT_IDENTIFIERS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PATIENT_COHORTS = PrivilegeConstants.VIEW_PATIENT_COHORTS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_COHORTS = PrivilegeConstants.ADD_COHORTS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_COHORTS = PrivilegeConstants.EDIT_COHORTS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_COHORTS = PrivilegeConstants.DELETE_COHORTS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_COHORTS = PrivilegeConstants.PURGE_COHORTS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ORDERS = PrivilegeConstants.VIEW_ORDERS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_ORDERS = PrivilegeConstants.ADD_ORDERS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_ORDERS = PrivilegeConstants.EDIT_ORDERS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_ORDERS = PrivilegeConstants.DELETE_ORDERS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_ORDERS = PrivilegeConstants.PURGE_ORDERS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_FORMS = PrivilegeConstants.VIEW_FORMS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_FORMS = PrivilegeConstants.MANAGE_FORMS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_FORMS = PrivilegeConstants.PURGE_FORMS;
-	
-	// This name is historic, since that's what it was originally called in the infopath formentry module
-	
-	@Deprecated
-	public static final String PRIV_FORM_ENTRY = PrivilegeConstants.FORM_ENTRY;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_REPORTS = "View Reports";
-	
-	@Deprecated
-	public static final String PRIV_ADD_REPORTS = "Add Reports";
-	
-	@Deprecated
-	public static final String PRIV_EDIT_REPORTS = "Edit Reports";
-	
-	@Deprecated
-	public static final String PRIV_DELETE_REPORTS = "Delete Reports";
-	
-	@Deprecated
-	public static final String PRIV_RUN_REPORTS = "Run Reports";
-	
-	@Deprecated
-	public static final String PRIV_VIEW_REPORT_OBJECTS = "View Report Objects";
-	
-	@Deprecated
-	public static final String PRIV_ADD_REPORT_OBJECTS = "Add Report Objects";
-	
-	@Deprecated
-	public static final String PRIV_EDIT_REPORT_OBJECTS = "Edit Report Objects";
-	
-	@Deprecated
-	public static final String PRIV_DELETE_REPORT_OBJECTS = "Delete Report Objects";
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_IDENTIFIER_TYPES = PrivilegeConstants.MANAGE_IDENTIFIER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_IDENTIFIER_TYPES = PrivilegeConstants.VIEW_IDENTIFIER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_IDENTIFIER_TYPES = PrivilegeConstants.PURGE_IDENTIFIER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_MIME_TYPES = "Manage Mime Types";
-	
-	@Deprecated
-	public static final String PRIV_VIEW_CONCEPT_CLASSES = PrivilegeConstants.VIEW_CONCEPT_CLASSES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_CONCEPT_CLASSES = PrivilegeConstants.MANAGE_CONCEPT_CLASSES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_CONCEPT_CLASSES = PrivilegeConstants.PURGE_CONCEPT_CLASSES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_CONCEPT_DATATYPES = PrivilegeConstants.VIEW_CONCEPT_DATATYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_CONCEPT_DATATYPES = PrivilegeConstants.MANAGE_CONCEPT_DATATYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_CONCEPT_DATATYPES = PrivilegeConstants.PURGE_CONCEPT_DATATYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PRIVILEGES = PrivilegeConstants.VIEW_PRIVILEGES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_PRIVILEGES = PrivilegeConstants.MANAGE_PRIVILEGES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PRIVILEGES = PrivilegeConstants.PURGE_PRIVILEGES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ROLES = PrivilegeConstants.VIEW_ROLES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_ROLES = PrivilegeConstants.MANAGE_ROLES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_ROLES = PrivilegeConstants.PURGE_ROLES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_FIELD_TYPES = PrivilegeConstants.VIEW_FIELD_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_FIELD_TYPES = PrivilegeConstants.MANAGE_FIELD_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_FIELD_TYPES = PrivilegeConstants.PURGE_FIELD_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ORDER_TYPES = PrivilegeConstants.VIEW_ORDER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_ORDER_TYPES = PrivilegeConstants.MANAGE_ORDER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_ORDER_TYPES = PrivilegeConstants.PURGE_ORDER_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_RELATIONSHIP_TYPES = PrivilegeConstants.VIEW_RELATIONSHIP_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_RELATIONSHIP_TYPES = PrivilegeConstants.MANAGE_RELATIONSHIP_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_RELATIONSHIP_TYPES = PrivilegeConstants.PURGE_RELATIONSHIP_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_ALERTS = PrivilegeConstants.MANAGE_ALERTS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_CONCEPT_SOURCES = PrivilegeConstants.MANAGE_CONCEPT_SOURCES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_CONCEPT_SOURCES = PrivilegeConstants.VIEW_CONCEPT_SOURCES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_CONCEPT_SOURCES = PrivilegeConstants.PURGE_CONCEPT_SOURCES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_NAVIGATION_MENU = PrivilegeConstants.VIEW_NAVIGATION_MENU;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ADMIN_FUNCTIONS = PrivilegeConstants.VIEW_ADMIN_FUNCTIONS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_UNPUBLISHED_FORMS = PrivilegeConstants.VIEW_UNPUBLISHED_FORMS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PROGRAMS = PrivilegeConstants.VIEW_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_PROGRAMS = PrivilegeConstants.MANAGE_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PATIENT_PROGRAMS = PrivilegeConstants.VIEW_PATIENT_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_PATIENT_PROGRAMS = PrivilegeConstants.ADD_PATIENT_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_PATIENT_PROGRAMS = PrivilegeConstants.EDIT_PATIENT_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_PATIENT_PROGRAMS = PrivilegeConstants.DELETE_PATIENT_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PATIENT_PROGRAMS = PrivilegeConstants.PURGE_PATIENT_PROGRAMS;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_OVERVIEW = PrivilegeConstants.DASHBOARD_OVERVIEW;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_REGIMEN = PrivilegeConstants.DASHBOARD_REGIMEN;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_ENCOUNTERS = PrivilegeConstants.DASHBOARD_ENCOUNTERS;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_DEMOGRAPHICS = PrivilegeConstants.DASHBOARD_DEMOGRAPHICS;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_GRAPHS = PrivilegeConstants.DASHBOARD_GRAPHS;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_FORMS = PrivilegeConstants.DASHBOARD_FORMS;
-	
-	@Deprecated
-	public static final String PRIV_DASHBOARD_SUMMARY = PrivilegeConstants.DASHBOARD_SUMMARY;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_GLOBAL_PROPERTIES = PrivilegeConstants.VIEW_GLOBAL_PROPERTIES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_GLOBAL_PROPERTIES = PrivilegeConstants.MANAGE_GLOBAL_PROPERTIES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_GLOBAL_PROPERTIES = PrivilegeConstants.PURGE_GLOBAL_PROPERTIES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_MODULES = PrivilegeConstants.MANAGE_MODULES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_SCHEDULER = PrivilegeConstants.MANAGE_SCHEDULER;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PERSON_ATTRIBUTE_TYPES = PrivilegeConstants.VIEW_PERSON_ATTRIBUTE_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_PERSON_ATTRIBUTE_TYPES = PrivilegeConstants.MANAGE_PERSON_ATTRIBUTE_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PERSON_ATTRIBUTE_TYPES = PrivilegeConstants.PURGE_PERSON_ATTRIBUTE_TYPES;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PERSONS = PrivilegeConstants.VIEW_PERSONS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_PERSONS = PrivilegeConstants.ADD_PERSONS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_PERSONS = PrivilegeConstants.EDIT_PERSONS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_PERSONS = PrivilegeConstants.DELETE_PERSONS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_PERSONS = PrivilegeConstants.PURGE_PERSONS;
-	
-	/**
-	 * @deprecated replacing with ADD/EDIT/DELETE privileges
-	 */
-	@Deprecated
-	public static final String PRIV_MANAGE_RELATIONSHIPS = "Manage Relationships";
-	
-	@Deprecated
-	public static final String PRIV_VIEW_RELATIONSHIPS = PrivilegeConstants.VIEW_RELATIONSHIPS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_RELATIONSHIPS = PrivilegeConstants.ADD_RELATIONSHIPS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_RELATIONSHIPS = PrivilegeConstants.EDIT_RELATIONSHIPS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_RELATIONSHIPS = PrivilegeConstants.DELETE_RELATIONSHIPS;
-	
-	@Deprecated
-	public static final String PRIV_PURGE_RELATIONSHIPS = PrivilegeConstants.PURGE_RELATIONSHIPS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_DATABASE_CHANGES = PrivilegeConstants.VIEW_DATABASE_CHANGES;
-	
-	@Deprecated
-	public static final String PRIV_MANAGE_IMPLEMENTATION_ID = PrivilegeConstants.MANAGE_IMPLEMENTATION_ID;
-	
-	@Deprecated
-	public static final String PRIV_SQL_LEVEL_ACCESS = PrivilegeConstants.SQL_LEVEL_ACCESS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_PROBLEMS = PrivilegeConstants.VIEW_PROBLEMS;
-	
-	@Deprecated
-	public static final String PRIV_ADD_PROBLEMS = PrivilegeConstants.ADD_PROBLEMS;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_PROBLEMS = PrivilegeConstants.EDIT_PROBLEMS;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_PROBLEMS = PrivilegeConstants.DELETE_PROBLEMS;
-	
-	@Deprecated
-	public static final String PRIV_VIEW_ALLERGIES = PrivilegeConstants.VIEW_ALLERGIES;
-	
-	@Deprecated
-	public static final String PRIV_ADD_ALLERGIES = PrivilegeConstants.ADD_ALLERGIES;
-	
-	@Deprecated
-	public static final String PRIV_EDIT_ALLERGIES = PrivilegeConstants.EDIT_ALLERGIES;
-	
-	@Deprecated
-	public static final String PRIV_DELETE_ALLERGIES = PrivilegeConstants.DELETE_ALLERGIES;
-	
-	/**
-	 * These are the privileges that are required by OpenMRS. Upon startup, if any of these
-	 * privileges do not exist in the database, they are inserted. These privileges are not allowed
-	 * to be deleted. They are marked as 'locked' in the administration screens.
-	 * 
-	 * @return privileges core to the system
-	 */
-	@Deprecated
-	public static final Map<String, String> CORE_PRIVILEGES() {
-		return OpenmrsUtil.getCorePrivileges();
-	}
-	
-	// Baked in Roles:
-	@Deprecated
-	public static final String SUPERUSER_ROLE = RoleConstants.SUPERUSER;
-	
-	@Deprecated
-	public static final String ANONYMOUS_ROLE = RoleConstants.ANONYMOUS;
-	
-	@Deprecated
-	public static final String AUTHENTICATED_ROLE = RoleConstants.AUTHENTICATED;
-	
-	@Deprecated
-	public static final String PROVIDER_ROLE = RoleConstants.PROVIDER;
-	
-	/**
-	 * All roles returned by this method are inserted into the database if they do not exist
-	 * already. These roles are also forbidden to be deleted from the administration screens.
-	 * 
-	 * @return roles that are core to the system
-	 */
-	@Deprecated
-	public static final Map<String, String> CORE_ROLES() {
-		return OpenmrsUtil.getCoreRoles();
-	}
-	
+		
 	/**
 	 * These roles are given to a user automatically and cannot be assigned
 	 * 
-	 * @return <code>Collection<String></code> of the auto-assigned roles
+	 * @return <code>Collection&lt;String&gt;</code> of the auto-assigned roles
 	 */
 	public static final Collection<String> AUTO_ROLES() {
 		List<String> roles = new Vector<String>();
 		
-		roles.add(ANONYMOUS_ROLE);
-		roles.add(AUTHENTICATED_ROLE);
+		roles.add(RoleConstants.ANONYMOUS);
+		roles.add(RoleConstants.AUTHENTICATED);
 		
 		return roles;
 	}
@@ -817,20 +266,25 @@ public final class OpenmrsConstants {
 	
 	public static final int GLOBAL_PROPERTY_PERSON_SEARCH_MAX_RESULTS_DEFAULT_VALUE = 1000;
 	
+	public static final String GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE = "person.attributeSearchMatchMode";
+	
+	public static final String GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_EXACT = "EXACT";
+	
+	public static final String GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_ANYWHERE = "ANYWHERE";
+	
 	public static final String GLOBAL_PROPERTY_GZIP_ENABLED = "gzip.enabled";
+	
+	public static final String GLOBAL_PROPERTY_GZIP_ACCEPT_COMPRESSED_REQUESTS_FOR_PATHS = "gzip.acceptCompressedRequestsForPaths";
 	
 	public static final String GLOBAL_PROPERTY_MEDICAL_RECORD_OBSERVATIONS = "concept.medicalRecordObservations";
 	
 	public static final String GLOBAL_PROPERTY_PROBLEM_LIST = "concept.problemList";
 	
-	@Deprecated
-	public static final String GLOBAL_PROPERTY_REPORT_XML_MACROS = "report.xmlMacros";
-	
-	public static final String GLOBAL_PROPERTY_STANDARD_DRUG_REGIMENS = "dashboard.regimen.standardRegimens";
-	
 	public static final String GLOBAL_PROPERTY_SHOW_PATIENT_NAME = "dashboard.showPatientName";
 	
 	public static final String GLOBAL_PROPERTY_ENABLE_VISITS = "visits.enabled";
+	
+	public static final String GLOBAL_PROPERTY_ALLOW_OVERLAPPING_VISITS = "visits.allowOverlappingVisits";
 	
 	public static final String GLOBAL_PROPERTY_DEFAULT_PATIENT_IDENTIFIER_VALIDATOR = "patient.defaultPatientIdentifierValidator";
 	
@@ -850,7 +304,7 @@ public final class OpenmrsConstants {
 	
 	public static final String GLOBAL_PROPERTY_MIN_SEARCH_CHARACTERS = "minSearchCharacters";
 	
-	public static final int GLOBAL_PROPERTY_DEFAULT_MIN_SEARCH_CHARACTERS = 3;
+	public static final int GLOBAL_PROPERTY_DEFAULT_MIN_SEARCH_CHARACTERS = 2;
 	
 	public static final String GLOBAL_PROPERTY_DEFAULT_LOCALE = "default_locale";
 	
@@ -866,6 +320,10 @@ public final class OpenmrsConstants {
 	
 	public static final String GLOBAL_PROPERTY_PATIENT_SEARCH_MATCH_ANYWHERE = "ANYWHERE";
 	
+	public static final String GLOBAL_PROPERTY_PATIENT_SEARCH_MATCH_START = "START";
+	
+	public static final String GLOBAL_PROPERTY_PROVIDER_SEARCH_MATCH_MODE = "providerSearch.matchMode";
+	
 	public static final String GLOBAL_PROPERTY_DEFAULT_SERIALIZER = "serialization.defaultSerializer";
 	
 	public static final String GLOBAL_PROPERTY_IGNORE_MISSING_NONLOCAL_PATIENTS = "hl7_processor.ignore_missing_patient_non_local";
@@ -874,34 +332,42 @@ public final class OpenmrsConstants {
 	
 	public static final String GLOBAL_PROPERTY_FALSE_CONCEPT = "concept.false";
 	
+	public static final String GLOBAL_PROPERTY_UNKNOWN_CONCEPT = "concept.unknown";
+	
 	public static final String GLOBAL_PROPERTY_LOCATION_WIDGET_TYPE = "location.field.style";
 	
 	public static final String GLOBAL_PROPERTY_REPORT_BUG_URL = "reportProblem.url";
 	
 	public static final String GLOBAL_PROPERTY_ADDRESS_TEMPLATE = "layout.address.format";
 	
-	public static final String DEFAULT_ADDRESS_TEMPLATE = "<org.openmrs.layout.web.address.AddressTemplate>\n"
+	public static final String GLOBAL_PROPERTY_LAYOUT_NAME_FORMAT = "layout.name.format";
+	
+	public static final String GLOBAL_PROPERTY_ENCOUNTER_TYPES_LOCKED = "EncounterType.encounterTypes.locked";
+	
+	public static final String GLOBAL_PROPERTY_FORMS_LOCKED = "forms.locked";
+	
+	public static final String GLOBAL_PROPERTY_PERSON_ATRIBUTE_TYPES_LOCKED = "personAttributeTypes.locked";
+	
+	public static final String GLOBAL_PROPERTY_PATIENT_IDENTIFIER_TYPES_LOCKED = "patientIdentifierTypes.locked";
+	
+	public static final String GLOBAL_PROPERTY_DRUG_ORDER_REQUIRE_DRUG = "drugOrder.requireDrug";
+	
+	public static final String DEFAULT_ADDRESS_TEMPLATE = "<org.openmrs.layout.address.AddressTemplate>\n"
 	        + "    <nameMappings class=\"properties\">\n"
 	        + "      <property name=\"postalCode\" value=\"Location.postalCode\"/>\n"
-	        + "      <property name=\"longitude\" value=\"Location.longitude\"/>\n"
 	        + "      <property name=\"address2\" value=\"Location.address2\"/>\n"
 	        + "      <property name=\"address1\" value=\"Location.address1\"/>\n"
-	        + "      <property name=\"startDate\" value=\"PersonAddress.startDate\"/>\n"
 	        + "      <property name=\"country\" value=\"Location.country\"/>\n"
-	        + "      <property name=\"endDate\" value=\"personAddress.endDate\"/>\n"
 	        + "      <property name=\"stateProvince\" value=\"Location.stateProvince\"/>\n"
-	        + "      <property name=\"latitude\" value=\"Location.latitude\"/>\n"
 	        + "      <property name=\"cityVillage\" value=\"Location.cityVillage\"/>\n" + "    </nameMappings>\n"
 	        + "    <sizeMappings class=\"properties\">\n" + "      <property name=\"postalCode\" value=\"10\"/>\n"
-	        + "      <property name=\"longitude\" value=\"10\"/>\n" + "      <property name=\"address2\" value=\"40\"/>\n"
-	        + "      <property name=\"address1\" value=\"40\"/>\n" + "      <property name=\"startDate\" value=\"10\"/>\n"
-	        + "      <property name=\"country\" value=\"10\"/>\n" + "      <property name=\"endDate\" value=\"10\"/>\n"
+	        + "      <property name=\"address2\" value=\"40\"/>\n" + "      <property name=\"address1\" value=\"40\"/>\n"
+	        + "      <property name=\"country\" value=\"10\"/>\n"
 	        + "      <property name=\"stateProvince\" value=\"10\"/>\n"
-	        + "      <property name=\"latitude\" value=\"10\"/>\n" + "      <property name=\"cityVillage\" value=\"10\"/>\n"
-	        + "    </sizeMappings>\n" + "    <lineByLineFormat>\n" + "      <string>address1</string>\n"
-	        + "      <string>address2</string>\n" + "      <string>cityVillage stateProvince country postalCode</string>\n"
-	        + "      <string>latitude longitude</string>\n" + "      <string>startDate endDate</string>\n"
-	        + "    </lineByLineFormat>\n" + "  </org.openmrs.layout.web.address.AddressTemplate>";
+	        + "      <property name=\"cityVillage\" value=\"10\"/>\n" + "    </sizeMappings>\n" + "    <lineByLineFormat>\n"
+	        + "      <string>address1</string>\n" + "      <string>address2</string>\n"
+	        + "      <string>cityVillage stateProvince country postalCode</string>\n" + "    </lineByLineFormat>\n"
+	        + "   <requiredElements>\\n\" + \" </requiredElements>\\n\" + \" </org.openmrs.layout.address.AddressTemplate>";
 	
 	/**
 	 * Global property name that allows specification of whether user passwords must contain both
@@ -973,15 +439,15 @@ public final class OpenmrsConstants {
 	public static final String GP_SEARCH_WIDGET_DELAY_INTERVAL = "searchWidget.searchDelayInterval";
 	
 	/**
-	 * Global property name for the prefix used when creating order numbers.
-	 */
-	public static final String GP_ORDER_ENTRY_ORDER_NUMBER_PREFIX = "orderEntry.orderNumberPrefix";
-	
-	/**
 	 * Global property name for the maximum number of results to return from a single search in the
 	 * search widgets
 	 */
 	public static final String GP_SEARCH_WIDGET_MAXIMUM_RESULTS = "searchWidget.maximumResults";
+	
+	/**
+	 * Global property for the Date format to be used to display date under search widgets and auto-completes
+	 */
+	public static final String GP_SEARCH_DATE_DISPLAY_FORMAT = "searchWidget.dateDisplayFormat";
 	
 	/**
 	 * Global property name for enabling/disabling concept map type management
@@ -1016,20 +482,17 @@ public final class OpenmrsConstants {
 	public static final String GP_DASHBOARD_METADATA_CASE_CONVERSION = "dashboard.metadata.caseConversion";
 	
 	/**
-	 * Global property name for the default ConceptMapType which is set automatically when no other
-	 * is set manually.
+	 * Global property name for the default ConceptMapType which is set automatically when no other is set manually.
 	 */
 	public static final String GP_DEFAULT_CONCEPT_MAP_TYPE = "concept.defaultConceptMapType";
 	
 	/**
-	 * Global property name of the allowed concept classes for the dosage form field of the concept
-	 * drug management form.
+	 * Global property name of the allowed concept classes for the dosage form field of the concept drug management form.
 	 */
 	public static final String GP_CONCEPT_DRUG_DOSAGE_FORM_CONCEPT_CLASSES = "conceptDrug.dosageForm.conceptClasses";
 	
 	/**
-	 * Global property name of the allowed concept classes for the route field of the concept drug
-	 * management form.
+	 * Global property name of the allowed concept classes for the route field of the concept drug management form.
 	 */
 	public static final String GP_CONCEPT_DRUG_ROUTE_CONCEPT_CLASSES = "conceptDrug.route.conceptClasses";
 	
@@ -1070,17 +533,64 @@ public final class OpenmrsConstants {
 	 */
 	public static final String AUTO_CLOSE_VISITS_TASK_NAME = "Auto Close Visits Task";
 	
-	public static final String GP_CONCEPT_INDEX_UPDATE_TASK_LAST_UPDATED_CONCEPT = "concept.IndexUpdateTask.lastConceptUpdated";
-	
 	public static final String GP_ALLOWED_FAILED_LOGINS_BEFORE_LOCKOUT = "security.allowedFailedLoginsBeforeLockout";
 	
-	public static final String GP_CASE_SENSITIVE_NAMES_IN_CONCEPT_NAME_TABLE = "concept.caseSensitiveNamesInConceptNameTable";
+	/**
+	 * @since 1.9.9, 1.10.2, 1.11
+	 */
+	public static final String GP_CASE_SENSITIVE_DATABASE_STRING_COMPARISON = "search.caseSensitiveDatabaseStringComparison";
 	
+	public static final String GP_DASHBOARD_CONCEPTS = "dashboard.header.showConcept";
+	
+	public static final String GP_MAIL_SMTP_STARTTLS_ENABLE = "mail.smtp.starttls.enable";
+	
+	public static final String GP_NEXT_ORDER_NUMBER_SEED = "order.nextOrderNumberSeed";
+	
+	public static final String GP_ORDER_NUMBER_GENERATOR_BEAN_ID = "order.orderNumberGeneratorBeanId";
+	
+	/**
+	 * Specifies the uuid of the concept set where its members represent the possible drug routes
+	 */
+	public static final String GP_DRUG_ROUTES_CONCEPT_UUID = "order.drugRoutesConceptUuid";
+	
+	public static final String GP_DRUG_DOSING_UNITS_CONCEPT_UUID = "order.drugDosingUnitsConceptUuid";
+	
+	public static final String GP_DRUG_DISPENSING_UNITS_CONCEPT_UUID = "order.drugDispensingUnitsConceptUuid";
+	
+	public static final String GP_DURATION_UNITS_CONCEPT_UUID = "order.durationUnitsConceptUuid";
+	
+	public static final String GP_TEST_SPECIMEN_SOURCES_CONCEPT_UUID = "order.testSpecimenSourcesConceptUuid";
+	
+	public static final String GP_UNKNOWN_PROVIDER_UUID = "provider.unknownProviderUuid";
+	
+	/**
+	 * @since 1.11
+	 */
+	public static final String GP_SEARCH_INDEX_VERSION = "search.indexVersion";
+	
+	/**
+	 * Indicates the version of the search index. The index will be rebuilt, if the version changes.
+	 * 
+	 * @since 1.11
+	 */
+	public static final Integer SEARCH_INDEX_VERSION = 3;
+
+	/**
+	 * @since 1.12
+	 */
+	public static final String GP_DISABLE_VALIDATION = "validation.disable";
+
+    /**
+     * @since 1.12
+	 * Specifies the uuid of the concept which represents drug non coded
+	 */
+	public static final String GP_DRUG_ORDER_DRUG_OTHER = "drugOrder.drugOther";
+
 	/**
 	 * At OpenMRS startup these global properties/default values/descriptions are inserted into the
 	 * database if they do not exist yet.
 	 * 
-	 * @return List<GlobalProperty> of the core global properties
+	 * @return List&lt;GlobalProperty&gt; of the core global properties
 	 */
 	public static final List<GlobalProperty> CORE_GLOBAL_PROPERTIES() {
 		List<GlobalProperty> props = new Vector<GlobalProperty>();
@@ -1098,6 +608,10 @@ public final class OpenmrsConstants {
 		
 		props.add(new GlobalProperty("dashboard.overview.showConcepts", "",
 		        "Comma delimited list of concepts ids to show on the patient dashboard overview tab"));
+		
+		props.add(new GlobalProperty(GP_DASHBOARD_CONCEPTS, "5497",
+		        "Comma delimited list of concepts ids to show on the patient header overview"));
+		
 		props
 		        .add(new GlobalProperty("dashboard.encounters.showEmptyFields", "true",
 		                "true/false whether or not to show empty fields on the 'View Encounter' window",
@@ -1154,60 +668,12 @@ public final class OpenmrsConstants {
 		props.add(new GlobalProperty(GLOBAL_PROPERTY_LOCATION_WIDGET_TYPE, "default",
 		        "Type of widget to use for location fields"));
 		
-		String standardRegimens = "<list>" + "  <regimenSuggestion>" + "    <drugComponents>" + "      <drugSuggestion>"
-		        + "        <drugId>2</drugId>" + "        <dose>1</dose>" + "        <units>tab(s)</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>" + "    </drugComponents>"
-		        + "    <displayName>3TC + d4T(30) + NVP (Triomune-30)</displayName>"
-		        + "    <codeName>standardTri30</codeName>" + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>"
-		        + "  </regimenSuggestion>" + "  <regimenSuggestion>" + "    <drugComponents>" + "      <drugSuggestion>"
-		        + "        <drugId>3</drugId>" + "        <dose>1</dose>" + "        <units>tab(s)</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>" + "    </drugComponents>"
-		        + "    <displayName>3TC + d4T(40) + NVP (Triomune-40)</displayName>"
-		        + "    <codeName>standardTri40</codeName>" + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>"
-		        + "  </regimenSuggestion>" + "  <regimenSuggestion>" + "    <drugComponents>" + "      <drugSuggestion>"
-		        + "        <drugId>39</drugId>" + "        <dose>1</dose>" + "        <units>tab(s)</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>" + "      <drugSuggestion>" + "        <drugId>22</drugId>"
-		        + "        <dose>200</dose>" + "        <units>mg</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>" + "    </drugComponents>" + "    <displayName>AZT + 3TC + NVP</displayName>"
-		        + "    <codeName>standardAztNvp</codeName>" + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>"
-		        + "  </regimenSuggestion>" + "  <regimenSuggestion>" + "    <drugComponents>"
-		        + "      <drugSuggestion reference=\"../../../regimenSuggestion[3]/drugComponents/drugSuggestion\"/>"
-		        + "      <drugSuggestion>" + "        <drugId>11</drugId>" + "        <dose>600</dose>"
-		        + "        <units>mg</units>" + "        <frequency>1/day x 7 days/week</frequency>"
-		        + "        <instructions></instructions>" + "      </drugSuggestion>" + "    </drugComponents>"
-		        + "    <displayName>AZT + 3TC + EFV(600)</displayName>" + "    <codeName>standardAztEfv</codeName>"
-		        + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>" + "  </regimenSuggestion>" + "  <regimenSuggestion>"
-		        + "    <drugComponents>" + "      <drugSuggestion>" + "        <drugId>5</drugId>"
-		        + "        <dose>30</dose>" + "        <units>mg</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>" + "      <drugSuggestion>" + "        <drugId>42</drugId>"
-		        + "        <dose>150</dose>" + "        		<units>mg</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>"
-		        + "      <drugSuggestion reference=\"../../../regimenSuggestion[4]/drugComponents/drugSuggestion[2]\"/>"
-		        + "    </drugComponents>" + "    <displayName>d4T(30) + 3TC + EFV(600)</displayName>"
-		        + "    <codeName>standardD4t30Efv</codeName>" + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>"
-		        + "  </regimenSuggestion>" + "  <regimenSuggestion>" + "    <drugComponents>" + "      <drugSuggestion>"
-		        + "        <drugId>6</drugId>" + "        <dose>40</dose>" + "        <units>mg</units>"
-		        + "        <frequency>2/day x 7 days/week</frequency>" + "        <instructions></instructions>"
-		        + "      </drugSuggestion>"
-		        + "      <drugSuggestion reference=\"../../../regimenSuggestion[5]/drugComponents/drugSuggestion[2]\"/>"
-		        + "      <drugSuggestion reference=\"../../../regimenSuggestion[4]/drugComponents/drugSuggestion[2]\"/>"
-		        + "    </drugComponents>" + "    <displayName>d4T(40) + 3TC + EFV(600)</displayName>"
-		        + "    <codeName>standardD4t40Efv</codeName>" + "    <canReplace>ANTIRETROVIRAL DRUGS</canReplace>"
-		        + "  </regimenSuggestion>" + "</list>";
-		props.add(new GlobalProperty(GLOBAL_PROPERTY_STANDARD_DRUG_REGIMENS, standardRegimens,
-		        "XML description of standard drug regimens, to be shown as shortcuts on the dashboard regimen entry tab"));
+		props.add(new GlobalProperty(GP_MAIL_SMTP_STARTTLS_ENABLE, "false",
+		        "Set to true to enable TLS encryption, else set to false"));
 		
 		props.add(new GlobalProperty("concept.weight", "5089", "Concept id of the concept defining the WEIGHT concept"));
 		props.add(new GlobalProperty("concept.height", "5090", "Concept id of the concept defining the HEIGHT concept"));
-		props
-		        .add(new GlobalProperty("concept.cd4_count", "5497",
-		                "Concept id of the concept defining the CD4 count concept"));
+		
 		props.add(new GlobalProperty("concept.causeOfDeath", "5002",
 		        "Concept id of the concept defining the CAUSE OF DEATH concept"));
 		props.add(new GlobalProperty("concept.none", "1107", "Concept id of the concept defining the NONE concept"));
@@ -1294,7 +760,7 @@ public final class OpenmrsConstants {
 		props
 		        .add(new GlobalProperty(
 		                GLOBAL_PROPERTY_PATIENT_NAME_REGEX,
-		                "^[a-zA-Z \\-]+$",
+		                "",
 		                "Names of the patients must pass this regex. Eg : ^[a-zA-Z \\-]+$ contains only english alphabet letters, spaces, and hyphens. A value of .* or the empty string means no validation is done."));
 		
 		props.add(new GlobalProperty(GLOBAL_PROPERTY_PERSON_SEARCH_MAX_RESULTS, String
@@ -1307,9 +773,6 @@ public final class OpenmrsConstants {
 		                "false",
 		                "Set to 'true' to turn on OpenMRS's gzip filter, and have the webapp compress data before sending it to any client that supports it. Generally use this if you are running Tomcat standalone. If you are running Tomcat behind Apache, then you'd want to use Apache to do gzip compression.",
 		                BooleanDatatype.class, null));
-		props
-		        .add(new GlobalProperty(GLOBAL_PROPERTY_REPORT_XML_MACROS, "",
-		                "Macros that will be applied to Report Schema XMLs when they are interpreted. This should be java.util.properties format."));
 		
 		props
 		        .add(new GlobalProperty(
@@ -1356,7 +819,7 @@ public final class OpenmrsConstants {
 		                "number",
 		                "The sort order for the obs listed on the encounter edit form.  'number' sorts on the associated numbering from the form schema.  'weight' sorts on the order displayed in the form schema."));
 		
-		props.add(new GlobalProperty(GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST, "en, es, fr, it, pt",
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST, "en, en_GB, es, fr, it, pt",
 		        "Comma delimited list of locales allowed for use on system"));
 		
 		props
@@ -1365,7 +828,7 @@ public final class OpenmrsConstants {
 		                "",
 		                "Comma separated list of the RelationshipTypes to show on the new/short patient form.  The list is defined like '3a, 4b, 7a'.  The number is the RelationshipTypeId and the 'a' vs 'b' part is which side of the relationship is filled in by the user."));
 		
-		props.add(new GlobalProperty(GLOBAL_PROPERTY_MIN_SEARCH_CHARACTERS, "3",
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_MIN_SEARCH_CHARACTERS, "2",
 		        "Number of characters user must input before searching is started."));
 		
 		props
@@ -1431,19 +894,20 @@ public final class OpenmrsConstants {
 		props
 		        .add(new GlobalProperty(
 		                GP_SEARCH_WIDGET_DELAY_INTERVAL,
-		                "400",
+		                "300",
 		                "Specifies time interval in milliseconds when searching, between keyboard keyup event and triggering the search off, should be higher if most users are slow when typing so as to minimise the load on the server"));
+		
+		props
+		        .add(new GlobalProperty(GP_SEARCH_DATE_DISPLAY_FORMAT, null,
+		                "Date display format to be used to display the date somewhere in the UI i.e the search widgets and autocompletes"));
 		
 		props.add(new GlobalProperty(GLOBAL_PROPERTY_DEFAULT_LOCATION_NAME, "Unknown Location",
 		        "The name of the location to use as a system default"));
 		props
 		        .add(new GlobalProperty(
 		                GLOBAL_PROPERTY_PATIENT_SEARCH_MATCH_MODE,
-		                "START",
+		                GLOBAL_PROPERTY_PATIENT_SEARCH_MATCH_START,
 		                "Specifies how patient names are matched while searching patient. Valid values are 'ANYWHERE' or 'START'. Defaults to start if missing or invalid value is present."));
-		
-		props.add(new GlobalProperty(GP_ORDER_ENTRY_ORDER_NUMBER_PREFIX, ORDER_NUMBER_DEFAULT_PREFIX,
-		        "Specifies the prefix used when creating order numbers"));
 		
 		props.add(new GlobalProperty(GP_ENABLE_CONCEPT_MAP_TYPE_MANAGEMENT, "false",
 		        "Enables or disables management of concept map types", BooleanDatatype.class, null));
@@ -1467,6 +931,9 @@ public final class OpenmrsConstants {
 		                "",
 		                "Specifies how encounter types are mapped to visit types when automatically assigning encounters to visits. e.g 1:1, 2:1, 3:2 in the format encounterTypeId:visitTypeId or encounterTypeUuid:visitTypeUuid or a combination of encounter/visit type uuids and ids e.g 1:759799ab-c9a5-435e-b671-77773ada74e4"));
 		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_ENCOUNTER_TYPES_LOCKED, "false",
+		        "saving, retiring or deleting an Encounter Type is not permitted, if true", BooleanDatatype.class, null));
+		
 		props
 		        .add(new GlobalProperty(
 		                GP_DASHBOARD_PROVIDER_DISPLAY_ENCOUNTER_ROLES,
@@ -1479,7 +946,7 @@ public final class OpenmrsConstants {
 		props
 		        .add(new GlobalProperty(
 		                GP_DASHBOARD_MAX_NUMBER_OF_ENCOUNTERS_TO_SHOW,
-		                "",
+		                "3",
 		                "An integer which, if specified, would determine the maximum number of encounters to display on the encounter tab of the patient dashboard."));
 		
 		props.add(new GlobalProperty(GP_VISIT_TYPES_TO_AUTO_CLOSE, "",
@@ -1501,9 +968,9 @@ public final class OpenmrsConstants {
 		
 		props
 		        .add(new GlobalProperty(
-		                GP_CASE_SENSITIVE_NAMES_IN_CONCEPT_NAME_TABLE,
+		                GP_CASE_SENSITIVE_DATABASE_STRING_COMPARISON,
 		                "true",
-		                "Indicates whether names in the concept_name table are case sensitive or not. Setting this to false for MySQL with a case insensitive collation improves search performance."));
+		                "Indicates whether database string comparison is case sensitive or not. Setting this to false for MySQL with a case insensitive collation improves search performance."));
 		props
 		        .add(new GlobalProperty(
 		                GP_DASHBOARD_METADATA_CASE_CONVERSION,
@@ -1519,6 +986,91 @@ public final class OpenmrsConstants {
 		props.add(new GlobalProperty(GLOBAL_PROPERTY_USER_REQUIRE_EMAIL_AS_USERNAME, "false",
 		        "Indicates whether a username must be a valid e-mail or not.", BooleanDatatype.class, null));
 		
+		props.add(new GlobalProperty(GP_SEARCH_INDEX_VERSION, "",
+		        "Indicates the index version. If it is blank, the index needs to be rebuilt."));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_ALLOW_OVERLAPPING_VISITS, "true",
+		        "true/false whether or not to allow visits of a given patient to overlap", BooleanDatatype.class, null));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_FORMS_LOCKED, "false",
+		        "Set to a value of true if you do not want any changes to be made on forms, else set to false."));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_DRUG_ORDER_REQUIRE_DRUG, "false",
+		        "Set to value true if you need to specify a formulation(Drug) when creating a drug order."));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_PERSON_ATRIBUTE_TYPES_LOCKED, "false",
+		        "Set to a value of true if you do not want allow editing person attribute types, else set to false."));
+		
+		props.add(new GlobalProperty(GLOBAL_PROPERTY_PATIENT_IDENTIFIER_TYPES_LOCKED, "false",
+		        "Set to a value of true if you do not want allow editing patient identifier types, else set to false."));
+		
+		props.add(new GlobalProperty(GP_NEXT_ORDER_NUMBER_SEED, "1", "The next order number available for assignment"));
+		
+		props.add(new GlobalProperty(GP_ORDER_NUMBER_GENERATOR_BEAN_ID, "",
+		        "Specifies spring bean id of the order generator to use when assigning order numbers"));
+		
+		props.add(new GlobalProperty(GP_DRUG_ROUTES_CONCEPT_UUID, "",
+		        "Specifies the uuid of the concept set where its members represent the possible drug routes"));
+		
+		props.add(new GlobalProperty(GP_DRUG_DOSING_UNITS_CONCEPT_UUID, "",
+		        "Specifies the uuid of the concept set where its members represent the possible drug dosing units"));
+		
+		props.add(new GlobalProperty(GP_DRUG_DISPENSING_UNITS_CONCEPT_UUID, "",
+		        "Specifies the uuid of the concept set where its members represent the possible drug dispensing units"));
+		
+		props.add(new GlobalProperty(GP_DURATION_UNITS_CONCEPT_UUID, "",
+		        "Specifies the uuid of the concept set where its members represent the possible duration units"));
+		
+		props.add(new GlobalProperty(GP_TEST_SPECIMEN_SOURCES_CONCEPT_UUID, "",
+		        "Specifies the uuid of the concept set where its members represent the possible test specimen sources"));
+		
+		props.add(new GlobalProperty(GP_UNKNOWN_PROVIDER_UUID, "", "Specifies the uuid of the Unknown Provider account"));
+		
+		props
+		        .add(new GlobalProperty(
+		                GLOBAL_PROPERTY_PROVIDER_SEARCH_MATCH_MODE,
+		                "EXACT",
+		                "Specifies how provider identifiers are matched while searching for providers. Valid values are START,EXACT, END or ANYWHERE"));
+		
+		props
+		        .add(new GlobalProperty(
+		                GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE,
+		                GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_EXACT,
+		                "Specifies how person attributes are matched while searching person. Valid values are 'ANYWHERE' or 'EXACT'. Defaults to exact if missing or invalid value is present."));
+
+		props.add(new GlobalProperty(GP_DISABLE_VALIDATION, "false",
+				"Disables validation of OpenMRS Objects. Only takes affect on next restart. Warning: only do this is you know what you are doing!"));
+
+
+		props.add(new GlobalProperty("allergy.concept.severity.mild", "1498AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the MILD severity concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.severity.moderate", "1499AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the MODERATE severity concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.severity.severe", "1500AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the SEVERE severity concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.allergen.food", "162553AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the food allergens concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.allergen.drug", "162552AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the drug allergens concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.allergen.environment", "162554AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the environment allergens concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.reactions", "162555AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the allergy reactions concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.otherNonCoded", "5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the allergy other non coded concept"));
+		
+		props.add(new GlobalProperty("allergy.concept.unknown", "1067AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		        "UUID for the allergy unknown concept"));
+		
+		props
+				.add(new GlobalProperty(GP_DRUG_ORDER_DRUG_OTHER, "", "Specifies the uuid of the concept which represents drug other non coded"));
 		for (GlobalProperty gp : ModuleFactory.getGlobalProperties()) {
 			props.add(gp);
 		}
@@ -1554,70 +1106,6 @@ public final class OpenmrsConstants {
 	public static Locale PORTUGUESE_LANGUAGE = new Locale("pt");
 	
 	public static Locale ITALIAN_LANGUAGE = new Locale("it");
-	
-	/**
-	 * @return Collection of locales available to openmrs
-	 * @deprecated
-	 */
-	public static final Collection<Locale> OPENMRS_LOCALES() {
-		List<Locale> languages = new Vector<Locale>();
-		
-		languages.add(Locale.US);
-		languages.add(Locale.UK);
-		languages.add(Locale.FRENCH);
-		languages.add(SPANISH_LANGUAGE);
-		languages.add(PORTUGUESE_LANGUAGE);
-		languages.add(ITALIAN_LANGUAGE);
-		
-		return languages;
-	}
-	
-	/**
-	 * @deprecated use {@link LocaleUtility#getDefaultLocale()}
-	 */
-	public static final Locale GLOBAL_DEFAULT_LOCALE = LocaleUtility.DEFAULT_LOCALE;
-	
-	/**
-	 * @return Collection of locales that the concept dictionary should be aware of
-	 * @see ConceptService#getLocalesOfConceptNames()
-	 * @deprecated
-	 */
-	public static final Collection<Locale> OPENMRS_CONCEPT_LOCALES() {
-		List<Locale> languages = new Vector<Locale>();
-		
-		languages.add(Locale.ENGLISH);
-		languages.add(Locale.FRENCH);
-		languages.add(SPANISH_LANGUAGE);
-		languages.add(PORTUGUESE_LANGUAGE);
-		languages.add(ITALIAN_LANGUAGE);
-		
-		return languages;
-	}
-	
-	@Deprecated
-	private static Map<String, String> OPENMRS_LOCALE_DATE_PATTERNS = null;
-	
-	/**
-	 * @return Mapping of Locales to locale specific date pattern
-	 * @deprecated use the {@link org.openmrs.api.context.Context#getDateFormat()}
-	 */
-	public static final Map<String, String> OPENMRS_LOCALE_DATE_PATTERNS() {
-		if (OPENMRS_LOCALE_DATE_PATTERNS == null) {
-			Map<String, String> patterns = new HashMap<String, String>();
-			
-			patterns.put(Locale.US.toString().toLowerCase(), "MM/dd/yyyy");
-			patterns.put(Locale.UK.toString().toLowerCase(), "dd/MM/yyyy");
-			patterns.put(Locale.FRENCH.toString().toLowerCase(), "dd/MM/yyyy");
-			patterns.put(Locale.GERMAN.toString().toLowerCase(), "MM.dd.yyyy");
-			patterns.put(SPANISH_LANGUAGE.toString().toLowerCase(), "dd/MM/yyyy");
-			patterns.put(PORTUGUESE_LANGUAGE.toString().toLowerCase(), "dd/MM/yyyy");
-			patterns.put(ITALIAN_LANGUAGE.toString().toLowerCase(), "dd/MM/yyyy");
-			
-			OPENMRS_LOCALE_DATE_PATTERNS = patterns;
-		}
-		
-		return OPENMRS_LOCALE_DATE_PATTERNS;
-	}
 	
 	/*
 	 * User property names
@@ -1657,18 +1145,6 @@ public final class OpenmrsConstants {
 	 * <code>proficientLocales = en_US, en_GB, en, fr_RW</code>
 	 */
 	public static final String USER_PROPERTY_PROFICIENT_LOCALES = "proficientLocales";
-	
-	/**
-	 * Report object properties
-	 */
-	@Deprecated
-	public static final String REPORT_OBJECT_TYPE_PATIENTFILTER = "Patient Filter";
-	
-	@Deprecated
-	public static final String REPORT_OBJECT_TYPE_PATIENTSEARCH = "Patient Search";
-	
-	@Deprecated
-	public static final String REPORT_OBJECT_TYPE_PATIENTDATAPRODUCER = "Patient Data Producer";
 	
 	// Used for differences between windows/linux upload capabilities)
 	// Used for determining where to find runtime properties
@@ -1759,22 +1235,24 @@ public final class OpenmrsConstants {
 	 * @see org.openmrs.api.PersonService
 	 */
 	public static enum PERSON_TYPE {
-		PERSON, PATIENT, USER
+		PERSON,
+		PATIENT,
+		USER
 	}
 	
 	//Patient Identifier Validators
 	public static final String LUHN_IDENTIFIER_VALIDATOR = LuhnIdentifierValidator.class.getName();
-	
-	// ComplexObsHandler views
-	public static final String RAW_VIEW = "RAW_VIEW";
-	
-	public static final String TEXT_VIEW = "TEXT_VIEW";
-	
-	public static final String ORDER_NUMBER_DEFAULT_PREFIX = "OR:";
 	
 	/** The data type to return on failing to load a custom data type. */
 	public static final String DEFAULT_CUSTOM_DATATYPE = FreeTextDatatype.class.getName();
 	
 	/**Prefix followed by registered component name.*/
 	public static final String REGISTERED_COMPONENT_NAME_PREFIX = "bean:";
+	
+	/** Value for the short person name format */
+	public static final String PERSON_NAME_FORMAT_SHORT = "short";
+	
+	/** Value for the long person name format */
+	public static final String PERSON_NAME_FORMAT_LONG = "long";
+
 }

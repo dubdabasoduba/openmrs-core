@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -44,8 +40,9 @@ public class ImplementationId implements java.io.Serializable {
 		if (o instanceof ImplementationId) {
 			ImplementationId other = (ImplementationId) o;
 			
-			if (getImplementationId() != null && other.getImplementationId() != null)
+			if (getImplementationId() != null && other.getImplementationId() != null) {
 				return getImplementationId().equals(other.getImplementationId());
+			}
 			
 			return this == other;
 		}
@@ -56,8 +53,9 @@ public class ImplementationId implements java.io.Serializable {
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		if (getImplementationId() != null)
+		if (getImplementationId() != null) {
 			return getImplementationId().hashCode() * 342 + 3;
+		}
 		
 		return super.hashCode();
 	}
@@ -65,7 +63,7 @@ public class ImplementationId implements java.io.Serializable {
 	/**
 	 * Text describing this implementation. (e.g. Source for the AMPATH program in Kenya. Created by
 	 * Paul Biondich)
-	 * 
+	 *
 	 * @return Returns the description.
 	 */
 	@Element(data = true)
@@ -76,7 +74,7 @@ public class ImplementationId implements java.io.Serializable {
 	/**
 	 * Text describing this implementation. (e.g. Source for the AMPATH program in Kenya. Created by
 	 * Paul Biondich)
-	 * 
+	 *
 	 * @param description The description to set.
 	 */
 	@Element(data = true)
@@ -85,14 +83,13 @@ public class ImplementationId implements java.io.Serializable {
 	}
 	
 	/**
-	 * This is the unique id for this implementation. <br/>
-	 * <br/>
+	 * This is the unique id for this implementation. <br>
+	 * <br>
 	 * The implementation id corresponds to the hl7Code of the ConceptSource that this corresponds
-	 * to.<br/>
-	 * <br/>
+	 * to.<br>
+	 * <br>
 	 * Must be limited to 20 characters and numbers. The characters "^" and "|" are not allowed.
-	 * 
-	 * @param implementationId the implementationId to set
+	 *
 	 * @return the implementationId
 	 */
 	@Attribute
@@ -101,13 +98,13 @@ public class ImplementationId implements java.io.Serializable {
 	}
 	
 	/**
-	 * This is the unique id for this implementation. <br/>
-	 * <br/>
+	 * This is the unique id for this implementation. <br>
+	 * <br>
 	 * The implementation id corresponds to the hl7Code of the ConceptSource that this corresponds
-	 * to. <br/>
-	 * <br/>
+	 * to. <br>
+	 * <br>
 	 * Must be limited to 20 characters and numbers. The characters "^" and "|" are not allowed.
-	 * 
+	 *
 	 * @param implementationId the implementationId to set
 	 */
 	@Attribute
@@ -120,7 +117,7 @@ public class ImplementationId implements java.io.Serializable {
 	 * Multiple installations of openmrs can use the same implmentation id, but they must all know
 	 * the passphrase. (Note that if an implementation id is shared, it is assumed that those
 	 * installations are the same implementation).
-	 * 
+	 *
 	 * @return the passphrase
 	 */
 	@Element(data = true, required = false)
@@ -133,7 +130,7 @@ public class ImplementationId implements java.io.Serializable {
 	 * Multiple installations of openmrs can use the same implmentation id, but they must all know
 	 * the passphrase. (Note that if an implementation id is shared, it is assumed that those
 	 * installations are the same implementation).
-	 * 
+	 *
 	 * @param passphrase the passphrase to set
 	 */
 	@Element(data = true, required = false)
@@ -143,7 +140,7 @@ public class ImplementationId implements java.io.Serializable {
 	
 	/**
 	 * A descriptive name for this implementation (e.g. AMRS installation in Eldoret, Kenya)
-	 * 
+	 *
 	 * @return Returns the name.
 	 */
 	@Element(data = true)
@@ -153,7 +150,7 @@ public class ImplementationId implements java.io.Serializable {
 	
 	/**
 	 * A descriptive name for this implementation (e.g. AMRS installation in Eldoret, Kenya)
-	 * 
+	 *
 	 * @param name The concept source name to set.
 	 */
 	@Element(data = true)

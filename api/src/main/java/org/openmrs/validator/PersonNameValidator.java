@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.validator;
 
@@ -25,7 +21,7 @@ import org.springframework.validation.Validator;
 
 /**
  * This class validates a PersonName object.
- * 
+ *
  * @since 1.7
  */
 @Handler(supports = { PersonName.class }, order = 50)
@@ -42,15 +38,18 @@ public class PersonNameValidator implements Validator {
 	
 	/**
 	 * Checks whether person name has all required values, and whether values are proper length
-	 * 
-	 * @param personName
+	 *
+	 * @param object
 	 * @param errors
 	 * @should fail validation if PersonName object is null
 	 * @should pass validation if name is invalid but voided
+	 * @should pass validation if field lengths are correct
+	 * @should fail validation if field lengths are not correct
 	 */
 	public void validate(Object object, Errors errors) {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug(this.getClass().getName() + ".validate...");
+		}
 		PersonName personName = (PersonName) object;
 		try {
 			// Validate that the person name object is not null
@@ -67,7 +66,7 @@ public class PersonNameValidator implements Validator {
 	
 	/**
 	 * Checks that the given {@link PersonName} is valid
-	 * 
+	 *
 	 * @param personName the {@link PersonName} to validate
 	 * @param errors
 	 * @param arrayInd indicates whether or not a names[0] array needs to be prepended to field
@@ -120,50 +119,38 @@ public class PersonNameValidator implements Validator {
 	 */
 	public void validatePersonName(PersonName personName, Errors errors, boolean arrayInd, boolean testInd) {
 		
-		if (personName == null)
+		if (personName == null) {
 			errors.reject("error.name");
+			return;
+		}
 		// Make sure they assign a name
 		if (StringUtils.isBlank(personName.getGivenName())
-		        || StringUtils.isBlank(personName.getGivenName().replaceAll("\"", "")))
+		        || StringUtils.isBlank(personName.getGivenName().replaceAll("\"", ""))) {
 			errors.rejectValue(getFieldKey("givenName", arrayInd, testInd), "Patient.names.required.given.family");
+		}
 		if (StringUtils.isBlank(personName.getFamilyName())
-		        || StringUtils.isBlank(personName.getFamilyName().replaceAll("\"", "")))
+		        || StringUtils.isBlank(personName.getFamilyName().replaceAll("\"", ""))) {
 			errors.rejectValue(getFieldKey("familyName", arrayInd, testInd), "Patient.names.required.given.family");
+		}
 		// Make sure the entered name value is sensible 
 		String namePattern = Context.getAdministrationService().getGlobalProperty(
 		    OpenmrsConstants.GLOBAL_PROPERTY_PATIENT_NAME_REGEX);
-		if (namePattern != null && namePattern != "") {
-			if (StringUtils.isNotBlank(personName.getGivenName()) && !personName.getGivenName().matches(namePattern))
+		if (StringUtils.isNotBlank(namePattern)) {
+			if (StringUtils.isNotBlank(personName.getGivenName()) && !personName.getGivenName().matches(namePattern)) {
 				errors.rejectValue(getFieldKey("givenName", arrayInd, testInd), "GivenName.invalid");
-			if (StringUtils.isNotBlank(personName.getMiddleName()) && !personName.getMiddleName().matches(namePattern))
+			}
+			if (StringUtils.isNotBlank(personName.getMiddleName()) && !personName.getMiddleName().matches(namePattern)) {
 				errors.rejectValue(getFieldKey("middleName", arrayInd, testInd), "MiddleName.invalid");
-			if (StringUtils.isNotBlank(personName.getFamilyName()) && !personName.getFamilyName().matches(namePattern))
+			}
+			if (StringUtils.isNotBlank(personName.getFamilyName()) && !personName.getFamilyName().matches(namePattern)) {
 				errors.rejectValue(getFieldKey("familyName", arrayInd, testInd), "FamilyName.invalid");
-			if (StringUtils.isNotBlank(personName.getFamilyName2()) && !personName.getFamilyName2().matches(namePattern))
+			}
+			if (StringUtils.isNotBlank(personName.getFamilyName2()) && !personName.getFamilyName2().matches(namePattern)) {
 				errors.rejectValue(getFieldKey("familyName2", arrayInd, testInd), "FamilyName2.invalid");
+			}
 		}
-		// Make sure the length does not exceed database column size
-		if (StringUtils.length(personName.getPrefix()) > 50)
-			rejectPersonNameOnLength(errors, "prefix", arrayInd, testInd);
-		if (StringUtils.length(personName.getGivenName()) > 50)
-			rejectPersonNameOnLength(errors, "givenName", arrayInd, testInd);
-		if (StringUtils.length(personName.getMiddleName()) > 50)
-			rejectPersonNameOnLength(errors, "middleName", arrayInd, testInd);
-		if (StringUtils.length(personName.getFamilyNamePrefix()) > 50)
-			rejectPersonNameOnLength(errors, "familyNamePrefix", arrayInd, testInd);
-		if (StringUtils.length(personName.getFamilyName()) > 50)
-			rejectPersonNameOnLength(errors, "familyName", arrayInd, testInd);
-		if (StringUtils.length(personName.getFamilyName2()) > 50)
-			rejectPersonNameOnLength(errors, "familyName2", arrayInd, testInd);
-		if (StringUtils.length(personName.getFamilyNameSuffix()) > 50)
-			rejectPersonNameOnLength(errors, "familyNameSuffix", arrayInd, testInd);
-		if (StringUtils.length(personName.getDegree()) > 50)
-			rejectPersonNameOnLength(errors, "degree", arrayInd, testInd);
-	}
-	
-	private void rejectPersonNameOnLength(Errors errors, String fieldKey, boolean arrayInd, boolean testInd) {
-		errors.rejectValue(getFieldKey(fieldKey, arrayInd, testInd), "error.name.max.length", new Object[] {
-		        getInternationizedFieldName("PersonName." + fieldKey), 50 }, "error.name");
+		ValidateUtil.validateFieldLengths(errors, personName.getClass(), "prefix", "givenName", "middleName",
+		    "familyNamePrefix", "familyName", "familyName2", "familyNameSuffix", "degree", "voidReason");
 	}
 	
 	/***********************************************************************************************************
@@ -173,10 +160,6 @@ public class PersonNameValidator implements Validator {
 	 */
 	private String getFieldKey(String field, boolean arrayInd, boolean testInd) {
 		return testInd ? field : arrayInd ? "names[0]." + field : "name." + field;
-	}
-	
-	private static String getInternationizedFieldName(String messageKey) {
-		return Context.getMessageSourceService().getMessage(messageKey, null, Context.getLocale());
 	}
 	
 }

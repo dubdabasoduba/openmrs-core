@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -24,9 +20,9 @@ import org.openmrs.aop.RequiredDataAdvice;
 /**
  * This class deals with {@link ConceptReferenceTerm} objects when they are saved via a save* method
  * in an Openmrs Service. This handler is automatically called by the {@link RequiredDataAdvice} AOP
- * class. <br/>
- * It sets the termA field for all {@link ConceptReferenceTermMap}s</li>
- * 
+ * class. <br>
+ * It sets the termA field for all {@link ConceptReferenceTermMap}s
+ *
  * @see RequiredDataHandler
  * @see SaveHandler
  * @see ConceptReferenceTerm
@@ -38,14 +34,15 @@ public class ConceptReferenceTermSaveHandler implements SaveHandler<ConceptRefer
 	/**
 	 * Sets the concept reference term as the term A for all the {@link ConceptReferenceTermMap}s
 	 * added to it.
-	 * 
+	 *
 	 * @see org.openmrs.api.handler.RequiredDataHandler#handle(org.openmrs.OpenmrsObject,
 	 *      org.openmrs.User, java.util.Date, java.lang.String)
 	 */
 	public void handle(ConceptReferenceTerm conceptReferenceTerm, User currentUser, Date currentDate, String other) {
 		if (conceptReferenceTerm.getConceptReferenceTermMaps() != null) {
-			for (ConceptReferenceTermMap map : conceptReferenceTerm.getConceptReferenceTermMaps())
+			for (ConceptReferenceTermMap map : conceptReferenceTerm.getConceptReferenceTermMaps()) {
 				map.setTermA(conceptReferenceTerm);
+			}
 		}
 	}
 }

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification;
 
@@ -70,19 +66,20 @@ public class Alert extends BaseOpenmrsObject implements Auditable, Serializable 
 	
 	/**
 	 * Convenience constructor to create an alert with the given text and for the given users
-	 * 
+	 *
 	 * @param text String to display for the alert
 	 * @param users Recipients of this alert
 	 */
 	public Alert(String text, Collection<User> users) {
 		setText(text);
-		for (User user : users)
+		for (User user : users) {
 			addRecipient(user);
+		}
 	}
 	
 	/**
 	 * Convenience constructor to create an alert with the given text and for the given users
-	 * 
+	 *
 	 * @param text String to display for the alert
 	 * @param user Recipient of the alert
 	 */
@@ -247,12 +244,13 @@ public class Alert extends BaseOpenmrsObject implements Auditable, Serializable 
 	
 	/**
 	 * Convenience method to add the given AlertRecipient to the list of recipients for this alert
-	 * 
+	 *
 	 * @param r AlertRecipient to add
 	 */
 	public void addRecipient(AlertRecipient r) {
-		if (this.recipients == null)
+		if (this.recipients == null) {
 			this.recipients = new HashSet<AlertRecipient>();
+		}
 		r.setAlert(this);
 		// duplicates are avoided by depending on the .equals and .hashcode
 		//  methods of Alert
@@ -261,7 +259,7 @@ public class Alert extends BaseOpenmrsObject implements Auditable, Serializable 
 	
 	/**
 	 * Convenience method to add the given user to this list of recipients for this alert
-	 * 
+	 *
 	 * @param u User to add to list of recipients
 	 */
 	public void addRecipient(User u) {
@@ -270,34 +268,37 @@ public class Alert extends BaseOpenmrsObject implements Auditable, Serializable 
 	
 	/**
 	 * Convenience method to remove the given AlertRecipient from this Alert's list of recipients
-	 * 
+	 *
 	 * @param r user to remove from list of recipients
 	 */
 	public void removeRecipient(AlertRecipient r) {
-		if (recipients != null)
+		if (recipients != null) {
 			recipients.remove(r);
+		}
 	}
 	
 	/**
 	 * Convenience method to find the AlertRecipient object within this alert that corresponds to
 	 * the given <code>recipient</code>
-	 * 
+	 *
 	 * @param recipient
 	 * @return AlertRecipient
 	 */
 	public AlertRecipient getRecipient(User recipient) {
-		if (getRecipients() != null)
+		if (getRecipients() != null) {
 			for (AlertRecipient ar : recipients) {
-				if (ar.getRecipient().equals(recipient))
+				if (ar.getRecipient().equals(recipient)) {
 					return ar;
+				}
 			}
+		}
 		return null;
 	}
 	
 	/**
 	 * Convenience method to mark this alert as read. In order to persist this change in the
 	 * database, AlertService.saveAlert(Alert) will need to be called after this method is done.
-	 * 
+	 *
 	 * @return This alert (for chaining and one-liner purposes)
 	 * @see org.openmrs.notification.AlertService#saveAlert(Alert)
 	 */
@@ -307,8 +308,9 @@ public class Alert extends BaseOpenmrsObject implements Auditable, Serializable 
 		if (authUser != null) {
 			AlertRecipient ar = getRecipient(authUser);
 			ar.setAlertRead(true);
-			if (isSatisfiedByAny())
+			if (isSatisfiedByAny()) {
 				setAlertRead(true);
+			}
 		}
 		
 		return this;

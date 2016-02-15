@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.impl;
 
@@ -42,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Default implementation of the {@link VisitService}. This class should not be used on its own. The
  * current OpenMRS implementation should be fetched from the Context.
- * 
+ *
  * @since 1.9
  */
 @Transactional
@@ -52,7 +48,7 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	
 	/**
 	 * Method used to inject the visit data access object.
-	 * 
+	 *
 	 * @param dao the visit data access object.
 	 */
 	public void setVisitDAO(VisitDAO dao) {
@@ -116,14 +112,14 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	 * @see org.openmrs.api.VisitService#retireVisitType(org.openmrs.VisitType, java.lang.String)
 	 */
 	public VisitType retireVisitType(VisitType visitType, String reason) {
-		return saveVisitType(visitType);
+		return Context.getVisitService().saveVisitType(visitType);
 	}
 	
 	/**
 	 * @see org.openmrs.api.VisitService#unretireVisitType(org.openmrs.VisitType)
 	 */
 	public VisitType unretireVisitType(VisitType visitType) {
-		return saveVisitType(visitType);
+		return Context.getVisitService().saveVisitType(visitType);
 	}
 	
 	/**
@@ -165,22 +161,24 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	 */
 	@Override
 	public Visit saveVisit(Visit visit) throws APIException {
-		if (visit.getVisitId() == null)
+		if (visit.getVisitId() == null) {
 			Context.requirePrivilege(PrivilegeConstants.ADD_VISITS);
-		else
+		} else {
 			Context.requirePrivilege(PrivilegeConstants.EDIT_VISITS);
+		}
 		
 		CustomDatatypeUtil.saveAttributesIfNecessary(visit);
 		return dao.saveVisit(visit);
 	}
 	
 	/**
-	 * @see org.openmrs.api.VisitService#endVisit(org.openmrs.Visit,java.util.Date)
+	 * @see org.openmrs.api.VisitService#endVisit(org.openmrs.Visit, java.util.Date)
 	 */
 	@Override
 	public Visit endVisit(Visit visit, Date stopDate) {
-		if (stopDate == null)
+		if (stopDate == null) {
 			stopDate = new Date();
+		}
 		
 		visit.setStopDatetime(stopDate);
 		
@@ -208,18 +206,17 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	 */
 	@Override
 	public void purgeVisit(Visit visit) throws APIException {
-		if (visit.getVisitId() == null)
+		if (visit.getVisitId() == null) {
 			return;
-		if (Context.getEncounterService().getEncountersByVisit(visit, true).size() > 0)
-			throw new APIException(Context.getMessageSourceService().getMessage("Visit.purge.inUse", null,
-			    "Cannot purge a visit that has encounters associated to it", Context.getLocale()));
+		}
+		if (Context.getEncounterService().getEncountersByVisit(visit, true).size() > 0) {
+			throw new APIException("Visit.purge.inUse", (Object[]) null);
+		}
 		dao.deleteVisit(visit);
 	}
 	
 	/**
-	 * @see org.openmrs.api.VisitService#getVisits(java.util.Collection, java.util.Collection,
-	 *      java.util.Collection, java.util.Collection, java.util.Date, java.util.Date,
-	 *      java.util.Date, java.util.Date, boolean, boolean)
+	 * @see org.openmrs.api.VisitService#getVisits(Collection, Collection, Collection, Collection, Date, Date, Date, Date, Map, boolean, boolean)
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -241,10 +238,12 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	@Transactional(readOnly = true)
 	public List<Visit> getVisitsByPatient(Patient patient) throws APIException {
 		//Don't bother to hit the database
-		if (patient == null || patient.getId() == null)
-			return Collections.EMPTY_LIST;
+		if (patient == null || patient.getId() == null) {
+			return Collections.emptyList();
+		}
 		
-		return getVisits(null, Collections.singletonList(patient), null, null, null, null, null, null, null, true, false);
+		return Context.getVisitService().getVisits(null, Collections.singletonList(patient), null, null, null, null, null,
+		    null, null, true, false);
 	}
 	
 	/**
@@ -253,7 +252,7 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	@Override
 	@Transactional(readOnly = true)
 	public List<Visit> getActiveVisitsByPatient(Patient patient) throws APIException {
-		return getVisitsByPatient(patient, false, false);
+		return Context.getVisitService().getVisitsByPatient(patient, false, false);
 	}
 	
 	/**
@@ -264,8 +263,9 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 	@Transactional(readOnly = true)
 	public List<Visit> getVisitsByPatient(Patient patient, boolean includeInactive, boolean includeVoided)
 	        throws APIException {
-		if (patient == null || patient.getId() == null)
-			return Collections.EMPTY_LIST;
+		if (patient == null || patient.getId() == null) {
+			return Collections.emptyList();
+		}
 		
 		return dao.getVisits(null, Collections.singletonList(patient), null, null, null, null, null, null, null,
 		    includeInactive, includeVoided);
@@ -348,8 +348,9 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 		String gpValue = Context.getAdministrationService().getGlobalProperty(OpenmrsConstants.GP_VISIT_TYPES_TO_AUTO_CLOSE);
 		VisitService vs = Context.getVisitService();
 		if (StringUtils.isNotBlank(gpValue)) {
-			if (maximumStartDate == null)
+			if (maximumStartDate == null) {
 				maximumStartDate = new Date();
+			}
 			
 			List<VisitType> visitTypesToStop = new ArrayList<VisitType>();
 			String[] visitTypeNames = StringUtils.split(gpValue.trim(), ",");
@@ -360,8 +361,9 @@ public class VisitServiceImpl extends BaseOpenmrsService implements VisitService
 			
 			List<VisitType> allVisitTypes = vs.getAllVisitTypes();
 			for (VisitType visitType : allVisitTypes) {
-				if (ArrayUtils.contains(visitTypeNames, visitType.getName().toLowerCase()))
+				if (ArrayUtils.contains(visitTypeNames, visitType.getName().toLowerCase())) {
 					visitTypesToStop.add(visitType);
+				}
 			}
 			
 			if (visitTypesToStop.size() > 0) {

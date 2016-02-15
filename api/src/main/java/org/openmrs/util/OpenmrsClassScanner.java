@@ -1,23 +1,19 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,15 +36,13 @@ public class OpenmrsClassScanner {
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	
-	private static final OpenmrsClassScanner instance = new OpenmrsClassScanner();
-	
 	private final MetadataReaderFactory metadataReaderFactory;
 	
 	private final ResourcePatternResolver resourceResolver;
 	
-	private Map<Class<?>, List<Class<?>>> annotationToClassMap;
+	private Map<Class<?>, Set<Class<?>>> annotationToClassMap;
 	
-	OpenmrsClassScanner() {
+	private OpenmrsClassScanner() {
 		this.metadataReaderFactory = new SimpleMetadataReaderFactory(OpenmrsClassLoader.getInstance());
 		this.resourceResolver = new PathMatchingResourcePatternResolver(OpenmrsClassLoader.getInstance());
 	}
@@ -57,26 +51,34 @@ public class OpenmrsClassScanner {
 	 * @return the instance
 	 */
 	public static OpenmrsClassScanner getInstance() {
-		return instance;
+		if (OpenmrsClassScannerHolder.INSTANCE == null) {
+			OpenmrsClassScannerHolder.INSTANCE = new OpenmrsClassScanner();
+		}
+		
+		return OpenmrsClassScannerHolder.INSTANCE;
+	}
+	
+	public static void destroyInstance() {
+		OpenmrsClassScannerHolder.INSTANCE = null;
 	}
 	
 	/**
 	 * Searches for classes with a given annotation.
 	 * 
-	 * @param annotation the annotation
+	 * @param annotationClass the annotation class
 	 * @return the list of found classes
 	 */
-	public List<Class<?>> getClassesWithAnnotation(Class annotationClass) {
+	public Set<Class<?>> getClassesWithAnnotation(Class annotationClass) {
 		
 		if (annotationToClassMap != null) {
 			if (annotationToClassMap.containsKey(annotationClass)) {
 				return annotationToClassMap.get(annotationClass);
 			}
 		} else {
-			annotationToClassMap = new HashMap<Class<?>, List<Class<?>>>();
+			annotationToClassMap = new HashMap<Class<?>, Set<Class<?>>>();
 		}
 		
-		List<Class<?>> types = new ArrayList<Class<?>>();
+		Set<Class<?>> types = new HashSet<Class<?>>();
 		String pattern = "classpath*:org/openmrs/**/*.class";
 		
 		try {
@@ -109,5 +111,15 @@ public class OpenmrsClassScanner {
 		annotationToClassMap.put(annotationClass, types);
 		
 		return types;
+	}
+	
+	/**
+	 * Private class to hold the one class scanner used throughout openmrs. This is an alternative
+	 * to storing the instance object on {@link OpenmrsClassScanner} itself so that garbage
+	 * collection can happen correctly.
+	 */
+	private static class OpenmrsClassScannerHolder {
+		
+		private static OpenmrsClassScanner INSTANCE = null;
 	}
 }

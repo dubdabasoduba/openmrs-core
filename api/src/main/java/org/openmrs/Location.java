@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -18,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.openmrs.annotation.Independent;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 
@@ -68,6 +65,7 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	private Set<Location> childLocations;
 	
+	@Independent
 	private Set<LocationTag> tags;
 	
 	// Constructors
@@ -211,10 +209,12 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	@Override
 	public String toString() {
-		if (getName() != null)
+		if (getName() != null) {
 			return getName();
-		if (getId() != null)
+		}
+		if (getId() != null) {
 			return getId().toString();
+		}
 		return "";
 	}
 	
@@ -230,24 +230,6 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 */
 	public void setCountyDistrict(String countyDistrict) {
 		this.countyDistrict = countyDistrict;
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress3()}
-	 * @return Returns the neighborhoodCell.
-	 */
-	@Deprecated
-	public String getNeighborhoodCell() {
-		return getAddress3();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress3(String)}
-	 * @param address3 The neighborhoodCell to set.
-	 */
-	@Deprecated
-	public void setNeighborhoodCell(String address3) {
-		this.setAddress3(address3);
 	}
 	
 	/**
@@ -290,10 +272,11 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 * @see org.openmrs.Attributable#serialize()
 	 */
 	public String serialize() {
-		if (getLocationId() != null)
+		if (getLocationId() != null) {
 			return "" + getLocationId();
-		else
+		} else {
 			return "";
+		}
 	}
 	
 	/**
@@ -301,60 +284,6 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 */
 	public String getDisplayString() {
 		return getName();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress6()}
-	 * @return the region
-	 */
-	@Deprecated
-	public String getRegion() {
-		return getAddress6();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress6(String)}
-	 * @param address6 the region to set
-	 */
-	@Deprecated
-	public void setRegion(String address6) {
-		this.setAddress6(address6);
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress5()}
-	 * @return the subregion
-	 */
-	@Deprecated
-	public String getSubregion() {
-		return getAddress5();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress5(String)}
-	 * @param address5 the subregion to set
-	 */
-	@Deprecated
-	public void setSubregion(String address5) {
-		this.setAddress5(address5);
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #getAddress4()}
-	 * @return the townshipDivision
-	 */
-	@Deprecated
-	public String getTownshipDivision() {
-		return getAddress4();
-	}
-	
-	/**
-	 * @deprecated As of 1.8, replaced by {@link #setAddress4(String)}
-	 * @param address4 the townshipDivision to set
-	 */
-	@Deprecated
-	public void setTownshipDivision(String address4) {
-		this.setAddress4(address4);
 	}
 	
 	/**
@@ -383,23 +312,43 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	/**
 	 * Returns all childLocations where child.locationId = this.locationId.
-	 * 
+	 *
 	 * @param includeRetired specifies whether or not to include voided childLocations
-	 * @return Returns a Set<Location> of all the childLocations.
+	 * @return Returns a Set&lt;Location&gt; of all the childLocations.
 	 * @since 1.5
 	 * @should return a set of locations
 	 */
 	public Set<Location> getChildLocations(boolean includeRetired) {
 		Set<Location> ret = new HashSet<Location>();
-		if (includeRetired)
+		if (includeRetired) {
 			ret = getChildLocations();
-		else if (getChildLocations() != null) {
+		} else if (getChildLocations() != null) {
 			for (Location l : getChildLocations()) {
-				if (!l.isRetired())
+				if (!l.isRetired()) {
 					ret.add(l);
+				}
 			}
 		}
 		return ret;
+	}
+	
+	/**
+	 * Returns the descendant locations.
+	 *
+	 * @param includeRetired specifies whether or not to include voided childLocations
+	 * @return Returns a Set&lt;Location&gt; of the descendant location.
+	 * @since 1.10
+	 */
+	public Set<Location> getDescendantLocations(boolean includeRetired) {
+		Set<Location> result = new HashSet<Location>();
+		
+		for (Location childLocation : getChildLocations()) {
+			if (!childLocation.isRetired() || includeRetired) {
+				result.add(childLocation);
+				result.addAll(childLocation.getDescendantLocations(includeRetired));
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -418,25 +367,28 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 * @should throw APIException if child already in hierarchy
 	 */
 	public void addChildLocation(Location child) {
-		if (child == null)
+		if (child == null) {
 			return;
+		}
 		
-		if (getChildLocations() == null)
+		if (getChildLocations() == null) {
 			childLocations = new HashSet<Location>();
+		}
 		
-		if (child.equals(this))
-			throw new APIException("A location cannot be its own child!");
+		if (child.equals(this)) {
+			throw new APIException("Location.cannot.be.its.own.child", (Object[]) null);
+		}
 		
 		// Traverse all the way up (down?) to the root, then check whether the child is already
 		// anywhere in the tree
 		Location root = this;
-		while (root.getParentLocation() != null)
+		while (root.getParentLocation() != null) {
 			root = root.getParentLocation();
+		}
 		
-		if (isInHierarchy(child, root))
-			throw new APIException("Location hierarchy loop detected! You cannot add: '" + child + "' to the parent: '"
-			        + this
-			        + "' because it is in the parent hierarchy somewhere already and a location cannot be its own parent.");
+		if (isInHierarchy(child, root)) {
+			throw new APIException("Location.hierarchy.loop", new Object[] { child, this });
+		}
 		
 		child.setParentLocation(this);
 		childLocations.add(child);
@@ -444,7 +396,7 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	/**
 	 * Checks whether 'location' is a member of the tree starting at 'root'.
-	 * 
+	 *
 	 * @param location The location to be tested.
 	 * @param root Location node from which to start the testing (down in the hierarchy).
 	 * @since 1.5
@@ -455,13 +407,15 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 * @should should find location in hierarchy
 	 */
 	public static Boolean isInHierarchy(Location location, Location root) {
-		if (root == null)
+		if (root == null) {
 			return false;
+		}
 		while (true) {
-			if (location == null)
+			if (location == null) {
 				return false;
-			else if (root.equals(location))
+			} else if (root.equals(location)) {
 				return true;
+			}
 			location = location.getParentLocation();
 		}
 	}
@@ -471,8 +425,9 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	 * @since 1.5
 	 */
 	public void removeChildLocation(Location child) {
-		if (getChildLocations() != null)
+		if (getChildLocations() != null) {
 			childLocations.remove(child);
+		}
 	}
 	
 	/**
@@ -485,7 +440,7 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	/**
 	 * Set the tags which are attached to this Location.
-	 * 
+	 *
 	 * @param tags The tags to set.
 	 * @since 1.5
 	 */
@@ -495,31 +450,34 @@ public class Location extends BaseCustomizableMetadata<LocationAttribute> implem
 	
 	/**
 	 * Attaches a tag to the Location.
-	 * 
+	 *
 	 * @param tag The tag to add.
 	 * @since 1.5
 	 */
 	public void addTag(LocationTag tag) {
-		if (getTags() == null)
+		if (getTags() == null) {
 			tags = new HashSet<LocationTag>();
-		if (tag != null && !tags.contains(tag))
+		}
+		if (tag != null && !tags.contains(tag)) {
 			tags.add(tag);
+		}
 	}
 	
 	/**
 	 * Remove the tag from the Location.
-	 * 
+	 *
 	 * @param tag The tag to remove.
 	 * @since 1.5
 	 */
 	public void removeTag(LocationTag tag) {
-		if (getTags() != null)
+		if (getTags() != null) {
 			tags.remove(tag);
+		}
 	}
 	
 	/**
 	 * Checks whether the Location has a particular tag.
-	 * 
+	 *
 	 * @param tagToFind the string of the tag for which to check
 	 * @return true if the tags include the specified tag, false otherwise
 	 * @since 1.5

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.validator;
 
@@ -32,13 +28,13 @@ import org.springframework.validation.Validator;
  * <li>all required properties are filled in on the Obs object.
  * <li>checks for no recursion in the obs grouping.
  * <li>Makes sure the obs has at least one value (if not an obs grouping)</li>
- * 
+ * </ul>
  * @see org.openmrs.Obs
  */
 @Handler(supports = { Obs.class }, order = 50)
 public class ObsValidator implements Validator {
 	
-	public final static int VALUE_TEXT_MAX_LENGTH = 50;
+	public final static int VALUE_TEXT_MAX_LENGTH = 1000;
 	
 	/**
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
@@ -64,18 +60,22 @@ public class ObsValidator implements Validator {
 	 * @should fail validation if the parent obs has values
 	 * @should reject an invalid concept and drug combination
 	 * @should pass if answer concept and concept of value drug match
+	 * @should pass validation if field lengths are correct
+	 * @should fail validation if field lengths are not correct
 	 */
 	public void validate(Object obj, Errors errors) {
 		Obs obs = (Obs) obj;
 		List<Obs> ancestors = new ArrayList<Obs>();
 		//ancestors.add(obs);
 		validateHelper(obs, errors, ancestors, true);
+		ValidateUtil.validateFieldLengths(errors, obj.getClass(), "accessionNumber", "valueModifier", "valueComplex",
+		    "comment", "voidReason");
 	}
 	
 	/**
 	 * Checks whether obs has all required values, and also checks to make sure that no obs group
 	 * contains any of its ancestors
-	 * 
+	 *
 	 * @param obs
 	 * @param errors
 	 * @param ancestors
@@ -83,36 +83,46 @@ public class ObsValidator implements Validator {
 	 *            not then we shouldn't reject fields by name.
 	 */
 	private void validateHelper(Obs obs, Errors errors, List<Obs> ancestors, boolean atRootNode) {
-		if (obs.getPersonId() == null)
+		if (obs.getPersonId() == null) {
 			errors.rejectValue("person", "error.null");
-		if (obs.getObsDatetime() == null)
+		}
+		if (obs.getObsDatetime() == null) {
 			errors.rejectValue("obsDatetime", "error.null");
+		}
 		
 		// if this is an obs group (i.e., parent) make sure that it has no values (other than valueGroupId) set
 		if (obs.hasGroupMembers()) {
-			if (obs.getValueCoded() != null)
+			if (obs.getValueCoded() != null) {
 				errors.rejectValue("valueCoded", "error.not.null");
+			}
 			
-			if (obs.getValueDrug() != null)
+			if (obs.getValueDrug() != null) {
 				errors.rejectValue("valueDrug", "error.not.null");
+			}
 			
-			if (obs.getValueDatetime() != null)
+			if (obs.getValueDatetime() != null) {
 				errors.rejectValue("valueDatetime", "error.not.null");
+			}
 			
-			if (obs.getValueNumeric() != null)
+			if (obs.getValueNumeric() != null) {
 				errors.rejectValue("valueNumeric", "error.not.null");
+			}
 			
-			if (obs.getValueModifier() != null)
+			if (obs.getValueModifier() != null) {
 				errors.rejectValue("valueModifier", "error.not.null");
+			}
 			
-			if (obs.getValueText() != null)
+			if (obs.getValueText() != null) {
 				errors.rejectValue("valueText", "error.not.null");
+			}
 			
-			if (obs.getValueBoolean() != null)
+			if (obs.getValueBoolean() != null) {
 				errors.rejectValue("valueBoolean", "error.not.null");
+			}
 			
-			if (obs.getValueComplex() != null)
+			if (obs.getValueComplex() != null) {
 				errors.rejectValue("valueComplex", "error.not.null");
+			}
 			
 		}
 		// if this is NOT an obs group, make sure that it has at least one value set (not counting obsGroupId)
@@ -133,61 +143,70 @@ public class ObsValidator implements Validator {
 			ConceptDatatype dt = c.getDatatype();
 			if (dt != null) {
 				if (dt.isBoolean() && obs.getValueBoolean() == null) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueBoolean", "error.null");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				} else if (dt.isCoded() && obs.getValueCoded() == null) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueCoded", "error.null");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				} else if ((dt.isDateTime() || dt.isDate() || dt.isTime()) && obs.getValueDatetime() == null) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueDatetime", "error.null");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				} else if (dt.isNumeric() && obs.getValueNumeric() == null) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueNumeric", "error.null");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				} else if (dt.isNumeric()) {
 					ConceptNumeric cn = Context.getConceptService().getConceptNumeric(c.getConceptId());
 					// If the concept numeric is not precise, the value cannot be a float, so raise an error 
-					if (!cn.isPrecise() && Math.ceil(obs.getValueNumeric()) != obs.getValueNumeric()) {
-						if (atRootNode)
+					if (!cn.isAllowDecimal() && Math.ceil(obs.getValueNumeric()) != obs.getValueNumeric()) {
+						if (atRootNode) {
 							errors.rejectValue("valueNumeric", "error.precision");
-						else
+						} else {
 							errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+						}
 					}
 					// If the number is higher than the absolute range, raise an error 
 					if (cn.getHiAbsolute() != null && cn.getHiAbsolute() < obs.getValueNumeric()) {
-						if (atRootNode)
+						if (atRootNode) {
 							errors.rejectValue("valueNumeric", "error.outOfRange.high");
-						else
+						} else {
 							errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+						}
 					}
 					// If the number is lower than the absolute range, raise an error as well 
 					if (cn.getLowAbsolute() != null && cn.getLowAbsolute() > obs.getValueNumeric()) {
-						if (atRootNode)
+						if (atRootNode) {
 							errors.rejectValue("valueNumeric", "error.outOfRange.low");
-						else
+						} else {
 							errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+						}
 					}
 				} else if (dt.isText() && obs.getValueText() == null) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueText", "error.null");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				}
 				
 				//If valueText is longer than the maxlength, raise an error as well.
 				if (dt.isText() && obs.getValueText() != null && obs.getValueText().length() > VALUE_TEXT_MAX_LENGTH) {
-					if (atRootNode)
+					if (atRootNode) {
 						errors.rejectValue("valueText", "error.exceededMaxLengthOfField");
-					else
+					} else {
 						errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
+					}
 				}
 			} else { // dt is null
 				errors.rejectValue("concept", "must have a datatype");
@@ -195,11 +214,13 @@ public class ObsValidator implements Validator {
 		}
 		
 		// If an obs fails validation, don't bother checking its children
-		if (errors.hasErrors())
+		if (errors.hasErrors()) {
 			return;
+		}
 		
-		if (ancestors.contains(obs))
+		if (ancestors.contains(obs)) {
 			errors.rejectValue("groupMembers", "Obs.error.groupContainsItself");
+		}
 		
 		if (obs.isObsGrouping()) {
 			ancestors.add(obs);

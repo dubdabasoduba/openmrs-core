@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -33,11 +29,11 @@ import org.openmrs.api.APIException;
 /**
  * This class deals with any object that implements {@link OpenmrsObject}. When an
  * {@link OpenmrsObject} is saved (via a save* method in a service), this handler is automatically
- * called by the {@link RequiredDataAdvice} AOP class. <br/>
- * <br/>
+ * called by the {@link RequiredDataAdvice} AOP class. <br>
+ * <br>
  * This class sets the uuid property on the given OpenmrsObject to a randomly generated <a
  * href="http://wikipedia.org/wiki/UUID">UUID</a> if it is non-null.
- * 
+ *
  * @see RequiredDataHandler
  * @see SaveHandler
  * @since 1.5
@@ -49,7 +45,7 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 	
 	/**
 	 * This sets the uuid property on the given OpenmrsObject if it is non-null.
-	 * 
+	 *
 	 * @see org.openmrs.api.handler.RequiredDataHandler#handle(org.openmrs.OpenmrsObject,
 	 *      org.openmrs.User, java.util.Date, java.lang.String)
 	 * @should set empty string properties to null
@@ -59,8 +55,9 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 	 * @should trim empty strings for AllowEmptyStrings annotation
 	 */
 	public void handle(OpenmrsObject openmrsObject, User creator, Date dateCreated, String reason) {
-		if (openmrsObject.getUuid() == null)
+		if (openmrsObject.getUuid() == null) {
 			openmrsObject.setUuid(UUID.randomUUID().toString());
+		}
 		
 		//Set all empty string properties, that do not have the AllowEmptyStrings annotation, to null.
 		//And also trim leading and trailing white space for properties that do not have the
@@ -110,25 +107,24 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 					continue;
 				}
 				
-				if ("".equals(value)) {
+				if ("".equals(value) && !(openmrsObject instanceof Voidable && ((Voidable) openmrsObject).isVoided())) {
 					//Set to null only if object is not already voided
-					if (!(openmrsObject instanceof Voidable && ((Voidable) openmrsObject).isVoided())) {
-						PropertyUtils.setProperty(openmrsObject, property.getName(), null);
-					}
+					PropertyUtils.setProperty(openmrsObject, property.getName(), null);
 				}
 			}
 			catch (UnsupportedOperationException ex) {
 				// there is no need to log this. These should be (mostly) silently skipped over 
-				if (log.isInfoEnabled())
+				if (log.isInfoEnabled()) {
 					log.info("The property " + property.getName() + " is no longer supported and should be ignored.", ex);
+				}
 			}
 			catch (InvocationTargetException ex) {
-				if (log.isWarnEnabled())
+				if (log.isWarnEnabled()) {
 					log.warn("Failed to access property " + property.getName() + "; accessor threw exception.", ex);
+				}
 			}
 			catch (Exception ex) {
-				throw new APIException(
-				        "Failed to change property value from empty string to null for " + property.getName(), ex);
+				throw new APIException("failed.change.property.value", new Object[] { property.getName() }, ex);
 			}
 		}
 	}

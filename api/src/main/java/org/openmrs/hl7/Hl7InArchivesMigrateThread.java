@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.hl7;
 
@@ -24,11 +20,8 @@ import org.openmrs.api.context.UserContext;
 
 /**
  * Separate thread to move the hl7 in archives from the database tables to the filesystem. It is
- * highly recommended to start this thread by calling "startHl7ArchiveMigration(UserContext)" method
- * in the service layer as opposed to calling the thread's start() method to ensure the thread is
- * started after making all the necessary checks.
- * 
- * @see {@link HL7Service#startHl7ArchiveMigration()}
+ * highly recommended to start this thread via DWRHL7Service as opposed to calling the thread's
+ * start() method to ensure the thread is started after making all the necessary checks.
  */
 public class Hl7InArchivesMigrateThread extends Thread {
 	
@@ -64,7 +57,15 @@ public class Hl7InArchivesMigrateThread extends Thread {
 	 * The different states this thread can be in at a given point during migration
 	 */
 	public enum Status {
-		RUNNING, STOPPED, COMPLETED, ERROR, NONE
+		RUNNING,
+		STOPPED,
+		COMPLETED,
+		ERROR,
+		NONE
+	}
+	
+	public static void setProgressStatusMap(Map<String, Integer> progressStatusMap) {
+		Hl7InArchivesMigrateThread.progressStatusMap = progressStatusMap;
 	}
 	
 	/**
@@ -72,7 +73,7 @@ public class Hl7InArchivesMigrateThread extends Thread {
 	 */
 	public Hl7InArchivesMigrateThread() {
 		this.userContext = Context.getUserContext();
-		progressStatusMap = new HashMap<String, Integer>();
+		setProgressStatusMap(new HashMap<String, Integer>());
 		progressStatusMap.put(HL7Constants.NUMBER_TRANSFERRED_KEY, 0);
 		progressStatusMap.put(HL7Constants.NUMBER_OF_FAILED_TRANSFERS_KEY, 0);
 	}
@@ -105,6 +106,10 @@ public class Hl7InArchivesMigrateThread extends Thread {
 		Hl7InArchivesMigrateThread.active = active;
 	}
 	
+	public static void setTransferStatus(Status transferStatus) {
+		Hl7InArchivesMigrateThread.transferStatus = transferStatus;
+	}
+	
 	/**
 	 * @see java.lang.Runnable#run()
 	 */
@@ -113,17 +118,19 @@ public class Hl7InArchivesMigrateThread extends Thread {
 		
 		Context.openSession();
 		Context.setUserContext(userContext);
-		transferStatus = Status.RUNNING;
+		setTransferStatus(Status.RUNNING);
 		
 		while (isActive() && transferStatus == Status.RUNNING) {
 			try {
 				// migrate the archives
-				if (isActive())
+				if (isActive()) {
 					Context.getHL7Service().migrateHl7InArchivesToFileSystem(progressStatusMap);
+				}
 				
 				//if transfer is done when user didn't just stop it
-				if (transferStatus != Status.STOPPED)
-					transferStatus = Status.COMPLETED;
+				if (transferStatus != Status.STOPPED) {
+					setTransferStatus(Status.COMPLETED);
+				}
 				
 			}
 			catch (APIException api) {
@@ -139,7 +146,7 @@ public class Hl7InArchivesMigrateThread extends Thread {
 				
 			}
 			catch (Exception e) {
-				transferStatus = Status.ERROR;
+				setTransferStatus(Status.ERROR);
 				log.warn("Some error occurred while migrating hl7 archives", e);
 			}
 		}
@@ -167,20 +174,22 @@ public class Hl7InArchivesMigrateThread extends Thread {
 	 * @return the numberTransferred at a given time during migration
 	 */
 	public static Integer getNumberTransferred() {
-		if (progressStatusMap == null)
+		if (progressStatusMap == null) {
 			return 0;
+		}
 		return progressStatusMap.get(HL7Constants.NUMBER_TRANSFERRED_KEY);
 	}
 	
 	/**
 	 * Gets the number of failed transfers during migration, this could be that the system couldn't
 	 * write them to the file system or couldn't be deleted from the database.
-	 * 
+	 *
 	 * @return the numberOfFailedTransfers
 	 */
 	public static Integer getNumberOfFailedTransfers() {
-		if (progressStatusMap == null)
+		if (progressStatusMap == null) {
 			return 0;
+		}
 		return progressStatusMap.get(HL7Constants.NUMBER_OF_FAILED_TRANSFERS_KEY);
 	}
 	

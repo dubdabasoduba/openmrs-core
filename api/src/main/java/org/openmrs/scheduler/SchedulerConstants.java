@@ -1,19 +1,13 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.scheduler;
-
-import org.openmrs.api.context.Daemon;
 
 public class SchedulerConstants {
 	
@@ -32,20 +26,6 @@ public class SchedulerConstants {
 	
 	/** The default 'subject' for emails send by the schedule */
 	public final static String SCHEDULER_DEFAULT_SUBJECT = "OpenMRS Scheduler Error";
-	
-	/**
-	 * @deprecated This is not needed anymore since tasks are run as the Daemon user. See
-	 *             {@link Daemon#executeScheduledTask(Task)}
-	 */
-	@Deprecated
-	public static String SCHEDULER_USERNAME_PROPERTY = "scheduler.username";
-	
-	/**
-	 * @deprecated This is not needed anymore since tasks are run as the Daemon user. See
-	 *             {@link Daemon#executeScheduledTask(Task)}
-	 */
-	@Deprecated
-	public static String SCHEDULER_PASSWORD_PROPERTY = "scheduler.password";
 	
 	/** Scheduler admin email enable property - Tell us whether we can send mail or not */
 	public static String SCHEDULER_ADMIN_EMAIL_ENABLED_PROPERTY = "scheduler.admin_email_enabled";

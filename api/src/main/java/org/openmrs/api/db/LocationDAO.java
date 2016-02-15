@@ -1,19 +1,13 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db;
-
-import java.util.List;
 
 import org.hibernate.SessionFactory;
 import org.openmrs.Location;
@@ -21,6 +15,9 @@ import org.openmrs.LocationAttribute;
 import org.openmrs.LocationAttributeType;
 import org.openmrs.LocationTag;
 import org.openmrs.api.LocationService;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Location-related database functions
@@ -45,7 +42,7 @@ public interface LocationDAO {
 	/**
 	 * Get a location by locationId
 	 * 
-	 * @param locationId Internal <code>Integer</code> identifier of the <code>Location<code> to get
+	 * @param locationId Internal <code>Integer</code> identifier of the <code>Location</code> to get
 	 * @return the requested <code>Location</code>
 	 */
 	public Location getLocation(Integer locationId);
@@ -62,18 +59,25 @@ public interface LocationDAO {
 	 * Get all locations
 	 * 
 	 * @param includeRetired boolean - include retired locations as well?
-	 * @return <code>List<Location></code> object of all <code>Location</code>s, possibly including
+	 * @return <code>List&lt;Location&gt;</code> object of all <code>Location</code>s, possibly including
 	 *         retired locations
 	 */
 	public List<Location> getAllLocations(boolean includeRetired);
 	
 	/**
-	 * Returns a specified number of locations starting with a given string from the specified index
-	 * 
-	 * @see LocationService#getLocations(String, boolean, Integer, Integer)
+	 * Gets the locations matching the specified arguments
+	 *
+	 * @param nameFragment is the string used to search for locations
+	 * @param parent only return children of this parent
+	 * @param serializedAttributeValues the serialized attribute values
+	 * @param includeRetired specifies if retired locations should also be returned
+	 * @param start the beginning index
+	 * @param length the number of matching locations to return
+	 * @return the list of locations
 	 */
-	public List<Location> getLocations(String nameFragment, boolean includeRetired, Integer start, Integer length)
-	        throws DAOException;
+	public List<Location> getLocations(String nameFragment, Location parent,
+	        Map<LocationAttributeType, String> serializedAttributeValues, boolean includeRetired, Integer start,
+	        Integer length) throws DAOException;
 	
 	/**
 	 * Completely remove the location from the database.
@@ -110,7 +114,7 @@ public interface LocationDAO {
 	 * Get all location tags
 	 * 
 	 * @param includeRetired boolean - include retired tags as well?
-	 * @return List<LocationTag> object with all <code>LocationTag</code>s, possibly included
+	 * @return List&lt;LocationTag&gt; object with all <code>LocationTag</code>s, possibly included
 	 *         retired ones
 	 */
 	public List<LocationTag> getAllLocationTags(boolean includeRetired);
@@ -119,7 +123,7 @@ public interface LocationDAO {
 	 * Find all location tags with matching names.
 	 * 
 	 * @param search name to search
-	 * @return List<LocationTag> with all matching <code>LocationTags</code>
+	 * @return List&lt;LocationTag&gt; with all matching <code>LocationTags</code>
 	 */
 	public List<LocationTag> getLocationTags(String search);
 	
@@ -138,7 +142,7 @@ public interface LocationDAO {
 	
 	/**
 	 * @param uuid
-	 * @return
+	 * @return location tag or null
 	 */
 	public LocationTag getLocationTagByUuid(String uuid);
 	
@@ -182,4 +186,19 @@ public interface LocationDAO {
 	 */
 	public LocationAttribute getLocationAttributeByUuid(String uuid);
 	
+	/**
+	 * @see LocationService#getLocationAttributeTypeByName(String)
+	 */
+	public LocationAttributeType getLocationAttributeTypeByName(String name);
+	
+	/**
+	 * Get locations that have all the location tags specified.
+	 *
+	 * @param locationTagIdList
+	 * @return list of locations
+	 * @should get locations having all tags
+	 * @should return empty list when no location has the given tags
+	 * @should ignore null values in location tag list
+	 */
+	List<Location> getLocationsHavingAllTags(List<LocationTag> locationTagIdList);
 }

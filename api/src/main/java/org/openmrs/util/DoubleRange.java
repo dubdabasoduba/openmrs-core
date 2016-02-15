@@ -1,17 +1,15 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Represents a bounded or unbounded numeric range. By default the range is closed (ake inclusive)
@@ -29,9 +27,15 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	private boolean closedHigh = false;
 	
+	/**
+	 * @should return null low and high if accessors are not called
+	 */
 	public DoubleRange() {
 	}
 	
+	/**
+	 * @should return infinite low and high if called with null parameters
+	 */
 	public DoubleRange(Double low, Double high) {
 		this.low = low == null ? new Double(Double.NEGATIVE_INFINITY) : low;
 		this.high = high == null ? new Double(Double.POSITIVE_INFINITY) : high;
@@ -39,6 +43,8 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	/**
 	 * @return Returns the high.
+	 * @should return correct value of high if it high was set previously
+	 * @should return positive infinity if high was not set previously
 	 */
 	public Double getHigh() {
 		return high;
@@ -46,6 +52,8 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	/**
 	 * @param high The high to set.
+	 * @should set high to positive infinity on null parameter
+	 * @should cause low to have the set value
 	 */
 	public void setHigh(Double high) {
 		this.high = high == null ? new Double(Double.POSITIVE_INFINITY) : high;
@@ -53,6 +61,8 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	/**
 	 * @return Returns the low.
+	 * @should return correct value of low if low was set previously
+	 * @should return negative infinity if low was not set previously
 	 */
 	public Double getLow() {
 		return low;
@@ -60,6 +70,8 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	/**
 	 * @param low The low to set.
+	 * @should set low to negative infinity on null parameter
+	 * @should cause low to have the set value
 	 */
 	public void setLow(Double low) {
 		this.low = low == null ? new Double(Double.NEGATIVE_INFINITY) : low;
@@ -67,6 +79,12 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	
 	/**
 	 * first sorts according to low-bound (ascending) then according to high-bound (descending)
+	 * @should return plus 1 if this low is greater than other low
+	 * @should return minus one if this low is lower than other low
+	 * @should return plus one if both lows are equal but other high is greater than this high
+	 * @should return minus one if both lows are equal but other high is less than this high
+	 * @should return zero if both lows and both highs are equal
+	 * @should return 1 if this range is wider than other range
 	 */
 	public int compareTo(DoubleRange other) {
 		int temp = low.compareTo(other.low);
@@ -76,6 +94,20 @@ public class DoubleRange implements Comparable<DoubleRange> {
 		return temp;
 	}
 	
+	/**
+	 * BUG: this method should return false if both ends of the range are null.
+	 * It currently returns true in this case.
+	 *
+	 * checks whether a double is in this range
+	 * @param 	d the Double to check for in this range
+	 * @return  true if d is in this range, false otherwise
+	 * @should return true if parameter is in range
+	 * @should return false if parameter is not in range
+	 * @should return false if parameter is equal to high
+	 * @should return true if parameter is equal to low
+	 * @should return false if parameter is lower than low
+	 * @should return false if both low and high are null
+	 */
 	public boolean contains(double d) {
 		if (low != null) {
 			if (closedLow) {
@@ -83,6 +115,7 @@ public class DoubleRange implements Comparable<DoubleRange> {
 					return false;
 				}
 			} else {
+				//unreachable code as closedLow is never set to false anywhere
 				if (d <= low) {
 					return false;
 				}
@@ -90,6 +123,7 @@ public class DoubleRange implements Comparable<DoubleRange> {
 		}
 		if (high != null) {
 			if (closedHigh) {
+				//unreachable code as closedHigh is never set to true anywhere
 				if (d > high) {
 					return false;
 				}
@@ -102,6 +136,14 @@ public class DoubleRange implements Comparable<DoubleRange> {
 		return true;
 	}
 	
+	/**
+	 *
+	 * @return a String representation of the DoubleRange
+	 * @should print the range if high and low are not null and not infinite
+	 * @should print empty high if high is infinite
+	 * @should print empty low if low is infinite
+	 * @should print empty string if low and high are infinite
+	 */
 	public String toString() {
 		StringBuffer ret = new StringBuffer();
 		if (low != null && low.doubleValue() != Double.NEGATIVE_INFINITY) {
@@ -111,6 +153,7 @@ public class DoubleRange implements Comparable<DoubleRange> {
 			}
 			ret.append(" " + Format.format(low));
 			if (high != null && high.doubleValue() != Double.NEGATIVE_INFINITY) {
+				//BUG: should not append this if high is also infinite
 				ret.append(" and ");
 			}
 		}
@@ -125,8 +168,19 @@ public class DoubleRange implements Comparable<DoubleRange> {
 	}
 	
 	public boolean equals(Object o) {
-		DoubleRange other = (DoubleRange) o;
-		return low.equals(other.low) && high.equals(other.high);
+		if (o instanceof DoubleRange) {
+			DoubleRange other = (DoubleRange) o;
+			return low.equals(other.low) && high.equals(other.high);
+		}
+		return false;
+	}
+	
+	/**
+	 * @should return the same hashCode for objects representing the same interval
+	 */
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(low).append(high).build();
 	}
 	
 }

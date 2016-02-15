@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.module;
 
@@ -37,22 +33,25 @@ import org.xml.sax.SAXException;
 
 /**
  * This class will parse an xml sql diff file
- * 
+ *
  * @version 1.0
  */
 public class SqlDiffFileParser {
 	
 	private static Log log = LogFactory.getLog(SqlDiffFileParser.class);
 	
+	private static final String SQLDIFF_CHANGELOG_FILENAME = "sqldiff.xml";
+	
 	/**
-	 * Get the diff map. Return a sorted map<version, sql statements>
-	 * 
-	 * @return SortedMap<String, String>
+	 * Get the diff map. Return a sorted map&lt;version, sql statements&gt;
+	 *
+	 * @return SortedMap&lt;String, String&gt;
 	 * @throws ModuleException
 	 */
 	public static SortedMap<String, String> getSqlDiffs(Module module) throws ModuleException {
-		if (module == null)
+		if (module == null) {
 			throw new ModuleException("Module cannot be null");
+		}
 		
 		SortedMap<String, String> map = new TreeMap<String, String>(new VersionComparator());
 		
@@ -68,22 +67,25 @@ public class SqlDiffFileParser {
 				throw new ModuleException("Unable to get jar file", module.getName(), e);
 			}
 			
-			ZipEntry diffEntry = jarfile.getEntry("sqldiff.xml");
-			
-			if (diffEntry == null) {
-				log.debug("No sqldiff.xml found for module: " + module.getName());
-				return map;
-			} else {
-				try {
-					diffStream = jarfile.getInputStream(diffEntry);
-				}
-				catch (IOException e) {
-					throw new ModuleException("Unable to get sql diff file stream", module.getName(), e);
+			diffStream = ModuleUtil.getResourceFromApi(jarfile, module.getModuleId(), module.getVersion(),
+			    SQLDIFF_CHANGELOG_FILENAME);
+			if (diffStream == null) {
+				// Try the old way. Loading from the root of the omod
+				ZipEntry diffEntry = jarfile.getEntry(SQLDIFF_CHANGELOG_FILENAME);
+				if (diffEntry == null) {
+					log.debug("No sqldiff.xml found for module: " + module.getName());
+					return map;
+				} else {
+					try {
+						diffStream = jarfile.getInputStream(diffEntry);
+					}
+					catch (IOException e) {
+						throw new ModuleException("Unable to get sql diff file stream", module.getName(), e);
+					}
 				}
 			}
 			
 			try {
-				
 				// turn the diff stream into an xml document
 				Document diffDoc = null;
 				try {
@@ -91,6 +93,7 @@ public class SqlDiffFileParser {
 					DocumentBuilder db = dbf.newDocumentBuilder();
 					db.setEntityResolver(new EntityResolver() {
 						
+						@Override
 						public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
 							// When asked to resolve external entities (such as a DTD) we return an InputSource
 							// with no data at the end, causing the parser to ignore the DTD.
@@ -107,8 +110,9 @@ public class SqlDiffFileParser {
 				
 				String diffVersion = rootNode.getAttribute("version");
 				
-				if (!validConfigVersions().contains(diffVersion))
+				if (!validConfigVersions().contains(diffVersion)) {
 					throw new ModuleException("Invalid config version: " + diffVersion, module.getModuleId());
+				}
 				
 				NodeList diffNodes = getDiffNodes(rootNode, diffVersion);
 				
@@ -139,8 +143,9 @@ public class SqlDiffFileParser {
 		}
 		finally {
 			try {
-				if (jarfile != null)
+				if (jarfile != null) {
 					jarfile.close();
+				}
 			}
 			catch (IOException e) {
 				log.warn("Unable to close jarfile: " + jarfile.getName());
@@ -151,21 +156,22 @@ public class SqlDiffFileParser {
 	
 	/**
 	 * Generic method to get a module tag
-	 * 
+	 *
 	 * @param element
 	 * @param version
 	 * @param tag
 	 * @return
 	 */
 	private static String getElement(Element element, String version, String tag) {
-		if (element.getElementsByTagName(tag).getLength() > 0)
+		if (element.getElementsByTagName(tag).getLength() > 0) {
 			return element.getElementsByTagName(tag).item(0).getTextContent();
+		}
 		return "";
 	}
 	
 	/**
 	 * List of the valid sqldiff versions
-	 * 
+	 *
 	 * @return
 	 */
 	private static List<String> validConfigVersions() {
@@ -176,7 +182,7 @@ public class SqlDiffFileParser {
 	
 	/**
 	 * Finds the nodes that contain diff information
-	 * 
+	 *
 	 * @param element
 	 * @param version
 	 * @return
@@ -184,8 +190,9 @@ public class SqlDiffFileParser {
 	private static NodeList getDiffNodes(Element element, String version) {
 		NodeList diffNodes = null;
 		
-		if ("1.0".equals(version))
+		if ("1.0".equals(version)) {
 			diffNodes = element.getElementsByTagName("diff");
+		}
 		
 		return diffNodes;
 	}

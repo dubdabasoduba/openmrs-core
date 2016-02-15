@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -22,7 +18,6 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
@@ -39,11 +34,11 @@ import org.openmrs.api.db.DAOException;
 import org.openmrs.api.db.ProgramWorkflowDAO;
 
 /**
- * Hibernate specific ProgramWorkflow related functions.<br/>
- * <br/>
+ * Hibernate specific ProgramWorkflow related functions.<br>
+ * <br>
  * This class should not be used directly. All calls should go through the
  * {@link org.openmrs.api.ProgramWorkflowService} methods.
- * 
+ *
  * @see org.openmrs.api.db.ProgramWorkflowDAO
  * @see org.openmrs.api.ProgramWorkflowService
  */
@@ -58,7 +53,7 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 	
 	/**
 	 * Hibernate Session Factory
-	 * 
+	 *
 	 * @param sessionFactory
 	 */
 	public void setSessionFactory(SessionFactory sessionFactory) {
@@ -90,14 +85,14 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 	@SuppressWarnings("unchecked")
 	public List<Program> getAllPrograms(boolean includeRetired) throws DAOException {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Program.class);
-		if (includeRetired == false) {
-			criteria.add(Expression.eq("retired", false));
+		if (!includeRetired) {
+			criteria.add(Restrictions.eq("retired", false));
 		}
 		return criteria.list();
 	}
 	
 	/**
-	 * @see org.openmrs.api.db.ProgramWorkflowDAO#getProgramsByName(java.lang.String)
+	 * @see org.openmrs.api.db.ProgramWorkflowDAO#getProgramsByName(String, boolean)
 	 */
 	public List<Program> getProgramsByName(String programName, boolean includeRetired) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Program.class);
@@ -118,7 +113,7 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 	@SuppressWarnings("unchecked")
 	public List<Program> findPrograms(String nameFragment) throws DAOException {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Program.class, "program");
-		criteria.add(Expression.ilike("name", nameFragment, MatchMode.ANYWHERE));
+		criteria.add(Restrictions.ilike("name", nameFragment, MatchMode.ANYWHERE));
 		criteria.addOrder(Order.asc("name"));
 		return criteria.list();
 	}
@@ -163,25 +158,26 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 	        throws DAOException {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(PatientProgram.class);
 		if (patient != null) {
-			crit.add(Expression.eq("patient", patient));
+			crit.add(Restrictions.eq("patient", patient));
 		}
 		if (program != null) {
-			crit.add(Expression.eq("program", program));
+			crit.add(Restrictions.eq("program", program));
 		}
 		if (minEnrollmentDate != null) {
-			crit.add(Expression.ge("dateEnrolled", minEnrollmentDate));
+			crit.add(Restrictions.ge("dateEnrolled", minEnrollmentDate));
 		}
 		if (maxEnrollmentDate != null) {
-			crit.add(Expression.le("dateEnrolled", maxEnrollmentDate));
+			crit.add(Restrictions.le("dateEnrolled", maxEnrollmentDate));
 		}
 		if (minCompletionDate != null) {
-			crit.add(Expression.or(Expression.isNull("dateCompleted"), Expression.ge("dateCompleted", minCompletionDate)));
+			crit.add(Restrictions.or(Restrictions.isNull("dateCompleted"), Restrictions.ge("dateCompleted",
+			    minCompletionDate)));
 		}
 		if (maxCompletionDate != null) {
-			crit.add(Expression.le("dateCompleted", maxCompletionDate));
+			crit.add(Restrictions.le("dateCompleted", maxCompletionDate));
 		}
 		if (!includeVoided) {
-			crit.add(Expression.eq("voided", false));
+			crit.add(Restrictions.eq("voided", false));
 		}
 		return crit.list();
 	}
@@ -193,21 +189,26 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 	@SuppressWarnings("unchecked")
 	public List<PatientProgram> getPatientPrograms(Cohort cohort, Collection<Program> programs) {
 		String hql = "from PatientProgram ";
-		if (cohort != null || programs != null)
+		if (cohort != null || programs != null) {
 			hql += "where ";
-		if (cohort != null)
+		}
+		if (cohort != null) {
 			hql += "patient.patientId in (:patientIds) ";
+		}
 		if (programs != null) {
-			if (cohort != null)
+			if (cohort != null) {
 				hql += "and ";
+			}
 			hql += " program in (:programs)";
 		}
 		hql += " order by patient.patientId, dateEnrolled";
 		Query query = sessionFactory.getCurrentSession().createQuery(hql);
-		if (cohort != null)
+		if (cohort != null) {
 			query.setParameterList("patientIds", cohort.getMemberIds());
-		if (programs != null)
+		}
+		if (programs != null) {
 			query.setParameterList("programs", programs);
+		}
 		return query.list();
 	}
 	
@@ -262,8 +263,8 @@ public class HibernateProgramWorkflowDAO implements ProgramWorkflowDAO {
 		
 		if (workflow != null && trigger != null) {
 			Criteria criteria = sessionFactory.getCurrentSession().createCriteria(ConceptStateConversion.class, "csc");
-			criteria.add(Expression.eq("csc.programWorkflow", workflow));
-			criteria.add(Expression.eq("csc.concept", trigger));
+			criteria.add(Restrictions.eq("csc.programWorkflow", workflow));
+			criteria.add(Restrictions.eq("csc.concept", trigger));
 			csc = (ConceptStateConversion) criteria.uniqueResult();
 		}
 		

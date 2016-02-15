@@ -1,8 +1,18 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+ *
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
+ */
 package org.openmrs.validator;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.scheduler.TaskDefinition;
+import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -10,10 +20,10 @@ import org.springframework.validation.Errors;
 /**
  * Tests methods on the {@link SchedulerFormValidator} class.
  */
-public class SchedulerFormValidatorTest {
+public class SchedulerFormValidatorTest extends BaseContextSensitiveTest {
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if name is null or empty or whitespace", method = "validate(Object,Errors)")
@@ -39,7 +49,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if taskClass is empty or whitespace", method = "validate(Object,Errors)")
@@ -60,7 +70,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if repeatInterval is null or empty or whitespace", method = "validate(Object,Errors)")
@@ -80,7 +90,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if class is not instance of Task", method = "validate(Object,Errors)")
@@ -98,7 +108,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if class is not accessible", method = "validate(Object,Errors)")
@@ -116,7 +126,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail validation if class cannot be instantiated", method = "validate(Object,Errors)")
@@ -134,7 +144,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "sshould fail validation if class not found", method = "validate(Object,Errors)")
@@ -152,7 +162,7 @@ public class SchedulerFormValidatorTest {
 	}
 	
 	/**
-	 * @see {@link SchedulerFormValidator#validate(Object,Errors)}
+	 * @see SchedulerFormValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass validation if all required fields have proper values", method = "validate(Object,Errors)")
@@ -166,5 +176,50 @@ public class SchedulerFormValidatorTest {
 		new SchedulerFormValidator().validate(def, errors);
 		
 		Assert.assertFalse(errors.hasErrors());
+	}
+	
+	/**
+	 * @see SchedulerFormValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should pass validation if field lengths are correct", method = "validate(Object,Errors)")
+	public void validate_shouldPassValidationIfFieldLengthsAreCorrect() throws Exception {
+		TaskDefinition def = new TaskDefinition();
+		def.setName("Chores");
+		def.setRepeatInterval(3600000L);
+		def.setTaskClass("org.openmrs.scheduler.tasks.HelloWorldTask");
+		def.setDescription("description");
+		def.setStartTimePattern("startTimePattern");
+		
+		Errors errors = new BindException(def, "def");
+		new SchedulerFormValidator().validate(def, errors);
+		
+		Assert.assertFalse(errors.hasErrors());
+	}
+	
+	/**
+	 * @see SchedulerFormValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail validation if field lengths are not correct", method = "validate(Object,Errors)")
+	public void validate_shouldFailValidationIfFieldLengthsAreNotCorrect() throws Exception {
+		TaskDefinition def = new TaskDefinition();
+		def
+		        .setName("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		def.setRepeatInterval(3600000L);
+		def
+		        .setTaskClass("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		def
+		        .setDescription("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		def
+		        .setStartTimePattern("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		
+		Errors errors = new BindException(def, "def");
+		new SchedulerFormValidator().validate(def, errors);
+		
+		Assert.assertTrue(errors.hasFieldErrors("name"));
+		Assert.assertTrue(errors.hasFieldErrors("taskClass"));
+		Assert.assertTrue(errors.hasFieldErrors("description"));
+		Assert.assertTrue(errors.hasFieldErrors("startTimePattern"));
 	}
 }

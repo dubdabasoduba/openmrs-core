@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.impl;
 
@@ -29,8 +25,11 @@ import org.openmrs.Privilege;
 import org.openmrs.PrivilegeListener;
 import org.openmrs.Role;
 import org.openmrs.User;
+import org.openmrs.annotation.Authorized;
+import org.openmrs.annotation.Logging;
 import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.APIException;
+import org.openmrs.api.CannotDeleteRoleWithChildrenException;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.DAOException;
@@ -68,38 +67,28 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	
 	/**
 	 * @see org.openmrs.api.UserService#createUser(org.openmrs.User, java.lang.String)
-	 * @deprecated
 	 */
 	public User createUser(User user, String password) throws APIException {
-		return Context.getUserService().saveUser(user, password);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#saveUser(org.openmrs.User, java.lang.String)
-	 */
-	public User saveUser(User user, String password) throws APIException {
-		if (user.getUserId() == null) {
-			Context.requirePrivilege(PrivilegeConstants.ADD_USERS);
-		} else {
-			Context.requirePrivilege(PrivilegeConstants.EDIT_USERS);
+		if (user.getUserId() != null) {
+			throw new APIException("This method can be used for only creating new users");
 		}
+		
+		Context.requirePrivilege(PrivilegeConstants.ADD_USERS);
 		
 		checkPrivileges(user);
 		
-		// if we're creating a user and a password wasn't supplied, throw an
-		// error
-		if (user.getUserId() == null && (password == null || password.length() < 1))
-			throw new APIException("A password is required when creating a user");
+		// if a password wasn't supplied, throw an error
+		if (password == null || password.length() < 1) {
+			throw new APIException("User.creating.password.required", (Object[]) null);
+		}
 		
-		if (hasDuplicateUsername(user))
+		if (hasDuplicateUsername(user)) {
 			throw new DAOException("Username " + user.getUsername() + " or system id " + user.getSystemId()
 			        + " is already in use.");
+		}
 		
 		// TODO Check required fields for user!!
-		
-		if (user.getUserId() == null && password != null) {
-			OpenmrsUtil.validatePassword(user.getUsername(), password, user.getSystemId());
-		}
+		OpenmrsUtil.validatePassword(user.getUsername(), password, user.getSystemId());
 		
 		return dao.saveUser(user, password);
 	}
@@ -136,31 +125,27 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 		List<Role> roles = new Vector<Role>();
 		roles.add(role);
 		
-		return getUsers(null, roles, false);
+		return Context.getUserService().getUsers(null, roles, false);
 	}
 	
 	/**
-	 * @deprecated replaced by {@link #saveUser(User, String)}
-	 * @see org.openmrs.api.UserService#updateUser(org.openmrs.User)
+	 * @see org.openmrs.api.UserService#saveUser(org.openmrs.User)
 	 */
-	public void updateUser(User user) throws APIException {
-		Context.getUserService().saveUser(user, null);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#grantUserRole(org.openmrs.User, org.openmrs.Role)
-	 * @deprecated
-	 */
-	public void grantUserRole(User user, Role role) throws APIException {
-		Context.getUserService().saveUser(user.addRole(role), null);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#revokeUserRole(org.openmrs.User, org.openmrs.Role)
-	 * @deprecated
-	 */
-	public void revokeUserRole(User user, Role role) throws APIException {
-		Context.getUserService().saveUser(user.removeRole(role), null);
+	public User saveUser(User user) throws APIException {
+		if (user.getUserId() == null) {
+			throw new APIException("This method can be called only to update existing users");
+		}
+		
+		Context.requirePrivilege(PrivilegeConstants.EDIT_USERS);
+		
+		checkPrivileges(user);
+		
+		if (hasDuplicateUsername(user)) {
+			throw new DAOException("Username " + user.getUsername() + " or system id " + user.getSystemId()
+			        + " is already in use.");
+		}
+		
+		return dao.saveUser(user, null);
 	}
 	
 	/**
@@ -179,7 +164,7 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 		user.setRetiredBy(Context.getAuthenticatedUser());
 		user.setDateRetired(new Date());
 		
-		return saveUser(user, null);
+		return saveUser(user);
 	}
 	
 	/**
@@ -198,24 +183,7 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 		user.setRetiredBy(null);
 		user.setDateRetired(null);
 		
-		return saveUser(user, null);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#deleteUser(org.openmrs.User)
-	 * @deprecated
-	 */
-	public void deleteUser(User user) throws APIException {
-		Context.getUserService().purgeUser(user);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#getUsers()
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<User> getUsers() throws APIException {
-		return getAllUsers();
+		return saveUser(user);
 	}
 	
 	/**
@@ -225,16 +193,7 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	public List<User> getAllUsers() throws APIException {
 		return dao.getAllUsers();
 	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#getPrivileges()
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<Privilege> getPrivileges() throws APIException {
-		return getAllPrivileges();
-	}
-	
+
 	/**
 	 * @see org.openmrs.api.UserService#getAllPrivileges()
 	 */
@@ -255,8 +214,9 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 * @see org.openmrs.api.UserService#purgePrivilege(org.openmrs.Privilege)
 	 */
 	public void purgePrivilege(Privilege privilege) throws APIException {
-		if (OpenmrsUtil.getCorePrivileges().keySet().contains(privilege.getPrivilege()))
-			throw new APIException("Cannot delete a core privilege");
+		if (OpenmrsUtil.getCorePrivileges().keySet().contains(privilege.getPrivilege())) {
+			throw new APIException("Privilege.cannot.delete.core", (Object[]) null);
+		}
 		
 		dao.deletePrivilege(privilege);
 	}
@@ -267,35 +227,13 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	public Privilege savePrivilege(Privilege privilege) throws APIException {
 		return dao.savePrivilege(privilege);
 	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#getRoles()
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<Role> getRoles() throws APIException {
-		return getAllRoles();
-	}
-	
+
 	/**
 	 * @see org.openmrs.api.UserService#getAllRoles()
 	 */
 	@Transactional(readOnly = true)
 	public List<Role> getAllRoles() throws APIException {
 		return dao.getAllRoles();
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#getInheritingRoles(org.openmrs.Role)
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<Role> getInheritingRoles(Role role) throws APIException {
-		
-		List<Role> roles = new Vector<Role>();
-		roles.addAll(role.getInheritedRoles());
-		
-		return roles;
 	}
 	
 	/**
@@ -310,11 +248,17 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 * @see org.openmrs.api.UserService#purgeRole(org.openmrs.Role)
 	 */
 	public void purgeRole(Role role) throws APIException {
-		if (role == null || role.getRole() == null)
+		if (role == null || role.getRole() == null) {
 			return;
+		}
 		
-		if (OpenmrsUtil.getCoreRoles().keySet().contains(role.getRole()))
-			throw new APIException("Cannot delete a core role");
+		if (OpenmrsUtil.getCoreRoles().keySet().contains(role.getRole())) {
+			throw new APIException("Role.cannot.delete.core", (Object[]) null);
+		}
+		
+		if (role.hasChildRoles()) {
+			throw new CannotDeleteRoleWithChildrenException();
+		}
 		
 		dao.deleteRole(role);
 	}
@@ -323,11 +267,11 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 * @see org.openmrs.api.UserService#saveRole(org.openmrs.Role)
 	 */
 	public Role saveRole(Role role) throws APIException {
-		
 		// make sure one of the parents of this role isn't itself...this would
 		// cause an infinite loop
-		if (role.getAllParentRoles().contains(role))
-			throw new APIAuthenticationException("Invalid Role or parent Role.  A role cannot inherit itself.");
+		if (role.getAllParentRoles().contains(role)) {
+			throw new APIException("Role.cannot.inherit.descendant", (Object[]) null);
+		}
 		
 		checkPrivileges(role);
 		
@@ -335,17 +279,12 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	}
 	
 	/**
-	 * @see org.openmrs.api.UserService#changePassword(org.openmrs.User, java.lang.String)
-	 */
-	public void changePassword(User u, String pw) throws APIException {
-		dao.changePassword(u, pw);
-	}
-	
-	/**
 	 * @see org.openmrs.api.UserService#changePassword(java.lang.String, java.lang.String)
 	 */
 	public void changePassword(String pw, String pw2) throws APIException {
-		dao.changePassword(pw, pw2);
+		User user = Context.getAuthenticatedUser();
+		
+		changePassword(user, pw, pw2);
 	}
 	
 	/**
@@ -379,31 +318,6 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	}
 	
 	/**
-	 * @see org.openmrs.api.UserService#findUsers(String, List, boolean)
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<User> findUsers(String name, List<String> roles, boolean includeVoided) {
-		
-		List<Role> rolesToSearch = new Vector<Role>();
-		
-		for (String role : roles) {
-			rolesToSearch.add(new Role(role));
-		}
-		
-		return getUsers(name, rolesToSearch, includeVoided);
-	}
-	
-	/**
-	 * @see org.openmrs.api.UserService#findUsers(String, String, boolean)
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<User> findUsers(String givenName, String familyName, boolean includeVoided) {
-		return getUsersByName(givenName, familyName, includeVoided);
-	}
-	
-	/**
 	 * @see org.openmrs.api.UserService#getUsersByName(java.lang.String, java.lang.String, boolean)
 	 */
 	@Transactional(readOnly = true)
@@ -420,20 +334,11 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	}
 	
 	/**
-	 * @see org.openmrs.api.UserService#getAllUsers(List, boolean)
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public List<User> getAllUsers(List<Role> roles, boolean includeVoided) {
-		return getUsers(null, roles, includeVoided);
-	}
-	
-	/**
 	 * @see org.openmrs.api.UserService#getUsers(java.lang.String, java.util.List, boolean)
 	 */
 	@Transactional(readOnly = true)
 	public List<User> getUsers(String nameSearch, List<Role> roles, boolean includeVoided) throws APIException {
-		return getUsers(nameSearch, roles, includeVoided, null, null);
+		return Context.getUserService().getUsers(nameSearch, roles, includeVoided, null, null);
 	}
 	
 	/**
@@ -443,28 +348,30 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 */
 	private void checkPrivileges(User user) {
 		Collection<Role> roles = user.getAllRoles();
-		User authUser = Context.getAuthenticatedUser();
-		
 		List<String> requiredPrivs = new Vector<String>();
 		
 		for (Role r : roles) {
-			if (r.getRole().equals(RoleConstants.SUPERUSER) && !authUser.hasRole(RoleConstants.SUPERUSER))
-				throw new APIException("You must have the role '" + RoleConstants.SUPERUSER + "' in order to assign it.");
+			if (r.getRole().equals(RoleConstants.SUPERUSER)
+			        && !Context.hasPrivilege(PrivilegeConstants.ASSIGN_SYSTEM_DEVELOPER_ROLE)) {
+				throw new APIException("User.you.must.have.role", new Object[] { RoleConstants.SUPERUSER });
+			}
 			if (r.getPrivileges() != null) {
-				for (Privilege p : r.getPrivileges())
-					if (!authUser.hasPrivilege(p.getPrivilege()))
+				for (Privilege p : r.getPrivileges()) {
+					if (!Context.hasPrivilege(p.getPrivilege())) {
 						requiredPrivs.add(p.getPrivilege());
+					}
+				}
 			}
 		}
 		
 		if (requiredPrivs.size() == 1) {
-			throw new APIException("You must have privilege '" + requiredPrivs.get(0) + "' in order to assign it.");
+			throw new APIException("User.you.must.have.privilege", new Object[] { requiredPrivs.get(0) });
 		} else if (requiredPrivs.size() > 1) {
-			String txt = "You must have the following privileges in order to assign them: ";
-			for (String s : requiredPrivs)
-				txt += s + ", ";
-			txt = txt.substring(0, txt.length() - 2);
-			throw new APIException(txt);
+			StringBuilder txt = new StringBuilder("You must have the following privileges in order to assign them: ");
+			for (String s : requiredPrivs) {
+				txt.append(s).append(", ");
+			}
+			throw new APIException(txt.substring(0, txt.length() - 2));
 		}
 	}
 	
@@ -473,13 +380,14 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 */
 	public User setUserProperty(User user, String key, String value) {
 		if (user != null) {
-			if (!Context.hasPrivilege(PrivilegeConstants.EDIT_USERS) && !user.equals(Context.getAuthenticatedUser()))
-				throw new APIException("You are not authorized to change " + user.getUserId() + "'s properties");
+			if (!Context.hasPrivilege(PrivilegeConstants.EDIT_USERS) && !user.equals(Context.getAuthenticatedUser())) {
+				throw new APIException("you.are.not.authorized.change.properties", new Object[] { user.getUserId() });
+			}
 			
 			user.setUserProperty(key, value);
 			try {
 				Context.addProxyPrivilege(PrivilegeConstants.EDIT_USERS);
-				saveUser(user, null);
+				Context.getUserService().saveUser(user);
 			}
 			finally {
 				Context.removeProxyPrivilege(PrivilegeConstants.EDIT_USERS);
@@ -498,14 +406,15 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 			// if the current user isn't allowed to edit users and
 			// the user being edited is not the current user, throw an
 			// exception
-			if (!Context.hasPrivilege(PrivilegeConstants.EDIT_USERS) && !user.equals(Context.getAuthenticatedUser()))
-				throw new APIException("You are not authorized to change " + user.getUserId() + "'s properties");
+			if (!Context.hasPrivilege(PrivilegeConstants.EDIT_USERS) && !user.equals(Context.getAuthenticatedUser())) {
+				throw new APIException("you.are.not.authorized.change.properties", new Object[] { user.getUserId() });
+			}
 			
 			user.removeUserProperty(key);
 			
 			try {
 				Context.addProxyPrivilege(PrivilegeConstants.EDIT_USERS);
-				saveUser(user, null);
+				Context.getUserService().saveUser(user);
 			}
 			finally {
 				Context.removeProxyPrivilege(PrivilegeConstants.EDIT_USERS);
@@ -559,8 +468,8 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	 * @see org.openmrs.api.UserService#purgeUser(org.openmrs.User, boolean)
 	 */
 	public void purgeUser(User user, boolean cascade) throws APIException {
-		if (cascade == true) {
-			throw new APIException("I don't think we want to cascade here");
+		if (cascade) {
+			throw new APIException("cascade.do.not.think", (Object[]) null);
 		}
 		
 		dao.deleteUser(user);
@@ -575,11 +484,13 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	private void checkPrivileges(Role role) {
 		Collection<Privilege> privileges = role.getPrivileges();
 		
-		if (privileges != null)
+		if (privileges != null) {
 			for (Privilege p : privileges) {
-				if (!Context.hasPrivilege(p.getPrivilege()))
+				if (!Context.hasPrivilege(p.getPrivilege())) {
 					throw new APIAuthenticationException("Privilege required: " + p);
+				}
 			}
+		}
 	}
 	
 	/**
@@ -612,14 +523,16 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	@Override
 	@Transactional(readOnly = true)
 	public Integer getCountOfUsers(String name, List<Role> roles, boolean includeRetired) {
-		if (name != null)
+		if (name != null) {
 			name = name.replace(", ", " ");
+		}
 		
 		// if the authenticated role is in the list of searched roles, then all
 		// persons should be searched
 		Role auth_role = getRole(RoleConstants.AUTHENTICATED);
-		if (roles.contains(auth_role))
+		if (roles.contains(auth_role)) {
 			return dao.getCountOfUsers(name, new Vector<Role>(), includeRetired);
+		}
 		
 		return dao.getCountOfUsers(name, roles, includeRetired);
 	}
@@ -631,11 +544,13 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	@Transactional(readOnly = true)
 	public List<User> getUsers(String name, List<Role> roles, boolean includeRetired, Integer start, Integer length)
 	        throws APIException {
-		if (name != null)
+		if (name != null) {
 			name = name.replace(", ", " ");
+		}
 		
-		if (roles == null)
+		if (roles == null) {
 			roles = new Vector<Role>();
+		}
 		
 		// add the requested roles and all child roles for consideration
 		Set<Role> allRoles = new HashSet<Role>();
@@ -647,8 +562,9 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 		// if the authenticated role is in the list of searched roles, then all
 		// persons should be searched
 		Role auth_role = getRole(RoleConstants.AUTHENTICATED);
-		if (roles.contains(auth_role))
+		if (roles.contains(auth_role)) {
 			return dao.getUsers(name, new Vector<Role>(), includeRetired, start, length);
+		}
 		
 		return dao.getUsers(name, new ArrayList<Role>(allRoles), includeRetired, start, length);
 	}
@@ -675,7 +591,7 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	public User saveUserProperty(String key, String value) {
 		User user = Context.getAuthenticatedUser();
 		if (user == null) {
-			throw new APIException("No Authenticated user found");
+			throw new APIException("no.authenticated.user.found", (Object[]) null);
 		}
 		user.setUserProperty(key, value);
 		return dao.saveUser(user, null);
@@ -685,13 +601,35 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService {
 	public User saveUserProperties(Map<String, String> properties) {
 		User user = Context.getAuthenticatedUser();
 		if (user == null) {
-			throw new APIException("No Authenticated user found");
+			throw new APIException("no.authenticated.user.found", (Object[]) null);
 		}
 		user.getUserProperties().clear();
-		for (String key : properties.keySet()) {
-			user.setUserProperty(key, properties.get(key));
+		for (Map.Entry<String, String> entry : properties.entrySet()) {
+			user.setUserProperty(entry.getKey(), entry.getValue());
 		}
 		return dao.saveUser(user, null);
+	}
+	
+	/**
+	 * @see UserService#changePassword(User, String, String)
+	 */
+	@Override
+	@Authorized(PrivilegeConstants.EDIT_USER_PASSWORDS)
+	@Logging(ignoredArgumentIndexes = { 1, 2 })
+	public void changePassword(User user, String oldPassword, String newPassword) throws APIException {
+		if (user.getUserId() == null) {
+			throw new APIException("user.must.exist", (Object[]) null);
+		}
+		if (oldPassword == null) {
+			if (!Context.hasPrivilege(PrivilegeConstants.EDIT_USER_PASSWORDS)) {
+				throw new APIException("null.old.password.privilege.required", (Object[]) null);
+			}
+		} else if (!dao.getLoginCredential(user).checkPassword(oldPassword)) {
+			throw new APIException("old.password.not.correct", (Object[]) null);
+		}
+	
+		OpenmrsUtil.validatePassword(user.getUsername(), newPassword, user.getSystemId());
+		dao.changePassword(user, newPassword);
 	}
 	
 }

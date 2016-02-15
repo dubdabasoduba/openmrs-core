@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -29,7 +25,7 @@ import org.openmrs.test.Verifies;
 public class ConceptNameSaveHandlerTest extends BaseContextSensitiveTest {
 	
 	/**
-	 * @see {@link ConceptNameSaveHandler#handle(ConceptName,User,Date,String)}
+	 * @see ConceptNameSaveHandler#handle(ConceptName,User,Date,String)
 	 */
 	@Test
 	@Verifies(value = "should not fail if tags is null", method = "handle(ConceptName,User,Date,String)")
@@ -41,27 +37,27 @@ public class ConceptNameSaveHandlerTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ConceptNameSaveHandler#handle(ConceptName,User,Date,String)}
+	 * @see ConceptNameSaveHandler#handle(ConceptName,User,Date,String)
 	 */
 	@Test
 	@Verifies(value = "should replace tags without ids with database fetched tag", method = "handle(ConceptName,User,Date,String)")
 	public void handle_shouldReplaceTagsWithoutIdsWithDatabaseFetchedTag() throws Exception {
 		ConceptNameSaveHandler handler = new ConceptNameSaveHandler();
 		ConceptName name = new ConceptName();
-		name.addTag(ConceptNameTag.PREFERRED); // this tag has a null id
-		name.addTag(ConceptNameTag.SHORT); // this tag has a null id
+		name.addTag("preferred"); // this tag has a null id
+		name.addTag("short"); // this tag has a null id
 		handler.handle(name, null, null, null);
 		for (ConceptNameTag tag : name.getTags()) {
-			if (tag.getTag().equals(ConceptNameTag.PREFERRED)) {
+			if (tag.getTag().equals("preferred")) {
 				Assert.assertEquals(4, tag.getConceptNameTagId().intValue());
-			} else if (tag.getTag().equals(ConceptNameTag.SHORT)) {
+			} else if (tag.getTag().equals("short")) {
 				Assert.assertEquals(2, tag.getConceptNameTagId().intValue());
 			}
 		}
 	}
 	
 	/**
-	 * @see {@link ConceptNameSaveHandler#handle(ConceptName,User,Date,String)}
+	 * @see ConceptNameSaveHandler#handle(ConceptName,User,Date,String)
 	 */
 	@Test
 	@Verifies(value = "should not replace tags without ids that are not in the database", method = "handle(ConceptName,User,Date,String)")
@@ -75,7 +71,7 @@ public class ConceptNameSaveHandlerTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ConceptNameSaveHandler#handle(ConceptName,User,Date,String)}
+	 * @see ConceptNameSaveHandler#handle(ConceptName,User,Date,String)
 	 */
 	@Test
 	@Verifies(value = "should not replace tags that have ids", method = "handle(ConceptName,User,Date,String)")

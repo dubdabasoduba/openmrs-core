@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter.update;
 
@@ -27,7 +23,7 @@ import org.openmrs.web.test.BaseWebContextSensitiveTest;
 public class UpdateFilterTest extends BaseWebContextSensitiveTest {
 	
 	/**
-	 * @see {@link UpdateFilter#authenticateAsSuperUser(String,String)}
+	 * @see UpdateFilter#authenticateAsSuperUser(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false if given invalid credentials", method = "authenticateAsSuperUser(String,String)")
@@ -36,7 +32,7 @@ public class UpdateFilterTest extends BaseWebContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link UpdateFilter#authenticateAsSuperUser(String,String)}
+	 * @see UpdateFilter#authenticateAsSuperUser(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false if given user is not superuser", method = "authenticateAsSuperUser(String,String)")
@@ -50,7 +46,7 @@ public class UpdateFilterTest extends BaseWebContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link UpdateFilter#authenticateAsSuperUser(String,String)}
+	 * @see UpdateFilter#authenticateAsSuperUser(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return true if given user is superuser", method = "authenticateAsSuperUser(String,String)")
@@ -59,7 +55,7 @@ public class UpdateFilterTest extends BaseWebContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link UpdateFilter#isSuperUser(Connection,Integer)}
+	 * @see UpdateFilter#isSuperUser(Connection,Integer)
 	 */
 	@Test
 	@Verifies(value = "should return true if given user has superuser role", method = "isSuperUser(Connection,Integer)")
@@ -68,11 +64,12 @@ public class UpdateFilterTest extends BaseWebContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link UpdateFilter#isSuperUser(Connection,Integer)}
+	 * @see UpdateFilter#isSuperUser(Connection,Integer)
 	 */
 	@Test
 	@Verifies(value = "should return false if given user does not have the super user role", method = "isSuperUser(Connection,Integer)")
 	public void isSuperUser_shouldReturnFalseIfGivenUserDoesNotHaveTheSuperUserRole() throws Exception {
 		Assert.assertFalse(new UpdateFilter().isSuperUser(getConnection(), 502));
 	}
+	
 }

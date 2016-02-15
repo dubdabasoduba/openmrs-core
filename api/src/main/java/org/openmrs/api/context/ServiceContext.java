@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.context;
 
@@ -26,11 +22,9 @@ import org.aopalliance.aop.Advice;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
-import org.openmrs.api.ActiveListService;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
 import org.openmrs.api.ConceptService;
-import org.openmrs.api.DataSetService;
 import org.openmrs.api.DatatypeService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
@@ -43,7 +37,6 @@ import org.openmrs.api.PatientSetService;
 import org.openmrs.api.PersonService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.ProviderService;
-import org.openmrs.api.ReportService;
 import org.openmrs.api.SerializationService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.VisitService;
@@ -53,7 +46,7 @@ import org.openmrs.logic.LogicService;
 import org.openmrs.messagesource.MessageSourceService;
 import org.openmrs.notification.AlertService;
 import org.openmrs.notification.MessageService;
-import org.openmrs.reporting.ReportObjectService;
+import org.openmrs.notification.NoteService;
 import org.openmrs.scheduler.SchedulerService;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.springframework.aop.Advisor;
@@ -65,24 +58,22 @@ import org.springframework.context.ApplicationContextAware;
 
 /**
  * Represents an OpenMRS <code>Service Context</code>, which returns the services represented
- * throughout the system. <br/>
- * <br/>
- * This class should not be access directly, but rather used through the <code>Context</code> class. <br/>
- * <br/>
+ * throughout the system. <br>
+ * <br>
+ * This class should not be access directly, but rather used through the <code>Context</code> class. <br>
+ * <br>
  * This class is essentially static and only one instance is kept because this is fairly
  * heavy-weight. Spring takes care of filling in the actual service implementations via dependency
- * injection. See the /metadata/api/spring/applicationContext-service.xml file. <br/>
- * <br/>
+ * injection. See the /metadata/api/spring/applicationContext-service.xml file. <br>
+ * <br>
  * Module services are also accessed through this class. See {@link #getService(Class)}
- * 
+ *
  * @see org.openmrs.api.context.Context
  */
 public class ServiceContext implements ApplicationContextAware {
 	
 	private static final Log log = LogFactory.getLog(ServiceContext.class);
-	
-	private static ServiceContext instance;
-	
+
 	private ApplicationContext applicationContext;
 	
 	private static boolean refreshingContext = false;
@@ -110,7 +101,7 @@ public class ServiceContext implements ApplicationContextAware {
 	/**
 	 * Services implementing the OpenmrsService interface for each module. The map is keyed by the
 	 * full class name including package.
-	 * 
+	 *
 	 * @since 1.9
 	 */
 	@SuppressWarnings("unchecked")
@@ -118,26 +109,31 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * The default constructor is private so as to keep only one instance per java vm.
-	 * 
+	 *
 	 * @see ServiceContext#getInstance()
 	 */
 	private ServiceContext() {
 		log.debug("Instantiating service context");
 	}
 	
+	private static class ServiceContextHolder {
+		private static ServiceContext instance = null;
+	}
+	
 	/**
 	 * There should only be one ServiceContext per openmrs (java virtual machine). This method
 	 * should be used when wanting to fetch the service context Note: The ServiceContext shouldn't
 	 * be used independently. All calls should go through the Context
-	 * 
+	 *
 	 * @return This VM's current ServiceContext.
 	 * @see org.openmrs.api.context.Context
 	 */
 	public static ServiceContext getInstance() {
-		if (instance == null)
-			instance = new ServiceContext();
+		if (ServiceContextHolder.instance == null) {
+			ServiceContextHolder.instance = new ServiceContext();
+		}
 		
-		return instance;
+		return ServiceContextHolder.instance;
 	}
 	
 	/**
@@ -145,41 +141,48 @@ public class ServiceContext implements ApplicationContextAware {
 	 * refreshing (being added/removed) and/or openmrs is shutting down
 	 */
 	public static void destroyInstance() {
-		if (instance != null && instance.services != null) {
+		if (ServiceContextHolder.instance != null && ServiceContextHolder.instance.services != null) {
 			if (log.isDebugEnabled()) {
-				for (Map.Entry<Class, Object> entry : instance.services.entrySet()) {
+				for (Map.Entry<Class, Object> entry : ServiceContextHolder.instance.services.entrySet()) {
 					log.debug("Service - " + entry.getKey().getName() + ":" + entry.getValue());
 				}
 			}
 			
 			// Remove advice and advisors that this service added
-			for (Class serviceClass : instance.services.keySet()) {
-				instance.removeAddedAOP(serviceClass);
+			for (Class serviceClass : ServiceContextHolder.instance.services.keySet()) {
+				ServiceContextHolder.instance.removeAddedAOP(serviceClass);
 			}
 			
-			if (instance.services != null) {
-				instance.services.clear();
-				instance.services = null;
+			if (ServiceContextHolder.instance.services != null) {
+				ServiceContextHolder.instance.services.clear();
+				ServiceContextHolder.instance.services = null;
 			}
 			
-			if (instance.addedAdvisors != null) {
-				instance.addedAdvisors.clear();
-				instance.addedAdvisors = null;
+			if (ServiceContextHolder.instance.addedAdvisors != null) {
+				ServiceContextHolder.instance.addedAdvisors.clear();
+				ServiceContextHolder.instance.addedAdvisors = null;
 			}
 			
-			if (instance.addedAdvice != null) {
-				instance.addedAdvice.clear();
-				instance.addedAdvice = null;
+			if (ServiceContextHolder.instance.addedAdvice != null) {
+				ServiceContextHolder.instance.addedAdvice.clear();
+				ServiceContextHolder.instance.addedAdvice = null;
 			}
 		}
 		
-		if (instance != null)
-			instance.applicationContext = null;
+		if (ServiceContextHolder.instance != null) {
+			ServiceContextHolder.instance.applicationContext = null;
+			
+			if (ServiceContextHolder.instance.moduleOpenmrsServices != null) {
+				ServiceContextHolder.instance.moduleOpenmrsServices.clear();
+				ServiceContextHolder.instance.moduleOpenmrsServices = null;
+			}
+		}
 		
-		if (log.isDebugEnabled())
-			log.debug("Destroying ServiceContext instance: " + instance);
+		if (log.isDebugEnabled()) {
+			log.debug("Destroying ServiceContext instance: " + ServiceContextHolder.instance);
+		}
 		
-		instance = null;
+		ServiceContextHolder.instance = null;
 	}
 	
 	/**
@@ -201,6 +204,13 @@ public class ServiceContext implements ApplicationContextAware {
 	 */
 	public ObsService getObsService() {
 		return getService(ObsService.class);
+	}
+	
+	/**
+	 * @return note service
+	 */
+	public NoteService getNoteService() {
+		return getService(NoteService.class);
 	}
 	
 	/**
@@ -239,28 +249,10 @@ public class ServiceContext implements ApplicationContextAware {
 	}
 	
 	/**
-	 * @return report object service
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public ReportObjectService getReportObjectService() {
-		return getService(ReportObjectService.class);
-	}
-	
-	/**
 	 * @return serialization service
 	 */
 	public SerializationService getSerializationService() {
 		return getService(SerializationService.class);
-	}
-	
-	/**
-	 * @return report service
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public ReportService getReportService() {
-		return getService(ReportService.class);
 	}
 	
 	/**
@@ -300,7 +292,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Set the scheduler service.
-	 * 
+	 *
 	 * @param schedulerService
 	 */
 	public void setSchedulerService(SchedulerService schedulerService) {
@@ -351,7 +343,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Sets the message service.
-	 * 
+	 *
 	 * @param messageService
 	 */
 	public void setMessageService(MessageService messageService) {
@@ -408,6 +400,13 @@ public class ServiceContext implements ApplicationContextAware {
 	}
 	
 	/**
+	 * @param noteService the noteService to set
+	 */
+	public void setNoteService(NoteService noteService) {
+		setService(NoteService.class, noteService);
+	}
+	
+	/**
 	 * @param orderService the orderService to set
 	 */
 	public void setOrderService(OrderService orderService) {
@@ -422,46 +421,10 @@ public class ServiceContext implements ApplicationContextAware {
 	}
 	
 	/**
-	 * @param reportObjectService the reportObjectService to set
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public void setReportObjectService(ReportObjectService reportObjectService) {
-		setService(ReportObjectService.class, reportObjectService);
-	}
-	
-	/**
-	 * @param reportService
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public void setReportService(ReportService reportService) {
-		setService(ReportService.class, reportService);
-	}
-	
-	/**
 	 * @param serializationService
 	 */
 	public void setSerializationService(SerializationService serializationService) {
 		setService(SerializationService.class, serializationService);
-	}
-	
-	/**
-	 * @param dataSetService
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public void setDataSetService(DataSetService dataSetService) {
-		setService(DataSetService.class, dataSetService);
-	}
-	
-	/**
-	 * @return the DataSetService
-	 * @deprecated see reportingcompatibility module
-	 */
-	@Deprecated
-	public DataSetService getDataSetService() {
-		return getService(DataSetService.class);
 	}
 	
 	/**
@@ -522,7 +485,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Gets the MessageSourceService used in the context.
-	 * 
+	 *
 	 * @return MessageSourceService
 	 */
 	public MessageSourceService getMessageSourceService() {
@@ -531,27 +494,11 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Sets the MessageSourceService used in the context.
-	 * 
+	 *
 	 * @param messageSourceService the MessageSourceService to use
 	 */
 	public void setMessageSourceService(MessageSourceService messageSourceService) {
 		setService(MessageSourceService.class, messageSourceService);
-	}
-	
-	/**
-	 * Gets the ActiveListService used in the context.
-	 * 
-	 * @return ActiveListService
-	 */
-	public ActiveListService getActiveListService() {
-		return getService(ActiveListService.class);
-	}
-	
-	/**
-	 * Sets the ActiveListService used in the context
-	 */
-	public void setActiveListService(ActiveListService activeListService) {
-		setService(ActiveListService.class, activeListService);
 	}
 	
 	/**
@@ -561,10 +508,12 @@ public class ServiceContext implements ApplicationContextAware {
 	@SuppressWarnings("unchecked")
 	public void addAdvisor(Class cls, Advisor advisor) {
 		Advised advisedService = (Advised) services.get(cls);
-		if (advisedService.indexOf(advisor) < 0)
+		if (advisedService.indexOf(advisor) < 0) {
 			advisedService.addAdvisor(advisor);
-		if (addedAdvisors.get(cls) == null)
+		}
+		if (addedAdvisors.get(cls) == null) {
 			addedAdvisors.put(cls, new HashSet<Advisor>());
+		}
 		getAddedAdvisors(cls).add(advisor);
 	}
 	
@@ -575,10 +524,12 @@ public class ServiceContext implements ApplicationContextAware {
 	@SuppressWarnings("unchecked")
 	public void addAdvice(Class cls, Advice advice) {
 		Advised advisedService = (Advised) services.get(cls);
-		if (advisedService.indexOf(advice) < 0)
+		if (advisedService.indexOf(advice) < 0) {
 			advisedService.addAdvice(advice);
-		if (addedAdvice.get(cls) == null)
+		}
+		if (addedAdvice.get(cls) == null) {
 			addedAdvice.put(cls, new HashSet<Advice>());
+		}
 		getAddedAdvice(cls).add(advice);
 	}
 	
@@ -606,7 +557,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Moves advisors and advice added by ServiceContext from the source service to the target one.
-	 * 
+	 *
 	 * @param source the existing service
 	 * @param target the new service
 	 */
@@ -628,7 +579,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Removes all advice and advisors added by ServiceContext.
-	 * 
+	 *
 	 * @param cls the class of the cached service to cleanup
 	 */
 	@SuppressWarnings("unchecked")
@@ -639,7 +590,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Removes all the advisors added by ServiceContext.
-	 * 
+	 *
 	 * @param cls the class of the cached service to cleanup
 	 */
 	@SuppressWarnings("unchecked")
@@ -647,26 +598,27 @@ public class ServiceContext implements ApplicationContextAware {
 		Advised advisedService = (Advised) services.get(cls);
 		Set<Advisor> advisorsToRemove = addedAdvisors.get(cls);
 		if (advisedService != null && advisorsToRemove != null) {
-			for (Advisor advisor : advisorsToRemove.toArray(new Advisor[] {}))
+			for (Advisor advisor : advisorsToRemove.toArray(new Advisor[] {})) {
 				removeAdvisor(cls, advisor);
+			}
 		}
 	}
 	
 	/**
 	 * Returns the set of advisors added by ServiceContext.
-	 * 
+	 *
 	 * @param cls the class of the cached service
 	 * @return the set of advisors or an empty set
 	 */
 	@SuppressWarnings("unchecked")
 	private Set<Advisor> getAddedAdvisors(Class cls) {
 		Set<Advisor> result = addedAdvisors.get(cls);
-		return result == null ? Collections.EMPTY_SET : result;
+		return (Set<Advisor>) (result == null ? Collections.emptySet() : result);
 	}
 	
 	/**
 	 * Removes all the advice added by the ServiceContext.
-	 * 
+	 *
 	 * @param cls the class of the caches service to cleanup
 	 */
 	@SuppressWarnings("unchecked")
@@ -674,33 +626,35 @@ public class ServiceContext implements ApplicationContextAware {
 		Advised advisedService = (Advised) services.get(cls);
 		Set<Advice> adviceToRemove = addedAdvice.get(cls);
 		if (advisedService != null && adviceToRemove != null) {
-			for (Advice advice : adviceToRemove.toArray(new Advice[] {}))
+			for (Advice advice : adviceToRemove.toArray(new Advice[] {})) {
 				removeAdvice(cls, advice);
+			}
 		}
 	}
 	
 	/**
 	 * Returns the set of advice added by ServiceContext.
-	 * 
+	 *
 	 * @param cls the class of the cached service
 	 * @return the set of advice or an empty set
 	 */
 	@SuppressWarnings("unchecked")
 	private Set<Advice> getAddedAdvice(Class cls) {
 		Set<Advice> result = addedAdvice.get(cls);
-		return result == null ? Collections.EMPTY_SET : result;
+		return (Set<Advice>) (result == null ? Collections.emptySet() : result);
 	}
 	
 	/**
 	 * Returns the current proxy that is stored for the Class <code>cls</code>
-	 * 
+	 *
 	 * @param cls
 	 * @return Object that is a proxy for the <code>cls</code> class
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Object> T getService(Class<? extends T> cls) {
-		if (log.isTraceEnabled())
+		if (log.isTraceEnabled()) {
 			log.trace("Getting service: " + cls);
+		}
 		
 		// if the context is refreshing, wait until it is
 		// done -- otherwise a null service might be returned
@@ -725,15 +679,16 @@ public class ServiceContext implements ApplicationContextAware {
 		}
 		
 		Object service = services.get(cls);
-		if (service == null)
+		if (service == null) {
 			throw new APIException("Service not found: " + cls);
+		}
 		
 		return (T) service;
 	}
 	
 	/**
 	 * Allow other services to be added to our service layer
-	 * 
+	 *
 	 * @param cls Interface to proxy
 	 * @param classInstance the actual instance of the <code>cls</code> interface
 	 */
@@ -759,31 +714,34 @@ public class ServiceContext implements ApplicationContextAware {
 						ProxyFactory factory = new ProxyFactory(interfaces);
 						factory.setTarget(classInstance);
 						advisedService = (Advised) factory.getProxy(OpenmrsClassLoader.getInstance());
-					} else
+					} else {
 						advisedService = (Advised) classInstance;
+					}
 					
-					if (replacingService)
+					if (replacingService) {
 						moveAddedAOP(cachedService, advisedService);
+					}
 					
 					services.put(cls, advisedService);
 				}
 				log.debug("Service: " + cls + " set successfully");
 			}
 			catch (Exception e) {
-				throw new APIException("Unable to create proxy factory for: " + classInstance.getClass().getName(), e);
+				throw new APIException("service.unable.create.proxy.factory", new Object[] { classInstance.getClass()
+				        .getName() }, e);
 			}
 			
 		}
 	}
 	
 	/**
-	 * Allow other services to be added to our service layer <br/>
-	 * <br/>
-	 * Classes will be found/loaded with the ModuleClassLoader <br/>
-	 * <br/>
-	 * <code>params</code>[0] = string representing the service interface<br/>
+	 * Allow other services to be added to our service layer <br>
+	 * <br>
+	 * Classes will be found/loaded with the ModuleClassLoader <br>
+	 * <br>
+	 * <code>params</code>[0] = string representing the service interface<br>
 	 * <code>params</code>[1] = service instance
-	 * 
+	 *
 	 * @param params list of parameters
 	 */
 	@SuppressWarnings("unchecked")
@@ -792,7 +750,7 @@ public class ServiceContext implements ApplicationContextAware {
 		Object classInstance = params.get(1);
 		
 		if (classString == null || classInstance == null) {
-			throw new APIException("Unable to find classString or classInstance in params");
+			throw new APIException("service.unable.find", (Object[]) null);
 		}
 		
 		Class cls = null;
@@ -801,7 +759,7 @@ public class ServiceContext implements ApplicationContextAware {
 		// loader or the system class loader depending on if we're in a testing
 		// environment or not (system == testing, openmrs == normal)
 		try {
-			if (useSystemClassLoader == false) {
+			if (!useSystemClassLoader) {
 				cls = OpenmrsClassLoader.getInstance().loadClass(classString);
 				
 				if (cls != null && log.isDebugEnabled()) {
@@ -811,20 +769,23 @@ public class ServiceContext implements ApplicationContextAware {
 					}
 					catch (Exception e) { /*pass*/}
 				}
-			} else if (useSystemClassLoader == true) {
+			} else if (useSystemClassLoader) {
 				try {
 					cls = Class.forName(classString);
 					if (log.isDebugEnabled()) {
 						log.debug("cls2 classloader: " + cls.getClass().getClassLoader() + " uid: "
 						        + cls.getClass().getClassLoader().hashCode());
-						log.debug("cls==cls2: " + String.valueOf(cls == cls));
+						//pay attention that here, cls = Class.forName(classString), the system class loader and
+						//cls2 is the openmrs class loader, like above.
+						log.debug("cls==cls2: "
+						        + String.valueOf(cls == OpenmrsClassLoader.getInstance().loadClass(classString)));
 					}
 				}
 				catch (Exception e) { /*pass*/}
 			}
 		}
 		catch (ClassNotFoundException e) {
-			throw new APIException("Unable to set module service: " + classString, e);
+			throw new APIException("service.unable.set", new Object[] { classString }, e);
 		}
 		
 		// add this module service to the normal list of services
@@ -841,7 +802,7 @@ public class ServiceContext implements ApplicationContextAware {
 	 * Set this service context to use the system class loader if the
 	 * <code>useSystemClassLoader</code> is set to true. If false, the openmrs class loader is used
 	 * to load module services
-	 * 
+	 *
 	 * @param useSystemClassLoader true/false whether to use the system class loader
 	 */
 	public void setUseSystemClassLoader(boolean useSystemClassLoader) {
@@ -850,11 +811,15 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Checks if we are using the system class loader.
-	 * 
+	 *
 	 * @return true if using the system class loader, else false.
 	 */
 	public boolean isUseSystemClassLoader() {
 		return useSystemClassLoader;
+	}
+	
+	public static void setRefreshingContext(boolean refreshingContext) {
+		ServiceContext.refreshingContext = refreshingContext;
 	}
 	
 	/**
@@ -864,7 +829,7 @@ public class ServiceContext implements ApplicationContextAware {
 	public void startRefreshingContext() {
 		synchronized (refreshingContextLock) {
 			log.info("Refreshing Context");
-			refreshingContext = true;
+			setRefreshingContext(true);
 		}
 	}
 	
@@ -875,7 +840,7 @@ public class ServiceContext implements ApplicationContextAware {
 	public void doneRefreshingContext() {
 		synchronized (refreshingContextLock) {
 			log.info("Done refreshing Context");
-			refreshingContext = false;
+			setRefreshingContext(false);
 			refreshingContextLock.notifyAll();
 		}
 	}
@@ -884,7 +849,7 @@ public class ServiceContext implements ApplicationContextAware {
 	 * Returns true/false whether startRefreshingContext() has been called without a subsequent call
 	 * to doneRefreshingContext() yet. All methods involved in starting/stopping a module should
 	 * call this if a service method is needed -- otherwise a deadlock will occur.
-	 * 
+	 *
 	 * @return true/false whether the services are currently blocking waiting for a call to
 	 *         doneRefreshingContext()
 	 */
@@ -900,7 +865,7 @@ public class ServiceContext implements ApplicationContextAware {
 	 * <p>
 	 * <b>NOTE: This method introspects top-level beans only.</b> It does <i>not</i> check nested
 	 * beans which might match the specified type as well.
-	 * 
+	 *
 	 * @see ApplicationContext#getBeansOfType(Class)
 	 * @param type the type of Bean to retrieve from the Spring {@link ApplicationContext}
 	 * @return a List of all registered Beans that are valid instances of the passed type
@@ -912,18 +877,19 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	public <T> List<T> getRegisteredComponents(Class<T> type) {
 		Map<String, T> m = getRegisteredComponents(applicationContext, type);
-		if (log.isTraceEnabled())
+		if (log.isTraceEnabled()) {
 			log.trace("getRegisteredComponents(" + type + ") = " + m);
+		}
 		return new ArrayList<T>(m.values());
 	}
 	
 	/**
 	 * Retrieves a bean that match the given type (including subclasses) and name.
-	 * 
+	 *
 	 * @param beanName the name of registered bean to retrieve
 	 * @param type the type of bean to retrieve 
 	 * @return bean of passed type
-	 * 
+	 *
 	 * @since 1.9.4
 	 */
 	public <T> T getRegisteredComponent(String beanName, Class<T> type) throws APIException {
@@ -931,14 +897,14 @@ public class ServiceContext implements ApplicationContextAware {
 			return applicationContext.getBean(beanName, type);
 		}
 		catch (BeansException beanException) {
-			throw new APIException("Error during getting registered component.", beanException);
+			throw new APIException("service.error.during.getting.component", null, beanException);
 		}
 	}
 	
 	/**
 	 * Private method which returns all components registered in a Spring applicationContext of a
 	 * given type This method recurses through each parent ApplicationContext
-	 * 
+	 *
 	 * @param context - The applicationContext to check
 	 * @param type - The type of component to retrieve
 	 * @return all components registered in a Spring applicationContext of a given type
@@ -947,8 +913,9 @@ public class ServiceContext implements ApplicationContextAware {
 	private <T> Map<String, T> getRegisteredComponents(ApplicationContext context, Class<T> type) {
 		Map<String, T> components = new HashMap<String, T>();
 		Map registeredComponents = context.getBeansOfType(type);
-		if (log.isTraceEnabled())
+		if (log.isTraceEnabled()) {
 			log.trace("getRegisteredComponents(" + context + ", " + type + ") = " + registeredComponents);
+		}
 		if (registeredComponents != null) {
 			components.putAll(registeredComponents);
 		}
@@ -965,10 +932,14 @@ public class ServiceContext implements ApplicationContextAware {
 		this.applicationContext = applicationContext;
 	}
 	
+	public ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+	
 	/**
 	 * Calls the {@link OpenmrsService#onStartup()} method for an instance implementing the
 	 * {@link OpenmrsService} interface.
-	 * 
+	 *
 	 * @param openmrsService instance implementing the {@link OpenmrsService} interface.
 	 * @param classString the full instance class name including the package name.
 	 * @since 1.9
@@ -1009,7 +980,7 @@ public class ServiceContext implements ApplicationContextAware {
 	/**
 	 * Gets a list of services implementing the {@link OpenmrsService} interface, for a given
 	 * module.
-	 * 
+	 *
 	 * @param modulePackage the module's package name.
 	 * @return the list of service instances.
 	 * @since 1.9
@@ -1028,7 +999,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Gets the visit service.
-	 * 
+	 *
 	 * @return visit service.
 	 * @since 1.9
 	 **/
@@ -1038,7 +1009,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Sets the visit service.
-	 * 
+	 *
 	 * @param visitService the visitService to set
 	 * @since 1.9
 	 **/
@@ -1048,7 +1019,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Gets the provider service.
-	 * 
+	 *
 	 * @return provider service.
 	 * @since 1.9
 	 **/
@@ -1059,7 +1030,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Sets the provider service.
-	 * 
+	 *
 	 * @param providerService the providerService to set
 	 * @since 1.9
 	 **/
@@ -1069,7 +1040,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Gets the datatype service
-	 * 
+	 *
 	 * @return custom datatype service
 	 * @since 1.9
 	 */
@@ -1079,7 +1050,7 @@ public class ServiceContext implements ApplicationContextAware {
 	
 	/**
 	 * Sets the datatype service
-	 * 
+	 *
 	 * @param datatypeService the datatypeService to set
 	 * @since 1.9
 	 */

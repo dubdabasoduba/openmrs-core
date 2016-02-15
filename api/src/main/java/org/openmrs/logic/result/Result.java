@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.logic.result;
 
@@ -17,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.Obs;
@@ -26,14 +24,14 @@ import org.openmrs.logic.LogicException;
 
 /**
  * A result from the logic service. A result can be 0-to-n date-values pairs. You can treat the
- * result as a list or easily coerce it into a simple value as needed. <br/>
- * <br/>
+ * result as a list or easily coerce it into a simple value as needed. <br>
+ * <br>
  * When possible, results carry references to more complex objects so that code that deals with
  * results and has some prior knowledge of the objects returned by a particular rule can more easily
- * get to the full-featured objects instead of the simplified values in the date-value pairs.<br/>
- * <br/>
+ * get to the full-featured objects instead of the simplified values in the date-value pairs.<br>
+ * <br>
  * TODO: eliminate unnecessary methods (toDatetime(), getDatetime(), and getDate() should all do the
- * same thing)<br/>
+ * same thing)<br>
  * TODO: better support/handling of NULL_RESULT
  */
 public class Result extends ArrayList<Result> {
@@ -113,8 +111,9 @@ public class Result extends ArrayList<Result> {
 	 * @should not fail with empty list
 	 */
 	public Result(List<Result> list) {
-		if (!(list == null || list.size() < 1))
+		if (!(list == null || list.size() < 1)) {
 			this.addAll(list);
+		}
 	}
 	
 	/**
@@ -173,16 +172,17 @@ public class Result extends ArrayList<Result> {
 			if (conceptDatatype == null) {
 				return;
 			}
-			if (conceptDatatype.isCoded())
+			if (conceptDatatype.isCoded()) {
 				this.datatype = Datatype.CODED;
-			else if (conceptDatatype.isNumeric())
+			} else if (conceptDatatype.isNumeric()) {
 				this.datatype = Datatype.NUMERIC;
-			else if (conceptDatatype.isDate())
+			} else if (conceptDatatype.isDate()) {
 				this.datatype = Datatype.DATETIME;
-			else if (conceptDatatype.isText())
+			} else if (conceptDatatype.isText()) {
 				this.datatype = Datatype.TEXT;
-			else if (conceptDatatype.isBoolean())
+			} else if (conceptDatatype.isBoolean()) {
 				this.datatype = Datatype.BOOLEAN;
+			}
 		}
 	}
 	
@@ -273,13 +273,7 @@ public class Result extends ArrayList<Result> {
 	 * Result result = new Result(new Date(), 2.5);
 	 * assertEqualtes(&quot;2.5&quot;, result.toString());
 	 * 
-	 * Result result = new Result(new Date(),
-	 *                            Result.Datatype.NUMERIC,
-	 *                            2.5,
-	 *                            null,
-	 *                            null,
-	 *                            &quot;Two and a half&quot;,
-	 *                            null);
+	 * Result result = new Result(new Date(), Result.Datatype.NUMERIC, 2.5, null, null, &quot;Two and a half&quot;, null);
 	 * assertEquals(&quot;Two and a half&quot;, result.toString());
 	 * </pre>
 	 * 
@@ -304,11 +298,6 @@ public class Result extends ArrayList<Result> {
 		this.resultObject = object;
 	}
 	
-	@Deprecated
-	public static final Result nullResult() {
-		return emptyResult;
-	}
-	
 	/**
 	 * @return null/empty result
 	 */
@@ -323,8 +312,9 @@ public class Result extends ArrayList<Result> {
 	 * @return datatype of the result
 	 */
 	public Datatype getDatatype() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return this.datatype;
+		}
 		// TODO: better option than defaulting to first element's datatype?
 		return this.get(0).getDatatype();
 	}
@@ -413,8 +403,9 @@ public class Result extends ArrayList<Result> {
 	 * @see #toDatetime()
 	 */
 	public Date getResultDate() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return resultDatetime;
+		}
 		return this.get(0).getResultDate();
 	}
 	
@@ -441,10 +432,11 @@ public class Result extends ArrayList<Result> {
 	 *         the overridden boolean value (if specifically defined) or a boolean representation of
 	 *         the default datatype. If the result is a list, then return false only if all members
 	 *         are false
-	 *         <table>
-	 *         <th>
-	 *         <td>Datatype</td>
-	 *         <td>Returns</td></th>
+	 *         <table summary="Return logic">
+	 *         <tr>
+	 *         <th>Datatype</th>
+	 *         <th>Returns</th>
+	 *         </tr>
 	 *         <tr>
 	 *         <td>CODED</td>
 	 *         <td>false for concept FALSE<br>
@@ -492,9 +484,11 @@ public class Result extends ArrayList<Result> {
 					return valueBoolean;
 			}
 		}
-		for (Result r : this)
-			if (!r.toBoolean())
+		for (Result r : this) {
+			if (!r.toBoolean()) {
 				return false;
+			}
+		}
 		return true;
 	}
 	
@@ -504,8 +498,9 @@ public class Result extends ArrayList<Result> {
 	 *         the result is a list, then the concept for the first member is returned.
 	 */
 	public Concept toConcept() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return valueCoded;
+		}
 		return this.get(0).toConcept();
 	}
 	
@@ -515,10 +510,11 @@ public class Result extends ArrayList<Result> {
 	 *         datetime value (if specifically defined) or datetime representation of the default
 	 *         datatype. If the result is a list, then the datetime representation of the first
 	 *         member is returned.
-	 *         <table>
-	 *         <th>
-	 *         <td>Datatype</td>
-	 *         <td>Returns</td></th>
+	 *         <table summary="Return logic">
+	 *         <tr>
+	 *         <th>Datatype</th>
+	 *         <th>Returns</th>
+	 *         </tr>
 	 *         <tr>
 	 *         <td>BOOLEAN</td>
 	 *         <td>null</td>
@@ -540,8 +536,9 @@ public class Result extends ArrayList<Result> {
 	 */
 	public Date toDatetime() {
 		if (isSingleResult()) {
-			if (valueDatetime != null)
+			if (valueDatetime != null) {
 				return valueDatetime;
+			}
 			if (datatype == Datatype.TEXT && valueText != null) {
 				try {
 					return Context.getDateFormat().parse(valueText);
@@ -558,10 +555,11 @@ public class Result extends ArrayList<Result> {
 	 *         the overridden numeric value (if specifically defined) or a numeric representation of
 	 *         the default datatype. If the result is a list, then the value of the first element is
 	 *         returned.
-	 *         <table>
-	 *         <th>
-	 *         <td>Datatype</td>
-	 *         <td>Returns</td></th>
+	 *         <table summary="Return logic">
+	 *         <tr>
+	 *         <th>Datatype</th>
+	 *         <th>Returns</th>
+	 *         </tr>
 	 *         <tr>
 	 *         <td>BOOLEAN</td>
 	 *         <td>1 for true<br>
@@ -576,6 +574,7 @@ public class Result extends ArrayList<Result> {
 	 *         <td>DATETIME</td>
 	 *         <td>Number of milliseconds since Java's epoch</td>
 	 *         </tr>
+	 *         <tr>
 	 *         <td>TEXT</td>
 	 *         <td>numeric value of text if it can be parsed into a number<br>
 	 *         otherwise zero (0)</td> </tr>
@@ -593,7 +592,7 @@ public class Result extends ArrayList<Result> {
 				case CODED:
 					return 0D;
 				case DATETIME:
-					return (valueDatetime == null ? 0 : new Long(valueDatetime.getTime()).doubleValue());
+					return (valueDatetime == null ? 0 : Long.valueOf(valueDatetime.getTime()).doubleValue());
 				case NUMERIC:
 					return (valueNumeric == null ? 0D : valueNumeric);
 				case TEXT:
@@ -626,7 +625,7 @@ public class Result extends ArrayList<Result> {
 				case BOOLEAN:
 					return (valueBoolean ? "true" : "false");
 				case CODED:
-					return (valueCoded == null ? "" : valueCoded.getBestName(Context.getLocale()).getName());
+					return (valueCoded == null ? "" : valueCoded.getName(Context.getLocale()).getName());
 				case DATETIME:
 					return (valueDatetime == null ? "" : Context.getDateFormat().format(valueDatetime));
 				case NUMERIC:
@@ -639,8 +638,9 @@ public class Result extends ArrayList<Result> {
 		}
 		StringBuffer s = new StringBuffer();
 		for (Result r : this) {
-			if (s.length() > 0)
+			if (s.length() > 0) {
 				s.append(",");
+			}
 			s.append(r.toString());
 		}
 		return s.toString();
@@ -653,10 +653,12 @@ public class Result extends ArrayList<Result> {
 	 * @should return all results for result list
 	 */
 	public Object toObject() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return resultObject;
-		if (this.size() == 1)
+		}
+		if (this.size() == 1) {
 			return this.get(0).toObject();
+		}
 		throw new LogicException("This result represents more than one result, you cannot call toObject on multiple results");
 	}
 	
@@ -677,8 +679,9 @@ public class Result extends ArrayList<Result> {
 			        || (valueNumeric != null && valueNumeric != 0) || (valueText != null && valueText.length() > 0));
 		}
 		for (Result r : this) {
-			if (r.exists())
+			if (r.exists()) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -692,17 +695,20 @@ public class Result extends ArrayList<Result> {
 	 */
 	public Result gt(Integer value) {
 		if (isSingleResult()) {
-			if (valueNumeric == null || valueNumeric <= value)
+			if (valueNumeric == null || valueNumeric <= value) {
 				return emptyResult;
+			}
 			return this;
 		}
 		List<Result> matches = new ArrayList<Result>();
 		for (Result r : this) {
-			if (!r.gt(value).isEmpty())
+			if (!r.gt(value).isEmpty()) {
 				matches.add(r);
+			}
 		}
-		if (matches.size() < 1)
+		if (matches.size() < 1) {
 			return emptyResult;
+		}
 		return new Result(matches);
 	}
 	
@@ -711,11 +717,13 @@ public class Result extends ArrayList<Result> {
 	 *         list, then returns true if <em>any</em> member has a matching coded value)
 	 */
 	public boolean containsConcept(Integer conceptId) {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return (valueCoded != null && valueCoded.getConceptId().equals(conceptId));
+		}
 		for (Result r : this) {
-			if (r.containsConcept(conceptId))
+			if (r.containsConcept(conceptId)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -725,11 +733,13 @@ public class Result extends ArrayList<Result> {
 	 *         equal to the given result
 	 */
 	public boolean contains(Result result) {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return this.equals(result);
+		}
 		for (Result r : this) {
-			if (r.contains(result))
+			if (r.contains(result)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -738,12 +748,14 @@ public class Result extends ArrayList<Result> {
 	 * @return a result with all duplicates removed
 	 */
 	public Result unique() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return this;
-		Integer something = new Integer(1);
-		HashMap<Result, Integer> map = new HashMap<Result, Integer>();
-		for (Result r : this)
+		}
+		Integer something = Integer.valueOf(1);
+		Map<Result, Integer> map = new HashMap<Result, Integer>();
+		for (Result r : this) {
 			map.put(r, something);
+		}
 		List<Result> uniqueList = new ArrayList<Result>(map.keySet());
 		return new Result(uniqueList);
 	}
@@ -765,8 +777,9 @@ public class Result extends ArrayList<Result> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Result))
+		if (obj == null || !(obj instanceof Result)) {
 			return false;
+		}
 		Result r = (Result) obj;
 		
 		if (EmptyResult.class.isAssignableFrom(r.getClass()) && this.isEmpty()) {
@@ -798,19 +811,31 @@ public class Result extends ArrayList<Result> {
 					return false;
 			}
 		}
-		if (isSingleResult() || r.isSingleResult())
+		if (isSingleResult() || r.isSingleResult()) {
 			// we already know they're not both single results, so if one is
 			// single, it's not a match
 			return false;
-		if (this.size() != r.size())
+		}
+		if (this.size() != r.size()) {
 			return false;
+		}
 		// at this point, we have two results that are lists, so members must
 		// match exactly
 		for (int i = 0; i < this.size(); i++) {
-			if (!this.get(i).equals(r.get(i)))
+			if (!this.get(i).equals(r.get(i))) {
 				return false;
+			}
 		}
 		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		if (isSingleResult()) {
+			return new HashCodeBuilder().append(datatype).hashCode();
+		} else {
+			return super.hashCode();
+		}
 	}
 	
 	/**
@@ -822,8 +847,9 @@ public class Result extends ArrayList<Result> {
 	 */
 	@Override
 	public Result get(int index) {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return (index == 0 ? this : emptyResult);
+		}
 		
 		if (index >= this.size()) {
 			return emptyResult;
@@ -840,15 +866,17 @@ public class Result extends ArrayList<Result> {
 	 * @should get one result with null result dates for all results
 	 */
 	public Result earliest() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return this;
+		}
 		
 		Result first = emptyResult();
 		
 		// default the returned result to the first item
 		// in case all resultDates are null
-		if (size() > 0)
+		if (size() > 0) {
 			first = get(0);
+		}
 		
 		for (Result r : this) {
 			if (r != null && r.getResultDate() != null
@@ -867,14 +895,16 @@ public class Result extends ArrayList<Result> {
 	 * @should get the result with null result date
 	 */
 	public Result latest() {
-		if (isSingleResult())
+		if (isSingleResult()) {
 			return this;
+		}
 		Result last = emptyResult();
 		
 		// default the returned result to the first item
 		// in case all resultDates are null
-		if (size() > 0)
+		if (size() > 0) {
 			last = get(0);
+		}
 		
 		for (Result r : this) {
 			if ((last.getResultDate() == null || (r.getResultDate() != null && r.getResultDate().after(last.getResultDate())))) {

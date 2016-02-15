@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -40,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Hibernate specific visit related functions This class should not be used directly. All calls
  * should go through the {@link org.openmrs.api.VisitService} methods.
- * 
+ *
  * @since 1.9
  */
 public class HibernateVisitDAO implements VisitDAO {
@@ -172,19 +168,25 @@ public class HibernateVisitDAO implements VisitDAO {
 		
 		Criteria criteria = getCurrentSession().createCriteria(Visit.class);
 		
-		if (visitTypes != null)
+		if (visitTypes != null) {
 			criteria.add(Restrictions.in("visitType", visitTypes));
-		if (patients != null)
+		}
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient", patients));
-		if (locations != null)
+		}
+		if (locations != null) {
 			criteria.add(Restrictions.in("location", locations));
-		if (indications != null)
+		}
+		if (indications != null) {
 			criteria.add(Restrictions.in("indication", indications));
+		}
 		
-		if (minStartDatetime != null)
+		if (minStartDatetime != null) {
 			criteria.add(Restrictions.ge("startDatetime", minStartDatetime));
-		if (maxStartDatetime != null)
+		}
+		if (maxStartDatetime != null) {
 			criteria.add(Restrictions.le("startDatetime", maxStartDatetime));
+		}
 		
 		// active visits have null end date, so it doesn't make sense to search against it if include inactive is set to false
 		if (!includeInactive) {
@@ -195,12 +197,14 @@ public class HibernateVisitDAO implements VisitDAO {
 				criteria.add(Restrictions.or(Restrictions.isNull("stopDatetime"), Restrictions.ge("stopDatetime",
 				    minEndDatetime)));
 			}
-			if (maxEndDatetime != null)
+			if (maxEndDatetime != null) {
 				criteria.add(Restrictions.le("stopDatetime", maxEndDatetime));
+			}
 		}
 		
-		if (!includeVoided)
+		if (!includeVoided) {
 			criteria.add(Restrictions.eq("voided", false));
+		}
 		
 		criteria.addOrder(Order.desc("startDatetime"));
 		criteria.addOrder(Order.desc("visitId"));
@@ -282,11 +286,13 @@ public class HibernateVisitDAO implements VisitDAO {
 		criteria.add(Restrictions.eq("voided", false)).add(
 		    Restrictions.gt("visitId", (previousVisit != null) ? previousVisit.getVisitId() : 0)).addOrder(
 		    Order.asc("visitId")).add(Restrictions.isNull("stopDatetime")).setMaxResults(1);
-		if (maximumStartDate != null)
+		if (maximumStartDate != null) {
 			criteria.add(Restrictions.le("startDatetime", maximumStartDate));
+		}
 		
-		if (CollectionUtils.isNotEmpty(visitTypes))
+		if (CollectionUtils.isNotEmpty(visitTypes)) {
 			criteria.add(Restrictions.in("visitType", visitTypes));
+		}
 		
 		return (Visit) criteria.uniqueResult();
 	}

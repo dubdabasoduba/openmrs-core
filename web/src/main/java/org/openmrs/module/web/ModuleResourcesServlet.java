@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.module.web;
 
@@ -17,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +27,7 @@ import org.openmrs.util.OpenmrsUtil;
 
 public class ModuleResourcesServlet extends HttpServlet {
 	
-	private final String MODULE_PATH = "/WEB-INF/view/module/";
+	private static final String MODULE_PATH = "/WEB-INF/view/module/";
 	
 	private static final long serialVersionUID = 1239820102030344L;
 	
@@ -38,22 +35,31 @@ public class ModuleResourcesServlet extends HttpServlet {
 	
 	/**
 	 * Used for caching purposes
-	 * 
+	 *
 	 * @see javax.servlet.http.HttpServlet#getLastModified(javax.servlet.http.HttpServletRequest)
 	 */
 	@Override
 	protected long getLastModified(HttpServletRequest req) {
 		File f = getFile(req);
 		
-		if (f == null)
+		if (f == null) {
 			return super.getLastModified(req);
+		}
 		
 		return f.lastModified();
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+		String path = request.getPathInfo();
 		log.debug("In service method for module servlet: " + request.getPathInfo());
+		
+		if (path.endsWith("openmrsmessages.js") || path.endsWith(("drugOrder.js"))) {
+			RequestDispatcher rd = request.getRequestDispatcher(getPathWithJstl(path));
+			rd.forward(request, response);
+			return;
+		}
 		
 		File f = getFile(request);
 		if (f == null) {
@@ -62,7 +68,7 @@ public class ModuleResourcesServlet extends HttpServlet {
 		}
 		
 		response.setDateHeader("Last-Modified", f.lastModified());
-		response.setContentLength(new Long(f.length()).intValue());
+		response.setContentLength(Long.valueOf(f.length()).intValue());
 		String mimeType = getServletContext().getMimeType(f.getName());
 		response.setContentType(mimeType);
 		
@@ -75,9 +81,16 @@ public class ModuleResourcesServlet extends HttpServlet {
 		}
 	}
 	
+	private String getPathWithJstl(String path) {
+		//String pathWithJstl = "/WEB-INF/view/module/legacyui/resources/scripts/openmrsmessages.js.withjstl";
+		Module module = ModuleUtil.getModuleForPath(path);
+		String relativePath = ModuleUtil.getPathForResource(module, path);
+		return MODULE_PATH + module.getModuleIdAsPath() + "/resources" + relativePath + ".withjstl";
+	}
+	
 	/**
 	 * Turns the given request/path into a File object
-	 * 
+	 *
 	 * @param request the current http request
 	 * @return the file being requested or null if not found
 	 */
@@ -94,6 +107,13 @@ public class ModuleResourcesServlet extends HttpServlet {
 		String relativePath = ModuleUtil.getPathForResource(module, path);
 		String realPath = getServletContext().getRealPath("") + MODULE_PATH + module.getModuleIdAsPath() + "/resources"
 		        + relativePath;
+		
+		//if in dev mode, load resources from the development directory
+		File devDir = ModuleUtil.getDevelopmentDirectory(module.getModuleId());
+		if (devDir != null) {
+			realPath = devDir.getAbsolutePath() + "/omod/target/classes/web/module/resources" + relativePath;
+		}
+		
 		realPath = realPath.replace("/", File.separator);
 		
 		File f = new File(realPath);

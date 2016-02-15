@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -52,8 +48,8 @@ public class ConceptTest {
 	/**
 	 * When asked for a collection of compatible names, the returned collection should not include
 	 * any incompatible names.
-	 *
-	 * @see {@link Concept#getCompatibleNames(Locale)}
+	 * 
+	 * @see Concept#getCompatibleNames(Locale)
 	 */
 	@Test
 	@Verifies(value = "should exclude incompatible country locales", method = "getCompatibleNames(Locale)")
@@ -76,8 +72,8 @@ public class ConceptTest {
 	/**
 	 * When asked for a collection of compatible names, the returned collection should not include
 	 * any incompatible names.
-	 *
-	 * @see {@link Concept#getCompatibleNames(Locale)}
+	 * 
+	 * @see Concept#getCompatibleNames(Locale)
 	 */
 	@Test
 	@Verifies(value = "should exclude incompatible language locales", method = "getCompatibleNames(Locale)")
@@ -91,8 +87,8 @@ public class ConceptTest {
 	/**
 	 * The Concept should unmark the old conceptName as the locale preferred one to enforce the rule
 	 * that a each locale should have only one preferred name per concept
-	 *
-	 * @see {@link Concept#setPreferredName(ConceptName)}
+	 * 
+	 * @see Concept#setPreferredName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should only allow one preferred name", method = "setPreferredName(ConceptName)")
@@ -111,7 +107,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getDescription(Locale,null)}
+	 * @see Concept#getDescription(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should not return language only match for exact matches", method = "getDescription(Locale,boolean)")
@@ -123,7 +119,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getDescription(Locale,null)}
+	 * @see Concept#getDescription(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should not return match on language only if exact match exists", method = "getDescription(Locale,boolean)")
@@ -141,7 +137,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getDescription(Locale,null)}
+	 * @see Concept#getDescription(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should return match on language only", method = "getDescription(Locale,boolean)")
@@ -153,7 +149,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getDescription(Locale,null)}
+	 * @see Concept#getDescription(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should return match on locale exactly", method = "getDescription(Locale,boolean)")
@@ -165,7 +161,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getName(Locale,null)}
+	 * @see Concept#getName(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should not fail if no names are defined", method = "getName(Locale,null)")
@@ -176,7 +172,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getName(Locale,null)}
+	 * @see Concept#getName(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "should return exact name locale match given exact equals true", method = "getName(Locale,null)")
@@ -195,7 +191,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getName(Locale,null)}
+	 * @see Concept#getName(Locale,null)
 	 */
 	@Test
 	@Verifies(value = "return null if no names are found in locale given exact equals true", method = "getName(Locale,null)")
@@ -209,7 +205,20 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getNames(Boolean)}
+	 * @see Concept#getName(Locale,false)
+	 */
+	@Test
+	@Verifies(value = "return any name within the same language when exact equals false", method = "getName(Locale,false)")
+	public void getName_shouldReturnNameWithinSameLanguageIfExactEqualsFalse() throws Exception {
+		Locale localeToSearch = new Locale("en");
+		
+		Concept concept = new Concept();
+		concept.addName(new ConceptName("Test Concept", localeToSearch));
+		Assert.assertEquals("Test Concept", (concept.getName(localeToSearch, false).toString()));
+	}
+	
+	/**
+	 * @see Concept#getNames(Boolean)
 	 */
 	@Test
 	@Verifies(value = "should not fail if getName(boolean) is only finding voided conceptNames when true", method = "getName(Boolean)")
@@ -228,7 +237,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getNames()}
+	 * @see Concept#getNames()
 	 */
 	@Test
 	@Verifies(value = "should not fail if getNames() is correctly calling getNames(false)", method = "getNames()")
@@ -245,7 +254,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getNames(Locale)}
+	 * @see Concept#getNames(Locale)
 	 */
 	@Test
 	@Verifies(value = "getName(Locale) should not return voided conceptName, should return non-voided concept in other locale even if not short", method = "getName(Locale)")
@@ -262,7 +271,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getNames(Locale)}
+	 * @see Concept#getNames(Locale)
 	 */
 	@Test
 	@Verifies(value = "getNames(Locale) should return an empty Collection if no concept names", method = "getBestName(Locale)")
@@ -275,7 +284,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getBestName(Locale)}
+	 * @see Concept#getBestName(Locale)
 	 */
 	@Test
 	@Verifies(value = "getBestName should return null if no concept names", method = "getBestName(Locale)")
@@ -287,7 +296,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAnswers()}
+	 * @see Concept#getAnswers()
 	 */
 	@Test
 	@Verifies(value = "not return null if no answers defined", method = "getAnswers()")
@@ -300,7 +309,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAnswers()}
+	 * @see Concept#getAnswers()
 	 */
 	@Test
 	@Verifies(value = "not return null if answers is null or empty", method = "getAnswers()")
@@ -311,7 +320,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addAnswer(ConceptAnswer)}
+	 * @see Concept#addAnswer(ConceptAnswer)
 	 */
 	@Test
 	@Verifies(value = "should not fail if answers list is null", method = "addAnswer(ConceptAnswer)")
@@ -323,7 +332,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAnswers()}
+	 * @see Concept#getAnswers()
 	 */
 	@Test
 	@Verifies(value = "should return retired and non-retired answers", method = "addAnswer(ConceptAnswer)")
@@ -342,7 +351,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAnswers()}
+	 * @see Concept#getAnswers()
 	 */
 	@Test
 	@Verifies(value = "should not return retired answers if includeRetired is false", method = "getAnswers(Boolean)")
@@ -361,7 +370,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAnswers()}
+	 * @see Concept#getAnswers()
 	 */
 	@Test
 	@Verifies(value = "should return retired answers if includeRetired is true", method = "getAnswers(Boolean)")
@@ -380,7 +389,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addAnswer(ConceptAnswer)}
+	 * @see Concept#addAnswer(ConceptAnswer)
 	 */
 	@Test
 	@Verifies(value = "set the sort weight to the max plus one if not provided", method = "addAnswer(ConceptAnswer)")
@@ -397,7 +406,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setPreferredName(ConceptName)}
+	 * @see Concept#setPreferredName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should add the name to the list of names if it not among them before", method = "setPreferredName(ConceptName)")
@@ -411,7 +420,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getFullySpecifiedName(Locale)}
+	 * @see Concept#getFullySpecifiedName(Locale)
 	 */
 	@Test
 	@Verifies(value = "should return the name marked as fully specified for the given locale", method = "getFullySpecifiedName(Locale)")
@@ -426,7 +435,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should add the concept to the current list of conceptSet", method = "addSetMember(Concept,int)")
@@ -443,7 +452,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept)}
+	 * @see Concept#addSetMember(Concept)
 	 */
 	@Test
 	@Verifies(value = "should add concept as a conceptSet", method = "addSetMember(Concept)")
@@ -458,7 +467,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should assign the calling component as parent to the ConceptSet", method = "addSetMember(Concept,int)")
@@ -473,7 +482,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept)}
+	 * @see Concept#addSetMember(Concept)
 	 */
 	@Test
 	@Verifies(value = "should append concept to the existing list of conceptSet", method = "addSetMember(Concept)")
@@ -488,7 +497,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept)}
+	 * @see Concept#addSetMember(Concept)
 	 */
 	@Test
 	@Verifies(value = "should place the new concept last in the list", method = "addSetMember(Concept)")
@@ -503,7 +512,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getSetMembers()}
+	 * @see Concept#getSetMembers()
 	 */
 	@Test
 	@Verifies(value = "should return concept set members sorted according to the sort weight", method = "getSetMembers()")
@@ -531,7 +540,48 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getSetMembers()}
+	 * @see Concept#getSetMembers()
+	 */
+	@Test
+	@Verifies(value = "should return concept set members sorted with retired last", method = "getSetMembers()")
+	public void getSetMembers_shouldReturnConceptSetMembersSortedWithRetiredLast() throws Exception {
+		Concept c = new Concept();
+		Concept retiredConcept = new Concept(3);
+		retiredConcept.setRetired(true);
+		Concept retiredConcept2 = new Concept(0);
+		retiredConcept2.setRetired(true);
+		Concept retiredConcept3 = new Concept(0);
+		retiredConcept3.setRetired(true);
+		ConceptSet set0 = new ConceptSet(retiredConcept, 3.0);
+		ConceptSet set1 = new ConceptSet(new Concept(1), 2.0);
+		ConceptSet set2 = new ConceptSet(new Concept(2), 1.0);
+		ConceptSet set3 = new ConceptSet(retiredConcept2, 0.0);
+		ConceptSet set4 = new ConceptSet();
+		set4.setConcept(new Concept(3));
+		ConceptSet set5 = new ConceptSet();
+		set5.setConcept(retiredConcept3);
+		
+		List<ConceptSet> sets = new ArrayList<ConceptSet>();
+		sets.add(set0);
+		sets.add(set1);
+		sets.add(set2);
+		sets.add(set3);
+		sets.add(set4);
+		sets.add(set5);
+		
+		c.setConceptSets(sets);
+		
+		List<Concept> setMembers = c.getSetMembers();
+		Assert.assertEquals(set4.getConcept(), setMembers.get(0));
+		Assert.assertEquals(set2.getConcept(), setMembers.get(1));
+		Assert.assertEquals(set1.getConcept(), setMembers.get(2));
+		Assert.assertEquals(set5.getConcept(), setMembers.get(3));
+		Assert.assertEquals(set3.getConcept(), setMembers.get(4));
+		Assert.assertEquals(set0.getConcept(), setMembers.get(5));
+	}
+	
+	/**
+	 * @see Concept#getSetMembers()
 	 */
 	@Test
 	@Verifies(value = "should return all the conceptMembers of current Concept", method = "getSetMembers()")
@@ -552,7 +602,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getSetMembers()}
+	 * @see Concept#getSetMembers()
 	 */
 	@Test(expected = UnsupportedOperationException.class)
 	@Verifies(value = "should return unmodifiable list of conceptMember list", method = "getSetMembers()")
@@ -566,7 +616,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept)}
+	 * @see Concept#addSetMember(Concept)
 	 */
 	@Test
 	@Verifies(value = "should append concept to the existing list of conceptSet", method = "addSetMember(Concept)")
@@ -585,7 +635,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should assign the given concept as a ConceptSet", method = "addSetMember(Concept,int)")
@@ -599,7 +649,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should insert the concept before the first with zero index", method = "addSetMember(Concept,int)")
@@ -617,7 +667,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should insert the concept at the end with negative one index", method = "addSetMember(Concept,int)")
@@ -634,7 +684,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addSetMember(Concept,int)}
+	 * @see Concept#addSetMember(Concept,int)
 	 */
 	@Test
 	@Verifies(value = "should insert the concept in the third slot", method = "addSetMember(Concept,int)")
@@ -657,7 +707,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getAllConceptNameLocales()}
+	 * @see Concept#getAllConceptNameLocales()
 	 */
 	@Test
 	@Verifies(value = "should return all locales for conceptNames for this concept without duplicates", method = "getAllConceptNameLocales()")
@@ -677,8 +727,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getPreferredName(Locale)}
-	 *
+	 * @see Concept#getPreferredName(Locale)
 	 */
 	@Test
 	@Verifies(value = "should return the fully specified name if no name is explicitly marked as locale preferred", method = "getPreferredName(Locale)")
@@ -696,7 +745,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getPreferredName(Locale)}
+	 * @see Concept#getPreferredName(Locale)
 	 */
 	@Test
 	@Verifies(value = "should return the concept name explicitly marked as locale preferred", method = "getPreferredName(Locale)")
@@ -713,7 +762,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getShortestName(Locale,Boolean)}
+	 * @see Concept#getShortestName(Locale,Boolean)
 	 */
 	@Test
 	@Verifies(value = "should return the shortest name for the concept from any locale if exact is false", method = "getShortestName(Locale,Boolean)")
@@ -727,7 +776,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getShortestName(Locale,Boolean)}
+	 * @see Concept#getShortestName(Locale,Boolean)
 	 */
 	@Test
 	@Verifies(value = "should return the shortest name in a given locale for a concept if exact is true", method = "getShortestName(Locale,Boolean)")
@@ -741,7 +790,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setFullySpecifiedName(ConceptName)}
+	 * @see Concept#setFullySpecifiedName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should add the name to the list of names if it not among them before", method = "setFullySpecifiedName(ConceptName)")
@@ -753,7 +802,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setFullySpecifiedName(ConceptName)}
+	 * @see Concept#setFullySpecifiedName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should convert the previous fully specified name if any to a synonym", method = "setFullySpecifiedName(ConceptName)")
@@ -768,7 +817,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setFullySpecifiedName(ConceptName)}
+	 * @see Concept#setFullySpecifiedName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should set the concept name type of the specified name to fully specified", method = "setFullySpecifiedName(ConceptName)")
@@ -780,7 +829,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setShortName(ConceptName)}
+	 * @see Concept#setShortName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should add the name to the list of names if it not among them before", method = "setShortName(ConceptName)")
@@ -792,7 +841,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setShortName(ConceptName)}
+	 * @see Concept#setShortName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should convert the previous shortName if any to a synonym", method = "setShortName(ConceptName)")
@@ -807,7 +856,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setShortName(ConceptName)}
+	 * @see Concept#setShortName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should set the concept name type of the specified name to short", method = "setShortName(ConceptName)")
@@ -832,7 +881,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getShortestName(Locale,Boolean)}
+	 * @see Concept#getShortestName(Locale,Boolean)
 	 */
 	@Test
 	@Verifies(value = "should return the name marked as the shortName for the locale if it is present", method = "getShortestName(Locale,Boolean)")
@@ -845,7 +894,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#getShortestName(Locale,Boolean)}
+	 * @see Concept#getShortestName(Locale,Boolean)
 	 */
 	@Test
 	@Verifies(value = "should return null if their are no names in the specified locale and exact is true", method = "getShortestName(Locale,Boolean)")
@@ -858,7 +907,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#setPreferredName(ConceptName)}
+	 * @see Concept#setPreferredName(ConceptName)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should fail if the preferred name to set to is an index term", method = "setPreferredName(ConceptName)")
@@ -872,7 +921,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addName(ConceptName)}
+	 * @see Concept#addName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should mark the first name added as fully specified", method = "addName(ConceptName)")
@@ -883,7 +932,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addName(ConceptName)}
+	 * @see Concept#addName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should replace the old fully specified name with a current one", method = "addName(ConceptName)")
@@ -900,7 +949,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addName(ConceptName)}
+	 * @see Concept#addName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should replace the old preferred name with a current one", method = "addName(ConceptName)")
@@ -917,7 +966,7 @@ public class ConceptTest {
 	}
 	
 	/**
-	 * @see {@link Concept#addName(ConceptName)}
+	 * @see Concept#addName(ConceptName)
 	 */
 	@Test
 	@Verifies(value = "should replace the old short name with a current one", method = "addName(ConceptName)")
@@ -952,10 +1001,37 @@ public class ConceptTest {
 		assertEquals("Preferred", conceptNameExpectedPreferred.getName());
 	}
 	
+	@Test
+	public void getShortNameInLocale_shouldReturnTheBestShortNameForAConcept() throws Exception {
+		Concept concept = new Concept();
+		concept.addName(new ConceptName("Giant cat", new Locale("en")));
+		concept.addName(new ConceptName("Gato gigante", new Locale("es", "MX")));
+		
+		ConceptName shortName1 = new ConceptName("Cat", new Locale("en"));
+		shortName1.setConceptNameType(ConceptNameType.SHORT);
+		concept.addName(shortName1);
+		
+		ConceptName shortName2 = new ConceptName("Gato", new Locale("es"));
+		shortName2.setConceptNameType(ConceptNameType.SHORT);
+		concept.addName(shortName2);
+		
+		Assert.assertEquals("Gato", concept.getShortNameInLocale(new Locale("es", "ES")).getName());
+	}
+	
+	@Test
+	@Verifies(value = "should return the language prefered name if no name is explicitly marked as locale preferred", method = "getPreferredName(Locale)")
+	public void getPreferredName_shouldReturnTheBesLocalePreferred() throws Exception {
+		Concept testConcept = createMockConcept(1, Locale.US);
+		// preferred name in en
+		ConceptName preferredNameEN = createMockConceptName(4, new Locale("en"), null, true);
+		testConcept.addName(preferredNameEN);
+		Assert.assertEquals(preferredNameEN.getName(), testConcept.getPreferredName(Locale.US).getName());
+	}
+	
 	/**
 	 * Convenient factory method to create a populated Concept with a one fully specified name and
 	 * one short name
-	 *
+	 * 
 	 * @param conceptId the id for the concept to create
 	 * @param locale the locale of the of the conceptNames for the concept to create
 	 * @return the created concept
@@ -978,7 +1054,7 @@ public class ConceptTest {
 	
 	/**
 	 * Convenient factory method to create a populated Concept name.
-	 *
+	 * 
 	 * @param conceptNameId id for the conceptName
 	 * @param locale for the conceptName
 	 * @param conceptNameType the conceptNameType of the concept
@@ -999,4 +1075,18 @@ public class ConceptTest {
 		
 		return mockConceptName;
 	}
+	
+	/**
+	 * @see Concept#getName()
+	 * @verifies return name in broader locale incase none is found in specific one
+	 */
+	@Test
+	public void getName_shouldReturnNameInBroaderLocaleIncaseNoneIsFoundInSpecificOne() throws Exception {
+		Locale locale = new Locale("en");
+		Locale localeToSearch = new Locale("en", "UK");
+		Concept concept = new Concept();
+		concept.addName(new ConceptName("Test Concept", locale));
+		Assert.assertEquals((concept.getName(locale, false).toString()), (concept.getName(localeToSearch, false).toString()));
+	}
+	
 }

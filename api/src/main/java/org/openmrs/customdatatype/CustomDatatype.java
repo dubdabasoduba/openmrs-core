@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.customdatatype;
 
@@ -53,7 +49,7 @@ public interface CustomDatatype<T> {
 	 * values.)
 	 * 
 	 * @param typedValue
-	 * @return
+	 * @return reference string
 	 * @throws UnsupportedOperationException  if it is not feasible to calculate this efficiently (e.g. you'd need to go to remote storage)
 	 */
 	String getReferenceStringForValue(T typedValue) throws UnsupportedOperationException;
@@ -70,7 +66,7 @@ public interface CustomDatatype<T> {
 	T fromReferenceString(String referenceString) throws InvalidCustomValueException;
 	
 	/**
-	 * Converts a reference string to a short (generally < 100 characters) plain-text representation of its value. The return
+	 * Converts a reference string to a short (generally &lt; 100 characters) plain-text representation of its value. The return
 	 * value also indicates whether this representation is a complete view of the value, or if there is more to display. 
 	 * Implementations of this method must be high-performance, e.g. if the method is called thousands of times for a table
 	 * of objects with custom values.

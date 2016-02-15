@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification.db.hibernate;
 
@@ -21,8 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
 import org.openmrs.User;
 import org.openmrs.api.db.DAOException;
 import org.openmrs.notification.Alert;
@@ -45,7 +41,7 @@ public class HibernateAlertDAO implements AlertDAO {
 	
 	/**
 	 * Set session factory
-	 * 
+	 *
 	 * @param sessionFactory
 	 */
 	public void setSessionFactory(SessionFactory sessionFactory) {
@@ -82,8 +78,9 @@ public class HibernateAlertDAO implements AlertDAO {
 		Criteria crit = sessionFactory.getCurrentSession().createCriteria(Alert.class);
 		
 		// exclude the expired alerts unless requested
-		if (includeExpired == false)
-			crit.add(Expression.or(Expression.isNull("dateToExpire"), Expression.gt("dateToExpire", new Date())));
+		if (!includeExpired) {
+			crit.add(Restrictions.or(Restrictions.isNull("dateToExpire"), Restrictions.gt("dateToExpire", new Date())));
+		}
 		
 		return crit.list();
 	}
@@ -99,7 +96,7 @@ public class HibernateAlertDAO implements AlertDAO {
 		
 		if (user != null && user.getUserId() != null) {
 			crit.createCriteria("recipients", "recipient");
-			crit.add(Expression.eq("recipient.recipient", user));
+			crit.add(Restrictions.eq("recipient.recipient", user));
 		} else {
 			// getting here means we passed in no user or a blank user.
 			// a null recipient column means get stuff for the anonymous user
@@ -111,13 +108,14 @@ public class HibernateAlertDAO implements AlertDAO {
 		}
 		
 		// exclude the expired alerts unless requested
-		if (includeExpired == false)
-			crit.add(Expression.or(Expression.isNull("dateToExpire"), Expression.gt("dateToExpire", new Date())));
+		if (!includeExpired) {
+			crit.add(Restrictions.or(Restrictions.isNull("dateToExpire"), Restrictions.gt("dateToExpire", new Date())));
+		}
 		
 		// exclude the read alerts unless requested
-		if (includeRead == false && (user != null && user.getUserId() != null)) {
-			crit.add(Expression.eq("alertRead", false));
-			crit.add(Expression.eq("recipient.alertRead", false));
+		if (!includeRead && user.getUserId() != null) {
+			crit.add(Restrictions.eq("alertRead", false));
+			crit.add(Restrictions.eq("recipient.alertRead", false));
 		}
 		
 		crit.addOrder(Order.desc("dateChanged"));

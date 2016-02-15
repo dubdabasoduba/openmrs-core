@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.scheduler;
 
@@ -60,7 +56,7 @@ public class Schedule {
 	/**
 	 * Default TODO Move to constants or properties
 	 */
-	public final String DEFAULT_DATE_FORMAT = "MM-dd-yyyy hh:mm:ss";
+	public static final String DEFAULT_DATE_FORMAT = "MM-dd-yyyy hh:mm:ss";
 	
 	/**
 	 * Date formatter used to format a date specified by a string
@@ -100,7 +96,7 @@ public class Schedule {
 	 * 
 	 * @param startTime Date for when to start the task (does not need to be in the future if the
 	 *            interval is specified).
-	 * @param repeatInterval interval time in seconds to wait between executing task (<= 0 indicates
+	 * @param repeatInterval interval time in seconds to wait between executing task (&lt;= 0 indicates
 	 *            that it should only be run once)
 	 */
 	public Schedule(Date startTime, long repeatInterval) {
@@ -114,7 +110,7 @@ public class Schedule {
 	 * @param description
 	 * @param startTime Date for when to start the task (does not need to be in the future if the
 	 *            interval is specified).
-	 * @param repeatInterval interval time in seconds to wait between executing task (<= 0 indicates
+	 * @param repeatInterval interval time in seconds to wait between executing task (&lt;= 0 indicates
 	 *            that it should only be run once)
 	 */
 	public Schedule(String name, String description, Date startTime, long repeatInterval) {

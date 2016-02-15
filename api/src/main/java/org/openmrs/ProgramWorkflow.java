@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -141,7 +137,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	
 	/**
 	 * Returns a {@link ProgramWorkflowState} whose {@link Concept} has any {@link ConceptName} that
-	 * matches the given <code>name</name>
+	 * matches the given <code>name</code>
 	 * 
 	 * @param name the {@link ProgramWorkflowState} name, in any {@link Locale}
 	 * @return a {@link ProgramWorkflowState} which has the passed <code>name</code> in any
@@ -157,13 +153,13 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	}
 	
 	/**
-	 * Returns a Set<{@link ProgramWorkflowState}> including all non-retired ProgramWorkflowStates
+	 * Returns a Set&lt;{@link ProgramWorkflowState}&gt; including all non-retired ProgramWorkflowStates
 	 * and all retired ProgramWorkflowStates in this ProgramWorkflow if <code>includeRetired</code>
 	 * is true
 	 * 
 	 * @param includeRetired - if false, returns only non-retired {@link ProgramWorkflowState}
 	 *            objects in this ProgramWorkflow
-	 * @return Set<ProgramWorkflowState> - all ProgramWorkflowStates matching input parameters
+	 * @return Set&lt;ProgramWorkflowState&gt; - all ProgramWorkflowStates matching input parameters
 	 */
 	public Set<ProgramWorkflowState> getStates(boolean includeRetired) {
 		Set<ProgramWorkflowState> ret = new HashSet<ProgramWorkflowState>();
@@ -176,10 +172,10 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	}
 	
 	/**
-	 * Returns a Set<{@link ProgramWorkflowState}> including all ProgramWorkflowStates, sorted by
+	 * Returns a Set&lt;{@link ProgramWorkflowState}&gt; including all ProgramWorkflowStates, sorted by
 	 * {@link ConceptName}
 	 * 
-	 * @return Set<ProgramWorkflowState> - all ProgramWorkflowStates, sorted by {@link ConceptName}
+	 * @return Set&lt;ProgramWorkflowState&gt; - all ProgramWorkflowStates, sorted by {@link ConceptName}
 	 * @should sort names containing numbers intelligently
 	 */
 	public Set<ProgramWorkflowState> getSortedStates() {
@@ -193,7 +189,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 			
 		};
 		
-		TreeSet<ProgramWorkflowState> sorted = new TreeSet<ProgramWorkflowState>(stateComparator);
+		Set<ProgramWorkflowState> sorted = new TreeSet<ProgramWorkflowState>(stateComparator);
 		if (getStates() != null) {
 			sorted.addAll(getStates());
 		}
@@ -201,11 +197,11 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	}
 	
 	/**
-	 * Returns a List<{@link ProgramWorkflowState}> including all possible next
+	 * Returns a List&lt;{@link ProgramWorkflowState}&gt; including all possible next
 	 * ProgramWorkflowStates, for the passed {@link PatientProgram} ordered by {@link ConceptName}
 	 * 
 	 * @param patientProgram - The PatientProgram to check
-	 * @return List<ProgramWorkflowState> - all possible next ProgramWorkflowStates, for the passed
+	 * @return List&lt;ProgramWorkflowState&gt; - all possible next ProgramWorkflowStates, for the passed
 	 *         {@link PatientProgram} ordered by {@link ConceptName}
 	 */
 	public List<ProgramWorkflowState> getPossibleNextStates(PatientProgram patientProgram) {
@@ -307,7 +303,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	 * Gets the number of states which are not retired
 	 * 
 	 * @return the total number of non retired states
-	 * @Since 1.9
+	 * @since 1.9
 	 */
 	public int getNonRetiredStateCount() {
 		return getStates(false).size();

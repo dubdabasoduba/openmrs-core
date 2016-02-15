@@ -1,18 +1,16 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.context;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
 import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.APIException;
@@ -32,10 +30,12 @@ import org.springframework.context.support.AbstractRefreshableApplicationContext
  */
 public class Daemon {
 	
+	protected static final Log log = LogFactory.getLog(Daemon.class);
+	
 	/**
 	 * The uuid defined for the daemon user object
 	 */
-	public static final String DAEMON_USER_UUID = "A4F30A1B-5EB9-11DF-A648-37A07F9C90FB";
+	protected static final String DAEMON_USER_UUID = "A4F30A1B-5EB9-11DF-A648-37A07F9C90FB";
 	
 	protected static final ThreadLocal<Boolean> isDaemonThread = new ThreadLocal<Boolean>();
 	
@@ -49,15 +49,15 @@ public class Daemon {
 	/**
 	 * This method should not be called directly. The {@link ModuleFactory#startModule(Module)}
 	 * method uses this to start the given module in a new thread that is authenticated as the
-	 * daemon user. <br/>
+	 * daemon user. <br>
 	 * If a non null application context is passed in, it gets refreshed to make the module's
 	 * services available
-	 * 
+	 *
 	 * @param module the module to start
 	 * @param isOpenmrsStartup Specifies whether this module is being started at application startup
 	 *            or not
 	 * @param applicationContext the spring application context instance to refresh
-	 * @returns the module returned from {@link ModuleFactory#startModuleInternal(Module)}
+	 * @return the module returned from {@link ModuleFactory#startModuleInternal(Module)}
 	 */
 	public static Module startModule(final Module module, final boolean isOpenmrsStartup,
 	        final AbstractRefreshableApplicationContext applicationContext) throws ModuleException {
@@ -71,8 +71,8 @@ public class Daemon {
 					Context.openSession();
 					returnedObject = ModuleFactory.startModuleInternal(module, isOpenmrsStartup, applicationContext);
 				}
-				catch (Throwable t) {
-					exceptionThrown = t;
+				catch (Exception e) {
+					exceptionThrown = e;
 				}
 				finally {
 					Context.closeSession();
@@ -91,10 +91,11 @@ public class Daemon {
 		}
 		
 		if (startModuleThread.exceptionThrown != null) {
-			if (startModuleThread.exceptionThrown instanceof ModuleException)
+			if (startModuleThread.exceptionThrown instanceof ModuleException) {
 				throw (ModuleException) startModuleThread.exceptionThrown;
-			else
+			} else {
 				throw new ModuleException("Unable to start module as Daemon", startModuleThread.exceptionThrown);
+			}
 		}
 		
 		Module startedModule = (Module) startModuleThread.returnedObject;
@@ -103,22 +104,22 @@ public class Daemon {
 	}
 	
 	/**
-	 * Executes the given task in a new thread that is authenticated as the daemon user. <br/>
-	 * <br/>
+	 * Executes the given task in a new thread that is authenticated as the daemon user. <br>
+	 * <br>
 	 * This can only be called from {@link TimerSchedulerTask} during actual task execution
-	 * 
+	 *
 	 * @param task the task to run
 	 * @should not be called from other methods other than TimerSchedulerTask
 	 * @should not throw error if called from a TimerSchedulerTask class
 	 */
-	public static void executeScheduledTask(final Task task) throws Throwable {
+	public static void executeScheduledTask(final Task task) throws Exception {
 		
 		// quick check to make sure we're only being called by ourselves
 		//Class<?> callerClass = Reflection.getCallerClass(0);
 		Class<?> callerClass = new OpenmrsSecurityManager().getCallerClass(0);
-		if (!TimerSchedulerTask.class.isAssignableFrom(callerClass))
-			throw new APIException("This method can only be called from the TimerSchedulerTask class, not "
-			        + callerClass.getName());
+		if (!TimerSchedulerTask.class.isAssignableFrom(callerClass)) {
+			throw new APIException("Scheduler.timer.task.only", new Object[] { callerClass.getName() });
+		}
 		
 		// now create a new thread and execute that task in it
 		DaemonThread executeTaskThread = new DaemonThread() {
@@ -131,8 +132,8 @@ public class Daemon {
 					Context.openSession();
 					TimerSchedulerTask.execute(task);
 				}
-				catch (Throwable t) {
-					exceptionThrown = t;
+				catch (Exception e) {
+					exceptionThrown = e;
 				}
 				finally {
 					Context.closeSession();
@@ -151,8 +152,9 @@ public class Daemon {
 			// ignore
 		}
 		
-		if (executeTaskThread.exceptionThrown != null)
+		if (executeTaskThread.exceptionThrown != null) {
 			throw executeTaskThread.exceptionThrown;
+		}
 		
 	}
 	
@@ -160,16 +162,18 @@ public class Daemon {
 	 * Call this method if you are inside a Daemon thread (for example in a Module activator or a
 	 * scheduled task) and you want to start up a new parallel Daemon thread. You may only call this
 	 * method from a Daemon thread.
-	 * 
+	 *
 	 * @param runnable what to run in a new thread
 	 * @return the newly spawned {@link Thread}
 	 * @should throw error if called from a non daemon thread
 	 * @should not throw error if called from a daemon thread
 	 */
+	@SuppressWarnings("squid:S1217")
 	public static Thread runInNewDaemonThread(final Runnable runnable) {
 		// make sure we're already in a daemon thread
-		if (!isDaemonThread())
+		if (!isDaemonThread()) {
 			throw new APIAuthenticationException("Only daemon threads can spawn new daemon threads");
+		}
 		
 		// we should consider making DaemonThread public, so the caller can access returnedObject and exceptionThrown
 		DaemonThread thread = new DaemonThread() {
@@ -179,6 +183,8 @@ public class Daemon {
 				isDaemonThread.set(true);
 				try {
 					Context.openSession();
+					//Suppressing sonar issue "squid:S1217"
+					//We intentionally do not start a new thread yet, rather wrap the run call in a session.
 					runnable.run();
 				}
 				finally {
@@ -198,17 +204,18 @@ public class Daemon {
 	 */
 	public static boolean isDaemonThread() {
 		Boolean b = isDaemonThread.get();
-		if (b == null)
+		if (b == null) {
 			return false;
-		else
+		} else {
 			return b.booleanValue();
+		}
 	}
 	
 	/**
 	 * Calls the {@link OpenmrsService#onStartup()} method, as a daemon, for an instance
 	 * implementing the {@link OpenmrsService} interface.
-	 * 
-	 * @param openmrsService instance implementing the {@link OpenmrsService} interface.
+	 *
+	 * @param service instance implementing the {@link OpenmrsService} interface.
 	 * @since 1.9
 	 */
 	public static void runStartupForService(final OpenmrsService service) throws ModuleException {
@@ -222,8 +229,8 @@ public class Daemon {
 					Context.openSession();
 					service.onStartup();
 				}
-				catch (Throwable t) {
-					exceptionThrown = t;
+				catch (Exception e) {
+					exceptionThrown = e;
 				}
 				finally {
 					Context.closeSession();
@@ -239,25 +246,27 @@ public class Daemon {
 		}
 		catch (InterruptedException e) {
 			// ignore
-			e.printStackTrace();
+			log.error(e);
 		}
 		
 		if (onStartupThread.exceptionThrown != null) {
-			if (onStartupThread.exceptionThrown instanceof ModuleException)
+			if (onStartupThread.exceptionThrown instanceof ModuleException) {
 				throw (ModuleException) onStartupThread.exceptionThrown;
-			else
+			} else {
 				throw new ModuleException("Unable to run onStartup() method as Daemon", onStartupThread.exceptionThrown);
+			}
 		}
 	}
 	
 	/**
 	 * Executes the given runnable in a new thread that is authenticated as the daemon user.
-	 * 
+	 *
 	 * @param runnable an object implementing the {@link Runnable} interface.
 	 * @param token the token required to run code as the daemon user
 	 * @return the newly spawned {@link Thread}
 	 * @since 1.9.2
 	 */
+	@SuppressWarnings("squid:S1217")
 	public static Thread runInDaemonThread(final Runnable runnable, DaemonToken token) {
 		if (!ModuleFactory.isTokenValid(token)) {
 			throw new ContextAuthenticationException("Invalid token " + token);
@@ -270,6 +279,8 @@ public class Daemon {
 				isDaemonThread.set(true);
 				try {
 					Context.openSession();
+					//Suppressing sonar issue "squid:S1217"
+					//We intentionally do not start a new thread yet, rather wrap the run call in a session.
 					runnable.run();
 				}
 				finally {
@@ -285,10 +296,9 @@ public class Daemon {
 	/**
 	 * Executes the given runnable in a new thread that is authenticated as the daemon user and wait
 	 * for the thread to finish.
-	 * 
+	 *
 	 * @param runnable an object implementing the {@link Runnable} interface.
 	 * @param token the token required to run code as the daemon user
-	 * @return the newly spawned {@link Thread}
 	 * @since 1.9.2
 	 */
 	public static void runInDaemonThreadAndWait(final Runnable runnable, DaemonToken token) {
@@ -317,14 +327,14 @@ public class Daemon {
 		/**
 		 * The exception thrown (if any) by the method called in {@link #run()}
 		 */
-		protected Throwable exceptionThrown = null;
+		protected Exception exceptionThrown = null;
 		
 		/**
 		 * Gets the exception thrown (if any) by the method called in {@link #run()}
-		 * 
+		 *
 		 * @return the thrown exception (if any).
 		 */
-		public Throwable getExceptionThrown() {
+		public Exception getExceptionThrown() {
 			return exceptionThrown;
 		}
 	}
@@ -334,8 +344,8 @@ public class Daemon {
 	 * However this is not the preferred method for checking to see if the current thread is a daemon thread,
 	 * 				rather use Daemon.isDeamonThread().
 	 * isDaemonThread is preferred for checking to see if you are in that thread or if the current thread is daemon.
-	 * 
-	 * @param user, user whom we are checking if daemon
+	 *
+	 * @param user user whom we are checking if daemon
 	 * @return true if user is Daemon
 	 * @should return true for a daemon user
 	 * @should return false if the user is not a daemon

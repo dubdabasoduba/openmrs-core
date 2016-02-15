@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -41,7 +37,7 @@ public interface DatatypeService extends OpenmrsService {
 	 * @param clazz
 	 * @param config
 	 * @return an instantiated {@link CustomDatatype}, with a configuration set
-	 * @throws
+	 * @throws CustomDatatypeException
 	 */
 	<T extends CustomDatatype<?>> T getDatatype(Class<T> clazz, String config) throws CustomDatatypeException;
 	
@@ -51,7 +47,7 @@ public interface DatatypeService extends OpenmrsService {
 	 * 
 	 * @param datatype
 	 * @param handlerConfig
-	 * @return
+	 * @return default handler with the given configuration
 	 */
 	CustomDatatypeHandler<?, ?> getHandler(CustomDatatype<?> datatype, String handlerConfig);
 	
@@ -66,7 +62,7 @@ public interface DatatypeService extends OpenmrsService {
 	 * Gets a clob storage object by its id
 	 * 
 	 * @param id
-	 * @return
+	 * @return clob storage object
 	 */
 	ClobDatatypeStorage getClobDatatypeStorage(Integer id);
 	
@@ -74,7 +70,7 @@ public interface DatatypeService extends OpenmrsService {
 	 * Gets a clob storage object by its uuid
 	 * 
 	 * @param uuid
-	 * @return
+	 * @return clob storage object
 	 */
 	ClobDatatypeStorage getClobDatatypeStorageByUuid(String uuid);
 	

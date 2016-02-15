@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.arden;
 
@@ -325,7 +321,7 @@ public class MLMObject {
 			
 			/*******************
 			 * Code for implementing If() then in Action
-			 * 
+			 *
 			 */
 			for (String uniqueKey : uniqueKeys) {
 				if (uniqueKey.startsWith("Box") || uniqueKey.startsWith("mode")) // Needs improvement - for now we allow if(variable not like Box1,...
@@ -366,19 +362,19 @@ public class MLMObject {
 			}
 			
 			/*****
-			 * 
+			 *
 			 * End of code for implementing If() then in Action
 			 */
 			
 			/*********** DO NOT NEED THIS because the above code does it
-			if (this.calls.get("action") != null) {
-				w.append("\t\t\t\tString value = null;\n");
-				w.append("\t\t\t\tString variable = null;\n");
-				w.append("\t\t\t\tint varLen = 0;\n");
-				for (Call currCall : this.calls.get("action")) {
-					currCall.write(w);
-				}
-			}
+			 if (this.calls.get("action") != null) {
+			 w.append("\t\t\t\tString value = null;\n");
+			 w.append("\t\t\t\tString variable = null;\n");
+			 w.append("\t\t\t\tint varLen = 0;\n");
+			 for (Call currCall : this.calls.get("action")) {
+			 currCall.write(w);
+			 }
+			 }
 			 **************/
 			
 			w.append("\t\t\t\tfor(String currAction:actions){\n");
@@ -1152,6 +1148,18 @@ public class MLMObject {
 		lastCall.addParameter(parameter);
 	}
 	
+	public static void setCompKeyIdUsed(boolean compKeyIdUsed) {
+		MLMObject.compKeyIdUsed = compKeyIdUsed;
+	}
+	
+	public static void setKeyId(int keyId) {
+		MLMObject.keyId = keyId;
+	}
+	
+	public static void setCompKeyId(int compKeyId) {
+		MLMObject.compKeyId = compKeyId;
+	}
+	
 	public void addCompOperator(String section, Integer operator, String key) {
 		
 		LinkedHashMap<String, Comparison> compBySection = this.comparisons.get(section);
@@ -1167,7 +1175,7 @@ public class MLMObject {
 				// but if key exists, modify it with __number for the hashmap only
 			} else {
 				compBySection.put(key + "__" + compKeyId, new Comparison(key, operator));
-				compKeyIdUsed = true;
+				setCompKeyIdUsed(true);
 			}
 		} else {
 			compBySection.put(key, new Comparison(key, operator));
@@ -1186,8 +1194,8 @@ public class MLMObject {
 		if (compKeyIdUsed == true) {
 			lastComparison = compBySection.get(key + "__" + compKeyId);
 			lastComparison.setAnswer(answer);
-			compKeyIdUsed = false;
-			compKeyId++; // for next use
+			setCompKeyIdUsed(false);
+			setCompKeyId(compKeyId + 1);//for next use
 		} else {
 			lastComparison = compBySection.get(key);
 			lastComparison.setAnswer(answer);
@@ -1256,10 +1264,12 @@ public class MLMObject {
 					compBySection.put(key + "__" + keyId, thisComparison);
 					
 					compBySection.remove("__Temp__" + keyId);
-					if (keyId > 100) // At most 100 Temp Keys
-						keyId = 1;
-					else
-						keyId++;
+					if (keyId > 100) {
+						// At most 100 Temp Keys
+						setKeyId(1);
+					} else {
+						setKeyId(keyId + 1);
+					}
 				}
 			} else if (thisComparison != null) {
 				
@@ -1269,10 +1279,12 @@ public class MLMObject {
 				compBySection.put(key, thisComparison);
 				compBySection.remove("__Temp__" + keyId);
 				retVal = false;
-				if (keyId > 100) // At most 100 Temp Keys
-					keyId = 1;
-				else
-					keyId++;
+				if (keyId > 100) {
+					// At most 100 Temp Keys
+					setKeyId(1);
+				} else {
+					setKeyId(keyId + 1);
+				}
 				
 			}
 		}

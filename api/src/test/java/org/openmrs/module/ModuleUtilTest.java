@@ -1,126 +1,87 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.module;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertThat;
+
 import java.io.File;
-import java.net.URL;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Properties;
+import java.util.jar.JarFile;
 
-import junit.framework.Assert;
-
-import org.junit.Ignore;
+import org.apache.commons.io.IOUtils;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
+import org.openmrs.GlobalProperty;
+import org.openmrs.api.context.Context;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
-import org.openmrs.util.OpenmrsUtil;
 
 /**
- * Tests methods on the {@link ModuleUtil} class
+ * Tests methods on the {@link org.openmrs.module.ModuleUtil} class
  */
 public class ModuleUtilTest extends BaseContextSensitiveTest {
 	
-	/**
-	 * This test requires a connection to the internet to pass
-	 * 
-	 * @see {@link ModuleUtil#getURLStream(URL)}
-	 */
-	@Test
-	@Verifies(value = "should return a valid input stream for old module urls", method = "getURLStream(URL)")
-	public void getURLStream_shouldReturnAValidInputStreamForOldModuleUrls() throws Exception {
-		ModuleUtil.getURLStream(new URL("https://dev.openmrs.org/modules/download/formentry/update.rdf"));
-	}
+	Properties initialRuntimeProperties;
 	
 	/**
-	 * This test requires a connection to the internet to pass
-	 * 
-	 * @see {@link ModuleUtil#getURL(URL)}
-	 */
-	@Test
-	@Ignore
-	@Verifies(value = "should return an update rdf page for old https dev urls", method = "getURL(URL)")
-	public void getURL_shouldReturnAnUpdateRdfPageForOldHttpsDevUrls() throws Exception {
-		String url = "https://dev.openmrs.org/modules/download/formentry/update.rdf";
-		String updateRdf = ModuleUtil.getURL(new URL(url));
-		Assert.assertTrue("Unable to fetch module update url: " + url, updateRdf.contains("<updates"));
-	}
-	
-	/**
-	 * This test requires a connection to the internet to pass
-	 * 
-	 * @see {@link ModuleUtil#getURL(URL)}
-	 */
-	@Test
-	@Ignore
-	@Verifies(value = "should return an update rdf page for old https module urls", method = "getURL(URL)")
-	public void getURL_shouldReturnAnUpdateRdfPageForOldHttpsModuleUrls() throws Exception {
-		String url = "https://modules.openmrs.org/modules/download/formentry/update.rdf";
-		String updateRdf = ModuleUtil.getURL(new URL(url));
-		Assert.assertTrue("Unable to fetch module update url: " + url, updateRdf.contains("<updates"));
-	}
-	
-	/**
-	 * This test requires a connection to the internet to pass
-	 * 
-	 * @see {@link ModuleUtil#getURL(URL)}
-	 */
-	@Test
-	@Ignore
-	@Verifies(value = "should return an update rdf page for module urls", method = "getURL(URL)")
-	public void getURL_shouldReturnAnUpdateRdfPageForModuleUrls() throws Exception {
-		String url = "http://modules.openmrs.org/modules/download/formentry/update.rdf";
-		String updateRdf = ModuleUtil.getURL(new URL(url));
-		Assert.assertTrue("Unable to fetch module update url: " + url, updateRdf.contains("<updates"));
-	}
-	
-	/**
-	 * @see {@link ModuleUtil#checkMandatoryModulesStarted()}
+	 * @see org.openmrs.module.ModuleUtil#checkMandatoryModulesStarted()
 	 */
 	@Test(expected = MandatoryModuleException.class)
 	@Verifies(value = "should throw ModuleException if a mandatory module is not started", method = "checkMandatoryModulesStarted()")
 	public void checkMandatoryModulesStarted_shouldThrowModuleExceptionIfAMandatoryModuleIsNotStarted() throws Exception {
-		executeDataSet("org/openmrs/module/include/mandatoryModulesGlobalProperties.xml");
-		ModuleUtil.checkMandatoryModulesStarted();
-	}
-	
-	/**
-	 * @see {@link ModuleUtil#checkOpenmrsCoreModulesStarted()}
-	 */
-	@Test(expected = OpenmrsCoreModuleException.class)
-	@Verifies(value = "should throw ModuleException if a core module is not started", method = "checkOpenmrsCoreModulesStarted()")
-	public void checkMandatoryModulesStarted_shouldThrowModuleExceptionIfACoreModuleIsNotStarted() throws Exception {
+		//given
+		assertThat(ModuleFactory.getStartedModules(), empty());
 		
-		runtimeProperties.setProperty(ModuleConstants.IGNORE_CORE_MODULES_PROPERTY, "false");
-		try {
-			ModuleUtil.checkOpenmrsCoreModulesStarted();
-		}
-		finally {
-			runtimeProperties.setProperty(ModuleConstants.IGNORE_CORE_MODULES_PROPERTY, "true");
+		GlobalProperty gp1 = new GlobalProperty("module1.mandatory", "true");
+		Context.getAdministrationService().saveGlobalProperty(gp1);
+		
+		//when
+		ModuleUtil.checkMandatoryModulesStarted();
+		//then exception
+	}
+	
+	@After
+	public void revertRuntimeProperties() {
+		if (initialRuntimeProperties != null) {
+			Context.setRuntimeProperties(initialRuntimeProperties);
+			initialRuntimeProperties = null;
 		}
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getMandatoryModules()}
+	 * @see org.openmrs.module.ModuleUtil#getMandatoryModules()
 	 */
 	@Test
 	@Verifies(value = "should return mandatory module ids", method = "getMandatoryModules()")
 	public void getMandatoryModules_shouldReturnMandatoryModuleIds() throws Exception {
-		executeDataSet("org/openmrs/module/include/mandatoryModulesGlobalProperties.xml");
-		Assert.assertEquals(1, ModuleUtil.getMandatoryModules().size());
-		Assert.assertEquals("firstmodule", ModuleUtil.getMandatoryModules().get(0));
+		//given
+		GlobalProperty gp1 = new GlobalProperty("firstmodule.mandatory", "true");
+		GlobalProperty gp2 = new GlobalProperty("secondmodule.mandatory", "false");
+		
+		Context.getAdministrationService().saveGlobalProperty(gp1);
+		Context.getAdministrationService().saveGlobalProperty(gp2);
+		
+		//when
+		//then
+		assertThat(ModuleUtil.getMandatoryModules(), contains("firstmodule"));
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged required version", method = "matchRequiredVersions(String,String)")
@@ -131,7 +92,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged required version with wild card", method = "matchRequiredVersions(String,String)")
@@ -142,7 +103,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged required version with wild card on one end", method = "matchRequiredVersions(String,String)")
@@ -155,7 +116,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow single entry for required version", method = "matchRequiredVersions(String,String)")
@@ -166,7 +127,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow required version with wild card", method = "matchRequiredVersions(String,String)")
@@ -177,7 +138,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow non numeric character required version", method = "matchRequiredVersions(String,String)")
@@ -188,7 +149,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged non numeric character required version", method = "matchRequiredVersions(String,String)")
@@ -199,7 +160,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged non numeric character with wild card", method = "matchRequiredVersions(String,String)")
@@ -210,7 +171,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow ranged non numeric character with wild card on one end", method = "matchRequiredVersions(String,String)")
@@ -223,7 +184,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false when openmrs version beyond wild card range", method = "matchRequiredVersions(String,String)")
@@ -236,7 +197,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false when required version beyond openmrs version", method = "matchRequiredVersions(String,String)")
@@ -247,7 +208,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false when required version with wild card beyond openmrs version", method = "matchRequiredVersions(String,String)")
@@ -259,7 +220,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false when required version with wild card on one end beyond openmrs version", method = "matchRequiredVersions(String,String)")
@@ -273,7 +234,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should return false when single entry required version beyond openmrs version", method = "matchRequiredVersions(String,String)")
@@ -284,7 +245,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#matchRequiredVersions(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
 	@Test
 	@Verifies(value = "should allow release type in the version", method = "matchRequiredVersions(String,String)")
@@ -297,7 +258,101 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getPathForResource(Module,String)}
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should match when revision number is below maximum revision number", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldMatchWhenRevisionNumberIsBelowMaximumRevisionNumber() {
+		String openmrsVersion = "1.4.1111";
+		String requiredVersion = "1.4.*";
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should not match when revision number is above maximum revision number", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldNotMatchWhenRevisionNumberIsAboveMaximumRevisionNumber() {
+		Long revisionNumber = (long) Integer.MAX_VALUE + 2;
+		String openmrsVersion = "1.4." + revisionNumber;
+		String requiredVersion = "1.4.*";
+		Assert.assertFalse(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should not match when version has wild card and is outside boundary", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldNotMatchWhenVersionHasWildCardAndIsOutsideBoundary() {
+		String openmrsVersion = "1.*.4";
+		String requiredVersion = "1.4.0 - 1.4.10";
+		Assert.assertFalse(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should match when version has wild card and is within boundary", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldMatchWhenVersionHasWildCardAndIsWithinBoundary() {
+		String openmrsVersion = "1.4.*";
+		String requiredVersion = "1.4.0 - 1.4.10";
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should not match when version has wild card plus qualifier and is outside boundary", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldNotMatchWhenVersionHasWildPlusQualifierCardAndIsOutsideBoundary() {
+		String openmrsVersion = "1.*.4-SNAPSHOT";
+		String requiredVersion = "1.4.0 - 1.4.10";
+		Assert.assertFalse(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should match when version has wild card plus qualifier and is within boundary", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldMatchWhenVersionHasWildCardPlusQualifierAndIsWithinBoundary() {
+		String openmrsVersion = "1.4.*-SNAPSHOT";
+		String requiredVersion = "1.4.0 - 1.4.10";
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should return true when required version is empty", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldReturnTrueWhenRequiredVersionIsEmpty() {
+		String openmrsVersion = "1.11.4";
+		String requiredVersion = "";
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see ModuleUtil#matchRequiredVersions(String,String)
+	 */
+	@Test
+	@Verifies(value = "should correctly set upper and lower limit for versionRange with qualifiers and wild card", method = "matchRequiredVersions(String version, String versionRange)")
+	public void matchRequiredVersions_shouldCorrectlySetUpperAndLoweLimitForVersionRangeWithQualifiersAndWildCard() {
+		String openmrsVersion = "1.4.11111";
+		String requiredVersion = "1.4.200 - 1.4.*-SNAPSHOT";
+		Long revisionNumber = (long) Integer.MAX_VALUE + 2;
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+		requiredVersion = "1.4.*-SNAPSHOT - 1.4.*";
+		Assert.assertTrue(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+		openmrsVersion = "1.4." + revisionNumber;
+		Assert.assertFalse(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredVersion));
+	}
+	
+	/**
+	 * @see org.openmrs.module.ModuleUtil#getPathForResource(org.openmrs.module.Module,String)
 	 */
 	@Test
 	@Verifies(value = "should handle ui springmvc css ui dot css example", method = "getPathForResource(Module,String)")
@@ -309,7 +364,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getModuleForPath(String)}
+	 * @see org.openmrs.module.ModuleUtil#getModuleForPath(String)
 	 */
 	@Test
 	@Verifies(value = "should handle ui springmvc css ui dot css when ui dot springmvc module is running", method = "getModuleForPath(String)")
@@ -321,10 +376,11 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 		
 		String path = "/ui/springmvc/css/ui.css";
 		Assert.assertEquals(module, ModuleUtil.getModuleForPath(path));
+		ModuleFactory.getStartedModulesMap().clear();
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getModuleForPath(String)}
+	 * @see org.openmrs.module.ModuleUtil#getModuleForPath(String)
 	 */
 	@Test
 	@Verifies(value = "should handle ui springmvc css ui dot css when ui module is running", method = "getModuleForPath(String)")
@@ -336,10 +392,11 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 		
 		String path = "/ui/springmvc/css/ui.css";
 		Assert.assertEquals(module, ModuleUtil.getModuleForPath(path));
+		ModuleFactory.getStartedModulesMap().clear();
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getModuleForPath(String)}
+	 * @see org.openmrs.module.ModuleUtil#getModuleForPath(String)
 	 */
 	@Test
 	@Verifies(value = "should return null for ui springmvc css ui dot css when no relevant module is running", method = "getModuleForPath(String)")
@@ -350,7 +407,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#checkRequiredVersion(String, String)}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test(expected = ModuleException.class)
 	@Verifies(value = "should throw ModuleException if openmrs version beyond wild card range", method = "checkRequiredVersion(String, String)")
@@ -361,7 +418,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#checkRequiredVersion(String, String)}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test(expected = ModuleException.class)
 	@Verifies(value = "should throw ModuleException if required version beyond openmrs version", method = "checkRequiredVersion(String, String)")
@@ -372,7 +429,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#checkRequiredVersion(String, String)}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test(expected = ModuleException.class)
 	@Verifies(value = "should throw ModuleException if required version with wild card beyond openmrs version", method = "checkRequiredVersion(String, String)")
@@ -384,7 +441,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#checkRequiredVersion(String, String)}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test(expected = ModuleException.class)
 	@Verifies(value = "should throw ModuleException if required version with wild card on one end beyond openmrs version", method = "checkRequiredVersion(String, String)")
@@ -396,7 +453,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#checkRequiredVersion(String, String)}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test(expected = ModuleException.class)
 	@Verifies(value = "should throw ModuleException if single entry required version beyond openmrs version", method = "checkRequiredVersion(String, String)")
@@ -408,7 +465,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#compareVersion(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#compareVersion(String,String)
 	 */
 	@Test
 	@Verifies(value = "should correctly comparing two version numbers", method = "compareVersion(String,String)")
@@ -419,7 +476,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#compareVersion(String,String)}
+	 * @see org.openmrs.module.ModuleUtil#compareVersion(String,String)
 	 */
 	@Test
 	@Verifies(value = "treat SNAPSHOT as earliest version", method = "compareVersion(String,String)")
@@ -432,46 +489,112 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getModuleRepository()}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
-	@Test
-	@Verifies(value = "should use the runtime property as the first choice if specified", method = "getModuleRepository()")
-	public void getModuleRepository_shouldUseTheRuntimePropertyAsTheFirstChoiceIfSpecified() throws Exception {
-		final String folderName = "test_folder";
-		File testFolder = null;
-		runtimeProperties.setProperty(ModuleConstants.REPOSITORY_FOLDER_RUNTIME_PROPERTY, folderName);
-		try {
-			testFolder = ModuleUtil.getModuleRepository();
-			Assert.assertNotNull(testFolder);
-			Assert.assertEquals(new File(OpenmrsUtil.getApplicationDataDirectory(), folderName), ModuleUtil
-			        .getModuleRepository());
-		}
-		finally {
-			if (testFolder != null)
-				testFolder.deleteOnExit();
-			runtimeProperties.setProperty(ModuleConstants.REPOSITORY_FOLDER_RUNTIME_PROPERTY, "");
-		}
+	@Test(expected = ModuleException.class)
+	@Verifies(value = "should throw ModuleException if SNAPSHOT not handled correctly", method = "checkRequiredVersion(String, String)")
+	public void checkRequiredVersion_shouldThrowModuleExceptionIfSNAPSHOTNotHandledCorrectly() throws Exception {
+		String openmrsVersion = "1.4.3";
+		String requiredOpenmrsVersion = "1.4.5-SNAPSHOT";
+		ModuleUtil.checkRequiredVersion(openmrsVersion, requiredOpenmrsVersion);
 	}
 	
 	/**
-	 * @see {@link ModuleUtil#getModuleRepository()}
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
 	 */
 	@Test
-	@Verifies(value = "should return the correct file if the runtime property is an absolute path", method = "getModuleRepository()")
-	public void getModuleRepository_shouldReturnTheCorrectFileIfTheRuntimePropertyIsAnAbsolutePath() throws Exception {
-		final File expectedModuleRepo = new File(System.getProperty("java.io.tmpdir"), "test_folder");
-		expectedModuleRepo.mkdirs();
-		
-		runtimeProperties.setProperty(ModuleConstants.REPOSITORY_FOLDER_RUNTIME_PROPERTY, expectedModuleRepo
-		        .getAbsolutePath());
+	@Verifies(value = "Should handle SNAPSHOT versions ", method = "checkRequiredVersion(String, String)")
+	public void checkRequiredVersion_shouldHandleSnapshotVersion() throws Exception {
+		String openMRSVersion = "1.9.2-SNAPSHOT";
+		String requiredOpenmrsVersion = "1.9.2-SNAPSHOT";
+		ModuleUtil.checkRequiredVersion(openMRSVersion, requiredOpenmrsVersion);
+	}
+	
+	/**
+	 * @see org.openmrs.module.ModuleUtil#checkRequiredVersion(String, String)
+	 */
+	@Test
+	@Verifies(value = "Should handle UUID suffix versions ", method = "checkRequiredVersion(String, String)")
+	public void checkRequiredVersion_shouldHandleUuidSuffixVersion() throws Exception {
+		String openMRSVersion = "1.9.9-f4927f";
+		String requiredOpenmrsVersion = "1.9.9-SNAPSHOT";
+		ModuleUtil.checkRequiredVersion(openMRSVersion, requiredOpenmrsVersion);
+	}
+	
+	@Test
+	@Verifies(value = "Should handle ALPHA versions ", method = "checkRequiredVersion(String, String)")
+	public void checkRequiredVersion_shouldHandleAlphaVersion() throws Exception {
+		String openMRSVersion = "1.9.2-ALPHA";
+		String requiredOpenmrsVersion = "1.9.2-ALPHA";
+		ModuleUtil.checkRequiredVersion(openMRSVersion, requiredOpenmrsVersion);
+	}
+	
+	private JarFile loadModuleJarFile(String moduleId, String version) throws IOException {
+		InputStream moduleStream = null;
+		File tempFile = null;
+		OutputStream tempFileStream = null;
+		JarFile jarFile = null;
 		try {
-			File testFolder = ModuleUtil.getModuleRepository();
-			Assert.assertNotNull(testFolder);
-			Assert.assertEquals(expectedModuleRepo, testFolder);
+			moduleStream = getClass().getClassLoader().getResourceAsStream(
+			    "org/openmrs/module/include/" + moduleId + "-" + version + ".omod");
+			Assert.assertNotNull(moduleStream);
+			tempFile = File.createTempFile("moduleTest", "omod");
+			tempFileStream = new FileOutputStream(tempFile);
+			IOUtils.copy(moduleStream, tempFileStream);
+			jarFile = new JarFile(tempFile);
 		}
 		finally {
-			runtimeProperties.setProperty(ModuleConstants.REPOSITORY_FOLDER_RUNTIME_PROPERTY, "");
-			expectedModuleRepo.deleteOnExit();
+			IOUtils.closeQuietly(moduleStream);
+			IOUtils.closeQuietly(tempFileStream);
+			if (tempFile != null) {
+				tempFile.delete();
+			}
 		}
+		return jarFile;
+	}
+	
+	/**
+	 * @see ModuleUtil#getResourceFromApi(JarFile,String,String,String)
+	 */
+	@Test
+	@Verifies(value = "load file from api as input stream", method = "getResourceFromApi(JarFile,String,String,String)")
+	public void getResourceFromApi_shouldLoadFileFromApiAsInputStream() throws Exception {
+		String moduleId = "test1";
+		String version = "1.0-SNAPSHOT";
+		String resource = "messages.properties";
+		JarFile moduleJarFile = loadModuleJarFile(moduleId, version);
+		Assert.assertNotNull(moduleJarFile);
+		InputStream resultStream = ModuleUtil.getResourceFromApi(moduleJarFile, moduleId, version, resource);
+		Assert.assertNotNull(resultStream);
+	}
+	
+	/**
+	 * @see ModuleUtil#getResourceFromApi(JarFile,String,String,String)
+	 */
+	@Test
+	@Verifies(value = "return null if api is not found", method = "getResourceFromApi(JarFile,String,String,String)")
+	public void getResourceFromApi_shouldReturnNullIfApiIsNotFound() throws Exception {
+		String moduleId = "logic";
+		String version = "0.2";
+		String resource = "messages.properties";
+		JarFile moduleJarFile = loadModuleJarFile(moduleId, version);
+		Assert.assertNotNull(moduleJarFile);
+		InputStream resultStream = ModuleUtil.getResourceFromApi(moduleJarFile, moduleId, version, resource);
+		Assert.assertNull(resultStream);
+	}
+	
+	/**
+	 * @see ModuleUtil#getResourceFromApi(JarFile,String,String,String)
+	 */
+	@Test
+	@Verifies(value = "return null if file is not found in api", method = "getResourceFromApi(JarFile,String,String,String)")
+	public void getResourceFromApi_shouldReturnNullIfFileIsNotFoundInApi() throws Exception {
+		String moduleId = "test1";
+		String version = "1.0-SNAPSHOT";
+		String resource = "messages_doesnotexist.properties";
+		JarFile moduleJarFile = loadModuleJarFile(moduleId, version);
+		Assert.assertNotNull(moduleJarFile);
+		InputStream resultStream = ModuleUtil.getResourceFromApi(moduleJarFile, moduleId, version, resource);
+		Assert.assertNull(resultStream);
 	}
 }

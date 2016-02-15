@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web;
 
@@ -32,6 +28,8 @@ public class WebConstants {
 	public static final String OPENMRS_ERROR_ATTR = "openmrs_error";
 	
 	public static final String OPENMRS_ERROR_ARGS = "openmrs_error_arguments";
+	
+	public static final String OPENMRS_ADDR_TMPL = "openmrs_address_template";
 	
 	public static final String OPENMRS_LANGUAGE_COOKIE_NAME = "__openmrs_language";
 	
@@ -60,11 +58,6 @@ public class WebConstants {
 	
 	public static String WEBAPP_NAME = "openmrs";
 	
-	// ComplexObsHandler views specific to the web layer:
-	public static final String HTML_VIEW = "html_view";
-	
-	public static final String HYPERLINK_VIEW = "hyperlink_view";
-	
 	/**
 	 * Page in the webapp used for initial setup of the database connection if no valid one exists
 	 */
@@ -84,7 +77,7 @@ public class WebConstants {
 	public static String GP_ALLOWED_LOGIN_ATTEMPTS_PER_IP = "security.loginAttemptsAllowedPerIP";
 	
 	/**
-	 * User names of the logged-in users are stored in this map (session id -> user name) in the
+	 * User names of the logged-in users are stored in this map (session id -&gt; user name) in the
 	 * ServletContext under this key
 	 */
 	public static final String CURRENT_USERS = "CURRENT_USERS";

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -23,7 +19,7 @@ import org.openmrs.aop.RequiredDataAdvice;
 /**
  * This class unsets the personVoid* attributes on the given {@link Person} object when an unvoid*
  * method is called with this class. This differs from the {@link BaseUnvoidHandler} because the
- * Person object contains personVoided* attributes instead of the normal voided attributes. <br/>
+ * Person object contains personVoided* attributes instead of the normal voided attributes. <br>
  * 
  * @see RequiredDataAdvice
  * @see VoidHandler
@@ -33,8 +29,8 @@ import org.openmrs.aop.RequiredDataAdvice;
 public class PersonUnvoidHandler implements UnvoidHandler<Person> {
 	
 	/**
-	 * Called around every unvoid* method to set everything to null.<br/>
-	 * <br/>
+	 * Called around every unvoid* method to set everything to null.<br>
+	 * <br>
 	 * 
 	 * @see org.openmrs.api.handler.RequiredDataHandler#handle(org.openmrs.OpenmrsObject,
 	 *      org.openmrs.User, java.util.Date, java.lang.String)
@@ -48,15 +44,14 @@ public class PersonUnvoidHandler implements UnvoidHandler<Person> {
 	public void handle(Person person, User unvoidingUser, Date origParentVoidedDate, String unused) {
 		
 		// only operate on voided objects
-		if (person.isPersonVoided()) {
+		if (person.isPersonVoided()
+		        && (origParentVoidedDate == null || origParentVoidedDate.equals(person.getPersonDateVoided()))) {
 			
 			// only unvoid objects that were voided at the same time as the parent object
-			if (origParentVoidedDate == null || origParentVoidedDate.equals(person.getPersonDateVoided())) {
-				person.setPersonVoided(false);
-				person.setPersonVoidedBy(null);
-				person.setPersonDateVoided(null);
-				person.setPersonVoidReason(null);
-			}
+			person.setPersonVoided(false);
+			person.setPersonVoidedBy(null);
+			person.setPersonDateVoided(null);
+			person.setPersonVoidReason(null);
 		}
 	}
 	

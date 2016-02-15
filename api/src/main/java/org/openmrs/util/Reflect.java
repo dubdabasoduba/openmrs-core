@@ -1,28 +1,28 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import org.azeckoski.reflectutils.ClassData;
-import org.springframework.util.TypeUtils;
+import org.azeckoski.reflectutils.ClassDataCacher;
+import org.azeckoski.reflectutils.ClassFields;
+import org.azeckoski.reflectutils.exceptions.FieldnameNotFoundException;
 
 /**
  * This class has convenience methods to find the fields on a class and superclass as well as
@@ -71,12 +71,29 @@ public class Reflect {
 	 * classes.
 	 * 
 	 * @param fieldClass Class
-	 * @return List<Field>
+	 * @return List&lt;Field&gt;
 	 * @should return all fields include private and super classes
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Field> getAllFields(Class<?> fieldClass) {
-		return new ClassData(fieldClass).getFields();
+		List<Field> fields = ClassDataCacher.getInstance().getClassData(fieldClass).getFields();
+		return new ArrayList<Field>(fields);
+	}
+	
+	/**
+	 * This method returns true if the given annotation is present on the given field.
+	 * 
+	 * @param fieldClass
+	 * @param fieldName
+	 * @param annotation
+	 * @return true if the given annotation is present
+	 */
+	public static boolean isAnnotationPresent(Class<?> fieldClass, String fieldName, Class<? extends Annotation> annotation) {
+		ClassFields<?> classFields = ClassDataCacher.getInstance().getClassFields(fieldClass);
+		try {
+			return classFields.getFieldAnnotation(annotation, fieldName) != null;
+		} catch (FieldnameNotFoundException e) {
+			return false;
+		}
 	}
 	
 	/**
@@ -92,18 +109,22 @@ public class Reflect {
 	
 	/**
 	 * @param t
-	 * @return true if given type is a subclass, or a generic type bounded by a subclass of the parameterized class
+	 * @return true if given type is a subclass, or a generic type bounded by a subclass of the
+	 *         parameterized class
 	 * @should return true for a generic whose bound is a subclass
 	 * @should return false for a generic whose bound is not a subclass
 	 */
 	public boolean isSuperClass(Type t) {
 		if (t instanceof TypeVariable<?>) {
 			TypeVariable<?> typeVar = (TypeVariable<?>) t;
-			if (typeVar.getBounds() == null || typeVar.getBounds().length == 0)
+			if (typeVar.getBounds() == null || typeVar.getBounds().length == 0) {
 				return parametrizedClass.equals(Object.class);
-			for (Type typeBound : typeVar.getBounds())
-				if (isSuperClass(typeBound))
+			}
+			for (Type typeBound : typeVar.getBounds()) {
+				if (isSuperClass(typeBound)) {
 					return true;
+				}
+			}
 			return false;
 		} else if (t instanceof Class<?>) {
 			return isSuperClass((Class<?>) t);
@@ -156,14 +177,13 @@ public class Reflect {
 	 * This method return all the fields (including private) until the given parameterized class
 	 * 
 	 * @param subClass Class
-	 * @return List<Field>
+	 * @return List&lt;Field&gt;
 	 * @should return only the sub class fields of given parameterized class
 	 */
-	@SuppressWarnings("unchecked")
-	public List<Field> getInheritedFields(Class subClass) {
+	public List<Field> getInheritedFields(Class<?> subClass) {
 		
 		List<Field> allFields = getAllFields(subClass);
-		for (Iterator iterator = allFields.iterator(); iterator.hasNext();) {
+		for (Iterator<Field> iterator = allFields.iterator(); iterator.hasNext();) {
 			Field field = (Field) iterator.next();
 			if (!hasField(field)) {
 				iterator.remove();

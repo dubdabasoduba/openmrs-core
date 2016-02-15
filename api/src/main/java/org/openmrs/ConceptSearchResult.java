@@ -1,22 +1,18 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 /**
  * An Object of this class represents a search result returned when searching for concepts, it holds
  * extra metadata about the matched concept(s).
- * 
+ *
  * @since 1.8
  */
 public class ConceptSearchResult implements java.io.Serializable {
@@ -39,27 +35,8 @@ public class ConceptSearchResult implements java.io.Serializable {
 	}
 	
 	/**
-	 * Optional constructor for turning a conceptWord into a conceptSearchResult, the constructor is
-	 * hidden from API users so as to hide the idea of conceptWord, it is meant to be used
-	 * underneath the API for convenience purposes.
-	 * 
-	 * @param conceptWord the conceptWord from which to construct a search result
-	 */
-	protected ConceptSearchResult(ConceptWord conceptWord) {
-		if (conceptWord != null) {
-			this.concept = conceptWord.getConcept();
-			this.conceptName = conceptWord.getConceptName();
-			this.word = conceptWord.getWord();
-			// if a null value is passed in, ignore it and maintain the default
-			// of 0.0
-			if (conceptWord.getWeight() != null)
-				this.transientWeight = conceptWord.getWeight();
-		}
-	}
-	
-	/**
 	 * Convenience constructor
-	 * 
+	 *
 	 * @param word the single word that will be matched to search terms
 	 * @param concept the concept that is being matched to
 	 * @param conceptName the specific name that will be matched
@@ -72,7 +49,7 @@ public class ConceptSearchResult implements java.io.Serializable {
 	
 	/**
 	 * Convenience constructor that takes in a weight too
-	 * 
+	 *
 	 * @param word the single word that will be matched to search terms
 	 * @param concept the concept that is being matched to
 	 * @param conceptName the specific name that will be matched
@@ -82,8 +59,9 @@ public class ConceptSearchResult implements java.io.Serializable {
 		this.concept = concept;
 		this.conceptName = conceptName;
 		this.word = word;
-		if (transientWeight != null)
+		if (transientWeight != null) {
 			this.transientWeight = transientWeight;
+		}
 	}
 	
 	/**
@@ -130,8 +108,8 @@ public class ConceptSearchResult implements java.io.Serializable {
 	
 	/**
 	 * Getter for transientWeight
-	 * 
-	 * @return
+	 *
+	 * @return transient weight
 	 */
 	public Double getTransientWeight() {
 		return transientWeight;
@@ -139,7 +117,7 @@ public class ConceptSearchResult implements java.io.Serializable {
 	
 	/**
 	 * Setter transientWeight
-	 * 
+	 *
 	 * @param transientWeight
 	 */
 	public void setTransientWeight(Double transientWeight) {
@@ -151,13 +129,16 @@ public class ConceptSearchResult implements java.io.Serializable {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!(obj instanceof ConceptSearchResult))
+		}
+		if (!(obj instanceof ConceptSearchResult)) {
 			return false;
+		}
 		ConceptSearchResult other = (ConceptSearchResult) obj;
-		if (getConcept() == null)
+		if (getConcept() == null) {
 			return false;
+		}
 		return getConcept().equals(other.getConcept());
 	}
 	
@@ -166,8 +147,9 @@ public class ConceptSearchResult implements java.io.Serializable {
 	 */
 	@Override
 	public int hashCode() {
-		if (getConcept() == null)
+		if (getConcept() == null) {
 			return super.hashCode();
+		}
 		return getConcept().hashCode();
 	}
 }

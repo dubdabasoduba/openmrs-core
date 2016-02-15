@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.migration;
 
@@ -58,16 +54,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class MigrationHelper {
 	
+	private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+
 	protected final static Log log = LogFactory.getLog(MigrationHelper.class);
 	
 	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	
-	static DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public static Date parseDate(String s) throws ParseException {
 		if (s == null || s.length() == 0) {
@@ -76,6 +74,7 @@ public class MigrationHelper {
 			if (s.length() == 10) {
 				s += " 00:00:00";
 			}
+			DateFormat df = new SimpleDateFormat(DATE_TIME_PATTERN);
 			return df.parse(s);
 		}
 	}
@@ -83,6 +82,14 @@ public class MigrationHelper {
 	public static Document parseXml(String xml) throws ParserConfigurationException {
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		try {
+			// Disable resolution of external entities. See TRUNK-3942 
+			builder.setEntityResolver(new EntityResolver() {
+				
+				public InputSource resolveEntity(String publicId, String systemId) {
+					return new InputSource(new StringReader(""));
+				}
+			});
+			
 			return builder.parse(new InputSource(new StringReader(xml)));
 		}
 		catch (IOException ex) {
@@ -105,9 +112,9 @@ public class MigrationHelper {
 	}
 	
 	/**
-	 * Takes XML like: <something> <user date_changed="2001-03-06 08:46:53.0"
+	 * Takes XML like: &lt;something&gt; &lt;user date_changed="2001-03-06 08:46:53.0"
 	 * date_created="2001-03-06 08:46:53.0" username="hamish@mit.edu" first_name="Hamish"
-	 * last_name="Fraser" user_id="2001"/> </something> Returns the number of users added
+	 * last_name="Fraser" user_id="2001"/&gt; &lt;/something&gt; Returns the number of users added
 	 */
 	public static int importUsers(Document document) throws ParseException {
 		int ret = 0;
@@ -144,14 +151,14 @@ public class MigrationHelper {
 				}
 				pass = new String(password);
 			}
-			us.saveUser(user, pass);
+			us.createUser(user, pass);
 			++ret;
 		}
 		return ret;
 	}
 	
 	/**
-	 * Takes XML like: <something> <location name="Cerca-la-Source"/> </something> returns the
+	 * Takes XML like: &lt;something&gt; &lt;location name="Cerca-la-Source"/&gt; &lt;/something&gt; returns the
 	 * number of locations added
 	 */
 	public static int importLocations(Document document) {
@@ -178,8 +185,8 @@ public class MigrationHelper {
 	}
 	
 	/**
-	 * Takes a list of Strings of the format RELATIONSHIP:<user last name>,<user first
-	 * name>,<relationship type name>,<patient identifier type name>,<identifier> so if user hfraser
+	 * Takes a list of Strings of the format RELATIONSHIP:&lt;user last name&gt;,&lt;user first
+	 * name&gt;,&lt;relationship type name&gt;,&lt;patient identifier type name&gt;,&lt;identifier&gt; so if user hfraser
 	 * if the cardiologist of the patient with patient_id 8039 in PIH's old emr, then:
 	 * RELATIONSHIP:hfraser,Cardiologist,HIV-EMRV1,8039 (the "RELATIONSHIP:" is not actually
 	 * necessary. Anything before and including the first : will be dropped If autoCreateUsers is
@@ -194,11 +201,13 @@ public class MigrationHelper {
 		List<Relationship> relsToAdd = new ArrayList<Relationship>();
 		Random rand = new Random();
 		for (String s : relationships) {
-			if (s.indexOf(":") >= 0)
+			if (s.indexOf(":") >= 0) {
 				s = s.substring(s.indexOf(":") + 1);
+			}
 			String[] ss = s.split(",");
-			if (ss.length < 5)
+			if (ss.length < 5) {
 				throw new IllegalArgumentException("The line '" + s + "' is in the wrong format");
+			}
 			String userLastName = ss[0];
 			String userFirstName = ss[1];
 			String username = (userFirstName + userLastName).replaceAll(" ", "");
@@ -208,9 +217,9 @@ public class MigrationHelper {
 			User user = null;
 			{ // first try looking for non-voided users
 				List<User> users = us.getUsersByName(userFirstName, userLastName, false);
-				if (users.size() == 1)
+				if (users.size() == 1) {
 					user = users.get(0);
-				else if (users.size() > 1) {
+				} else if (users.size() > 1) {
 					throw new IllegalArgumentException("Found " + users.size() + " users named '" + userLastName + ", "
 					        + userFirstName + "'");
 				}
@@ -218,9 +227,9 @@ public class MigrationHelper {
 			if (user == null) {
 				// next try looking for voided users
 				List<User> users = us.getUsersByName(userFirstName, userLastName, false);
-				if (users.size() == 1)
+				if (users.size() == 1) {
 					user = users.get(0);
-				else if (users.size() > 1) {
+				} else if (users.size() > 1) {
 					throw new IllegalArgumentException("Found " + users.size() + " voided users named '" + userLastName
 					        + ", " + userFirstName + "'");
 				}
@@ -244,22 +253,25 @@ public class MigrationHelper {
 				}
 				if (autoAddRole) {
 					Role role = us.getRole(relationshipType);
-					if (role != null)
+					if (role != null) {
 						user.addRole(role);
+					}
 				}
-				us.saveUser(user, pass);
+				us.createUser(user, pass);
 			}
-			if (user == null)
+			if (user == null) {
 				throw new IllegalArgumentException("Can't find user '" + userLastName + ", " + userFirstName + "'");
+			}
 			Person person = personService.getPerson(user.getUserId());
 			
 			RelationshipType relationship = personService.getRelationshipTypeByName(relationshipType);
 			PatientIdentifierType pit = ps.getPatientIdentifierTypeByName(identifierType);
 			List<PatientIdentifier> found = ps.getPatientIdentifiers(identifier, Collections.singletonList(pit), null, null,
 			    null);
-			if (found.size() != 1)
+			if (found.size() != 1) {
 				throw new IllegalArgumentException("Found " + found.size() + " patients with identifier '" + identifier
 				        + "' of type " + identifierType);
+			}
 			Person relative = personService.getPerson(found.get(0).getPatient().getPatientId());
 			Relationship rel = new Relationship();
 			rel.setPersonA(person);
@@ -295,13 +307,15 @@ public class MigrationHelper {
 				String identifier = temp[1];
 				List<PatientIdentifier> pis = ps.getPatientIdentifiers(identifier, Collections.singletonList(pit), null,
 				    null, null);
-				if (pis.size() != 1)
+				if (pis.size() != 1) {
 					throw new IllegalArgumentException("Found " + pis.size() + " instances of identifier " + identifier
 					        + " of type " + pit);
+				}
 				Patient p = pis.get(0).getPatient();
 				Program program = programsByName.get(temp[2]);
-				if (program == null)
+				if (program == null) {
 					throw new RuntimeException("Couldn't find program \"" + temp[2] + "\" in " + programsByName);
+				}
 				Date enrollmentDate = temp.length < 4 ? null : parseDate(temp[3]);
 				Date completionDate = temp.length < 5 ? null : parseDate(temp[4]);
 				PatientProgram pp = new PatientProgram();
@@ -324,18 +338,21 @@ public class MigrationHelper {
 				Patient p = pis.get(0).getPatient();
 				*/
 				Program program = programsByName.get(temp[2]);
-				if (program == null)
+				if (program == null) {
 					throw new RuntimeException("Couldn't find program \"" + temp[2] + "\" in " + programsByName);
+				}
 				//ProgramWorkflow wf = pws.getWorkflow(program, temp[3]);
 				ProgramWorkflow wf = program.getWorkflowByName(temp[3]);
-				if (wf == null)
+				if (wf == null) {
 					throw new RuntimeException("Couldn't find workflow \"" + temp[3] + "\" for program " + program + " (in "
 					        + program.getAllWorkflows() + ")");
+				}
 				//ProgramWorkflowState st = pws.getState(wf, temp[4]);
 				ProgramWorkflowState st = wf.getStateByName(temp[4]);
-				if (st == null)
+				if (st == null) {
 					throw new RuntimeException("Couldn't find state \"" + temp[4] + "\" for workflow " + wf + " (in "
 					        + wf.getStates() + ")");
+				}
 				Date startDate = temp.length < 6 ? null : parseDate(temp[5]);
 				Date endDate = temp.length < 7 ? null : parseDate(temp[6]);
 				PatientState state = new PatientState();

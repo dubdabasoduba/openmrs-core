@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.validator;
 
@@ -52,11 +48,14 @@ public class PatientIdentifierValidator implements Validator {
 	 * 
 	 * @see org.springframework.validation.Validator#validate(java.lang.Object,
 	 *      org.springframework.validation.Errors)
+	 * @should pass validation if field lengths are correct
+	 * @should fail validation if field lengths are not correct
 	 */
 	public void validate(Object obj, Errors errors) {
 		PatientIdentifier pi = (PatientIdentifier) obj;
 		try {
 			validateIdentifier(pi);
+			ValidateUtil.validateFieldLengths(errors, obj.getClass(), "identifier", "voidReason");
 		}
 		catch (Exception e) {
 			errors.reject(e.getMessage());
@@ -95,13 +94,12 @@ public class PatientIdentifierValidator implements Validator {
 				    "PatientIdentifier.location.null", new Object[] { identifierString }, Context.getLocale()));
 			}
 			
-			if (pi.getIdentifierType().getUniquenessBehavior() != UniquenessBehavior.NON_UNIQUE) {
+			if (pi.getIdentifierType().getUniquenessBehavior() != UniquenessBehavior.NON_UNIQUE
+			        && Context.getPatientService().isIdentifierInUseByAnotherPatient(pi)) {
 				// Check is already in use by another patient
-				if (Context.getPatientService().isIdentifierInUseByAnotherPatient(pi)) {
-					throw new IdentifierNotUniqueException(Context.getMessageSourceService().getMessage(
-					    "PatientIdentifier.error.notUniqueWithParameter", new Object[] { pi.getIdentifier() },
-					    Context.getLocale()), pi);
-				}
+				throw new IdentifierNotUniqueException(Context.getMessageSourceService().getMessage(
+				    "PatientIdentifier.error.notUniqueWithParameter", new Object[] { pi.getIdentifier() },
+				    Context.getLocale()), pi);
 			}
 		}
 	}
@@ -115,7 +113,7 @@ public class PatientIdentifierValidator implements Validator {
 	 * @throws PatientIdentifierException if the identifier is invalid
 	 * @should fail validation if PatientIdentifierType is null
 	 * @should fail validation if identifier is blank
-	 * @see #checkIdentifierAgainstFormat(String, String)
+	 * @see #checkIdentifierAgainstFormat(String, String, String)
 	 * @see #checkIdentifierAgainstValidator(String, IdentifierValidator)
 	 */
 	public static void validateIdentifier(String identifier, PatientIdentifierType pit) throws PatientIdentifierException {
@@ -130,7 +128,7 @@ public class PatientIdentifierValidator implements Validator {
 			throw new BlankIdentifierException("PatientIdentifier.error.nullOrBlank");
 		}
 		
-		checkIdentifierAgainstFormat(identifier, pit.getFormat());
+		checkIdentifierAgainstFormat(identifier, pit.getFormat(), pit.getFormatDescription());
 		
 		// Check identifier against IdentifierValidator
 		if (pit.hasValidator()) {
@@ -144,15 +142,19 @@ public class PatientIdentifierValidator implements Validator {
 	/**
 	 * Validates that a given identifier string is valid for a given regular expression format
 	 * 
-	 * @param format - the regular expression format to validate against
 	 * @param identifier - the identifier to check against the passed {@link PatientIdentifierType}
+	 * @param format - the regular expression format to validate against
+	 * @param formatDescription - user-friendly way of describing format (may be null)
 	 * @throws PatientIdentifierException if the identifier is does not match the format
 	 * @should fail validation if identifier is blank
 	 * @should fail validation if identifier does not match the format
 	 * @should pass validation if identifier matches the format
 	 * @should pass validation if the format is blank
+	 * @should include format in error message if no formatDescription is specified
+	 * @should include formatDescription in error message if specified
 	 */
-	public static void checkIdentifierAgainstFormat(String identifier, String format) throws PatientIdentifierException {
+	public static void checkIdentifierAgainstFormat(String identifier, String format, String formatDescription)
+	        throws PatientIdentifierException {
 		
 		log.debug("Checking identifier: " + identifier + " against format: " + format);
 		
@@ -169,7 +171,7 @@ public class PatientIdentifierValidator implements Validator {
 		if (!identifier.matches(format)) {
 			log.debug("The two DO NOT match");
 			throw new InvalidIdentifierFormatException(getMessage("PatientIdentifier.error.invalidFormat", identifier,
-			    format));
+			    StringUtils.isNotBlank(formatDescription) ? formatDescription : format));
 		}
 		log.debug("The two match!!");
 	}

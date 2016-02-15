@@ -1,36 +1,32 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 /**
- * Defines a type of relationship between two people in the database. <br/>
- * <br/>
- * A relationship is two-way. There is a name for the relationship in both directions. <br/>
- * <br/>
- * For example: <br/>
- * a) physician Joe<br/>
- * b) patient Bob<br/>
+ * Defines a type of relationship between two people in the database. <br>
+ * <br>
+ * A relationship is two-way. There is a name for the relationship in both directions. <br>
+ * <br>
+ * For example: <br>
+ * a) physician Joe<br>
+ * b) patient Bob<br>
  * Joe is the "physician of" Bob <u>and</u> Bob is the patient of Joe. Once you can establish one of
- * the two relationships, you automatically know the other. <br/>
- * <br/>
- * ALL relationships are two-way and can be defined as such. <br/>
- * <br/>
+ * the two relationships, you automatically know the other. <br>
+ * <br>
+ * ALL relationships are two-way and can be defined as such. <br>
+ * <br>
  * RelationshipTypes should be defined as <b>gender non-specific</b> For example: A mother and her
  * son. Instead of having a RelationshipType defined as mother-son, it should be defined as
  * Parent-child. (This avoids the duplicative types that would come out like father-son,
- * father-daughter, mother-daughter) <br/>
- * <br/>
+ * father-daughter, mother-daughter) <br>
+ * <br>
  * In English, we run into a tricky RelationshipType with aunts and uncles. We have chosen to define
  * them as aunt/uncle-niece/nephew.
  */
@@ -114,15 +110,6 @@ public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Ser
 	 */
 	public String getbIsToA() {
 		return bIsToA;
-	}
-	
-	/**
-	 * @deprecated use isPreferred(). This method is kept around for Spring/Hibernate's use
-	 * @return the preferred status
-	 */
-	@SuppressWarnings("unused")
-	private Boolean getPreferred() {
-		return isPreferred();
 	}
 	
 	/**

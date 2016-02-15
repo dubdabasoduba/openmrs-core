@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification.impl;
 
@@ -57,7 +53,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Set the message preparator.
-	 * 
+	 *
 	 * @param messagePreparator
 	 */
 	public void setMessagePreparator(MessagePreparator messagePreparator) {
@@ -70,7 +66,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Set the message sender.
-	 * 
+	 *
 	 * @param messageSender
 	 */
 	public void setMessageSender(MessageSender messageSender) {
@@ -83,7 +79,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Send the message. All send calls go through this method.
-	 * 
+	 *
 	 * @param message the Message to be sent
 	 * @see org.openmrs.notification.MessageService#sendMessage(org.openmrs.notification.Message)
 	 */
@@ -99,35 +95,35 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Create a message object with the given parts.
-	 * 
+	 *
 	 * @param recipients the recipients of the message
 	 * @param sender the send of the message
 	 * @param subject the subject of the message
 	 * @param content the content or body of the message
 	 */
 	public Message createMessage(String recipients, String sender, String subject, String content) throws MessageException {
-		return createMessage(recipients, sender, subject, content, null, null, null);
+		return Context.getMessageService().createMessage(recipients, sender, subject, content, null, null, null);
 	}
 	
 	/**
 	 * Create a message object with the given parts.
-	 * 
+	 *
 	 * @param sender the send of the message
 	 * @param subject the subject of the message
 	 * @param content the content or body of the message
 	 */
 	public Message createMessage(String sender, String subject, String content) throws MessageException {
-		return createMessage(null, sender, subject, content);
+		return Context.getMessageService().createMessage(null, sender, subject, content);
 	}
 	
 	/**
 	 * Create a message object with the given parts.
-	 * 
+	 *
 	 * @param subject the subject of the message
 	 * @param content the content or body of the message
 	 */
 	public Message createMessage(String subject, String content) throws MessageException {
-		return createMessage(null, null, subject, content);
+		return Context.getMessageService().createMessage(null, null, subject, content);
 	}
 	
 	/**
@@ -154,12 +150,12 @@ public class MessageServiceImpl implements MessageService {
 	 */
 	public void sendMessage(String recipients, String sender, String subject, String content) throws MessageException {
 		Message message = createMessage(recipients, sender, subject, content);
-		sendMessage(message);
+		Context.getMessageService().sendMessage(message);
 	}
 	
 	/**
 	 * Send a message to a user that is identified by the given identifier.
-	 * 
+	 *
 	 * @param message <code>Message</code> to be sent
 	 * @param recipientId Integer identifier of user (recipient)
 	 */
@@ -168,22 +164,23 @@ public class MessageServiceImpl implements MessageService {
 		User user = Context.getUserService().getUser(recipientId);
 		message.addRecipient(user.getUserProperty(OpenmrsConstants.USER_PROPERTY_NOTIFICATION_ADDRESS));
 		// message.setFormat( user( OpenmrsConstants.USER_PROPERTY_NOTIFICATION_FORMAT ) );
-		sendMessage(message);
+		Context.getMessageService().sendMessage(message);
 	}
 	
 	/**
 	 * Send message to a single user.
-	 * 
+	 *
 	 * @param message the <code>Message</code> to be sent
 	 * @param user the recipient of the message
 	 */
 	public void sendMessage(Message message, User user) throws MessageException {
 		log.debug("Sending message to user " + user);
 		String address = user.getUserProperty(OpenmrsConstants.USER_PROPERTY_NOTIFICATION_ADDRESS);
-		if (address != null)
+		if (address != null) {
 			message.addRecipient(address);
+		}
 		// message.setFormat( user.getProperty( OpenmrsConstants.USER_PROPERTY_NOTIFICATION_FORMAT ) );
-		sendMessage(message);
+		Context.getMessageService().sendMessage(message);
 	}
 	
 	/**
@@ -193,10 +190,11 @@ public class MessageServiceImpl implements MessageService {
 		log.debug("Sending message to users " + users);
 		for (User user : users) {
 			String address = user.getUserProperty(OpenmrsConstants.USER_PROPERTY_NOTIFICATION_ADDRESS);
-			if (address != null)
+			if (address != null) {
 				message.addRecipient(address);
+			}
 		}
-		sendMessage(message);
+		Context.getMessageService().sendMessage(message);
 	}
 	
 	/**
@@ -205,7 +203,7 @@ public class MessageServiceImpl implements MessageService {
 	public void sendMessage(Message message, String roleName) throws MessageException {
 		log.debug("Sending message to role with name " + roleName);
 		Role role = Context.getUserService().getRole(roleName);
-		sendMessage(message, role);
+		Context.getMessageService().sendMessage(message, role);
 	}
 	
 	/**
@@ -221,13 +219,13 @@ public class MessageServiceImpl implements MessageService {
 		Collection<User> users = Context.getUserService().getUsers(null, roles, false);
 		
 		log.debug("Sending message " + message + " to " + users);
-		sendMessage(message, users);
+		Context.getMessageService().sendMessage(message, users);
 	}
 	
 	/**
 	 * Prepare a message given the template. The template should be populated with all necessary
 	 * data including the variable name-value pairs
-	 * 
+	 *
 	 * @param template the given <code>Template</code>
 	 * @return the prepared <code>Message</code>
 	 */
@@ -237,7 +235,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Prepare a message based on a template and data used for variable subsitution within template.
-	 * 
+	 *
 	 * @param templateName name of the template to be used
 	 * @param data data mapping used for variable substitution within template
 	 * @return the prepared Message
@@ -248,7 +246,7 @@ public class MessageServiceImpl implements MessageService {
 		try {
 			Template template = (Template) getTemplatesByName(templateName).get(0);
 			template.setData(data);
-			return prepareMessage(template);
+			return Context.getMessageService().prepareMessage(template);
 		}
 		catch (Exception e) {
 			throw new MessageException("Could not prepare message with template " + templateName, e);
@@ -257,7 +255,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Get all templates in the database.
-	 * 
+	 *
 	 * @return list of Templates
 	 */
 	@SuppressWarnings("unchecked")
@@ -268,7 +266,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Get template by identifier.
-	 * 
+	 *
 	 * @param id template identifier
 	 * @return Template
 	 */
@@ -279,7 +277,7 @@ public class MessageServiceImpl implements MessageService {
 	
 	/**
 	 * Get templates by name.
-	 * 
+	 *
 	 * @param name the name of the template
 	 * @return list of Templates
 	 */
@@ -287,113 +285,5 @@ public class MessageServiceImpl implements MessageService {
 	@Transactional(readOnly = true)
 	public List getTemplatesByName(String name) throws MessageException {
 		return templateDAO.getTemplatesByName(name);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#create(java.lang.String, java.lang.String)
-	 * @deprecated
-	 */
-	public Message create(String subject, String message) throws MessageException {
-		return Context.getMessageService().createMessage(subject, message);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#create(java.lang.String, java.lang.String,
-	 *      java.lang.String)
-	 * @deprecated
-	 */
-	public Message create(String sender, String subject, String message) throws MessageException {
-		return Context.getMessageService().createMessage(sender, subject, message);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#create(java.lang.String, java.lang.String,
-	 *      java.lang.String, java.lang.String)
-	 * @deprecated
-	 */
-	public Message create(String recipients, String sender, String subject, String message) throws MessageException {
-		return Context.getMessageService().createMessage(recipients, sender, subject, message);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#prepare(java.lang.String, java.util.Map)
-	 * @deprecated
-	 */
-	@SuppressWarnings("unchecked")
-	@Transactional(readOnly = true)
-	public Message prepare(String templateName, Map data) throws MessageException {
-		return prepareMessage(templateName, data);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#prepare(org.openmrs.notification.Template)
-	 * @deprecated
-	 */
-	@Transactional(readOnly = true)
-	public Message prepare(Template template) throws MessageException {
-		return prepareMessage(template);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message)
-	 * @deprecated use {@link #sendMessage(Message)}
-	 */
-	public void send(Message message) throws MessageException {
-		sendMessage(message);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message,
-	 *      java.lang.String)
-	 * @deprecated use {@link #sendMessage(Message, String)}
-	 */
-	public void send(Message message, String roleName) throws MessageException {
-		sendMessage(message, roleName);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message,
-	 *      java.lang.Integer)
-	 * @deprecated use {@link #sendMessage(Message, Integer)}
-	 */
-	public void send(Message message, Integer userId) throws MessageException {
-		sendMessage(message, userId);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message,
-	 *      org.openmrs.User)
-	 * @deprecated use {@link #sendMessage(Message, User)}
-	 */
-	public void send(Message message, User user) throws MessageException {
-		sendMessage(message, user);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message,
-	 *      org.openmrs.Role)
-	 * @deprecated {@link #send(Message, Role)}
-	 */
-	public void send(Message message, Role role) throws MessageException {
-		sendMessage(message, role);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(org.openmrs.notification.Message,
-	 *      java.util.Collection)
-	 * @deprecated {@link #send(Message, Collection)}
-	 */
-	public void send(Message message, Collection<User> users) throws MessageException {
-		sendMessage(message, users);
-	}
-	
-	/**
-	 * @see org.openmrs.notification.MessageService#send(java.lang.String, java.lang.String,
-	 *      java.lang.String, java.lang.String)
-	 * @deprecated use {@link #send(String, String, String, String)}
-	 */
-	public void send(String recipients, String sender, String subject, String message) throws MessageException {
-		sendMessage(recipients, sender, subject, message);
-	}
-	
+	}	
 }

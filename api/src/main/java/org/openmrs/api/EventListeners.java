@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -37,47 +33,49 @@ public class EventListeners {
 	/**
 	 * This setter acts more like an "appender".  If the list already has elements, calling this method
 	 * will <b>add to</b> the list of listeners instead of replacing it.
-	 * 
+	 *
 	 * @param globalPropertyListeners
 	 */
 	public void setGlobalPropertyListeners(List<GlobalPropertyListener> globalPropertyListeners) {
 		if (log.isDebugEnabled()) {
 			StringBuffer sb = new StringBuffer();
 			for (GlobalPropertyListener gpl : globalPropertyListeners) {
-				if (sb.length() > 0)
+				if (sb.length() > 0) {
 					sb.append(", ");
+				}
 				sb.append(gpl.getClass().getName());
 			}
 			log.debug("GlobalPropertyListeners set to: " + sb.toString());
 			
 		}
 		
-		if (EventListeners.globalPropertyListeners == null)
+		if (EventListeners.globalPropertyListeners == null) {
 			EventListeners.globalPropertyListeners = globalPropertyListeners;
-		else {
+		} else {
 			for (GlobalPropertyListener gpl : globalPropertyListeners) {
-				if (!EventListeners.globalPropertyListeners.contains(gpl))
+				if (!EventListeners.globalPropertyListeners.contains(gpl)) {
 					EventListeners.globalPropertyListeners.add(gpl);
+				}
 			}
 		}
 	}
 	
 	/**
 	 * Convenience method called by spring to reset the static list of event
-	 * listeners.<br/>
+	 * listeners.<br>
 	 * Without this, the event listener list continues to grow with every Spring
 	 * restart. (and is a memory leak)
-	 * 
+	 *
+	 * @see "applicationContext-service.xml"
 	 * @param nullList
 	 *            if true, nulls the list instead of just clearing it
-	 * 
-	 * @see applicationContext-service.xml
 	 */
 	public void setGlobalPropertyListenersToEmpty(boolean nullList) {
-		if (nullList)
-			EventListeners.globalPropertyListeners = null;
-		else if (EventListeners.globalPropertyListeners != null)
+		if (nullList) {
+			setGlobalPropertyListeners(null);
+		} else if (EventListeners.globalPropertyListeners != null) {
 			EventListeners.globalPropertyListeners.clear();
+		}
 	}
 	
 }

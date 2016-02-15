@@ -1,21 +1,16 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.aop;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,8 +20,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,8 +34,9 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.BaseOpenmrsMetadata;
 import org.openmrs.BaseOpenmrsObject;
@@ -46,12 +44,15 @@ import org.openmrs.Concept;
 import org.openmrs.Location;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Person;
+import org.openmrs.PersonName;
+import org.openmrs.Role;
 import org.openmrs.User;
 import org.openmrs.annotation.AllowDirectAccess;
 import org.openmrs.annotation.DisableHandlers;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.handler.BaseVoidHandler;
 import org.openmrs.api.handler.OpenmrsObjectSaveHandler;
 import org.openmrs.api.handler.RequiredDataHandler;
@@ -61,39 +62,76 @@ import org.openmrs.api.handler.UnretireHandler;
 import org.openmrs.api.handler.UnvoidHandler;
 import org.openmrs.api.handler.VoidHandler;
 import org.openmrs.api.impl.ConceptServiceImpl;
+import org.openmrs.test.BaseContextMockTest;
 import org.openmrs.test.Verifies;
+import org.openmrs.util.HandlerUtil;
 import org.openmrs.util.Reflect;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.openmrs.util.RoleConstants;
+import org.springframework.context.ApplicationContext;
 
 /**
  * Tests the {@link RequiredDataAdvice} class.
  */
-@SuppressWarnings( { "unchecked" })
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Context.class)
-public class RequiredDataAdviceTest {
+public class RequiredDataAdviceTest extends BaseContextMockTest {
 	
-	private SaveHandler saveHandler;
+	@Mock
+	AdministrationService administrationService;
 	
-	private VoidHandler voidHandler;
+	@Mock
+	ApplicationContext applicationContext;
 	
-	private RequiredDataAdvice requiredDataAdvice;
+	@Mock
+	Context context;
+	
+	@Mock
+	ServiceContext serviceContext;
+	
+	@Spy
+	OpenmrsObjectSaveHandler saveHandler;
+	
+	@Spy
+	BaseVoidHandler voidHandler;
+	
+	RequiredDataAdvice requiredDataAdvice = new RequiredDataAdvice();
 	
 	@Before
 	public void setUp() {
-		this.requiredDataAdvice = new RequiredDataAdvice();
+
+		context.setUserContext(userContext);
+		context.setServiceContext(serviceContext);
+		context.setContext(serviceContext);
+		serviceContext.setApplicationContext(applicationContext);
 		
-		PowerMockito.mockStatic(Context.class);
+		//when(context.getUserContext()).thenReturn(userContext);
+		//when(serviceContext.getApplicationContext()).thenReturn(applicationContext);
 		
-		saveHandler = mock(OpenmrsObjectSaveHandler.class);
-		voidHandler = mock(BaseVoidHandler.class);
+		User user = new User();
+		user.setUuid("1010d442-e134-11de-babe-001e378eb67e");
+		user.setUserId(1);
+		user.setUsername("admin");
+		user.addRole(new Role(RoleConstants.SUPERUSER));
+		Person person = new Person();
+		person.setUuid("6adb7c42-cfd2-4301-b53b-ff17c5654ff7");
+		person.setId(1);
+		person.addName(new PersonName("Bob", "", "Smith"));
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(1980, 01, 01);
+		person.setBirthdate(calendar.getTime());
+		person.setGender("M");
+		user.setPerson(person);
+		when(userContext.getAuthenticatedUser()).thenReturn(user);
+		when(userContext.isAuthenticated()).thenReturn(true);
 		
-		when(Context.getRegisteredComponents(SaveHandler.class)).thenReturn(Arrays.asList(saveHandler));
-		when(Context.getRegisteredComponents(VoidHandler.class)).thenReturn(Arrays.asList(voidHandler));
-		AdministrationService administrationService = mock(AdministrationService.class);
-		when(Context.getAdministrationService()).thenReturn(administrationService);
+		Map<String, SaveHandler> saveHandlers = new HashMap<String, SaveHandler>();
+		saveHandlers.put("saveHandler", saveHandler);
+		when(applicationContext.getBeansOfType(SaveHandler.class)).thenReturn(saveHandlers);
+		
+		Map<String, VoidHandler> voidHandlers = new HashMap<String, VoidHandler>();
+		voidHandlers.put("voidHandler", voidHandler);
+		when(applicationContext.getBeansOfType(VoidHandler.class)).thenReturn(voidHandlers);
+		
+		//Clear cache since handlers are updated
+		HandlerUtil.clearCachedHandlers();
 	}
 	
 	/**
@@ -117,7 +155,7 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#getChildCollection(OpenmrsObject, Field)}
+	 * @see RequiredDataAdvice#getChildCollection(OpenmrsObject, Field)
 	 */
 	@Test
 	@Verifies(value = "should get value of given child collection on given field", method = "getChildCollection(OpenmrsObject,Field)")
@@ -168,7 +206,7 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#getChildCollection(OpenmrsObject, Field)}
+	 * @see RequiredDataAdvice#getChildCollection(OpenmrsObject, Field)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should throw APIException if getter method not found", method = "getChildCollection(OpenmrsObject,Field)")
@@ -216,7 +254,7 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#isOpenmrsObjectCollection(Field)}
+	 * @see RequiredDataAdvice#isOpenmrsObjectCollection(Field)
 	 */
 	@Test
 	@Verifies(value = "should return false if field is collection of other objects", method = "isOpenmrsObjectCollection(Field)")
@@ -230,7 +268,7 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#isOpenmrsObjectCollection(Field)}
+	 * @see RequiredDataAdvice#isOpenmrsObjectCollection(Field)
 	 */
 	@Test
 	@Verifies(value = "should return false if field is collection of parameterized type", method = "isOpenmrsObjectCollection(Field)")
@@ -240,7 +278,7 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#isOpenmrsObjectCollection(Field)}
+	 * @see RequiredDataAdvice#isOpenmrsObjectCollection(Field)
 	 */
 	@Test
 	@Verifies(value = "should return false if field is not a collection", method = "isOpenmrsObjectCollection(Field)")
@@ -484,12 +522,12 @@ public class RequiredDataAdviceTest {
 	}
 	
 	/**
-	 * @see {@link RequiredDataAdvice#before(Method, null, Object)}
+	 * @see RequiredDataAdvice#before(Method, null, Object)
 	 */
 	@Test
 	@Verifies(value = "should not fail on update method with no arguments", method = "before(Method,null,Object)")
 	public void before_shouldNotFailOnUpdateMethodWithNoArguments() throws Throwable {
-		Method method = ConceptServiceImpl.class.getMethod("updateConceptWords", (Class[]) null);
+		Method method = ConceptServiceImpl.class.getMethod("updateConceptIndexes", (Class[]) null);
 		requiredDataAdvice.before(method, null, new ConceptServiceImpl());
 		requiredDataAdvice.before(method, new Object[] {}, new ConceptServiceImpl());
 	}

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 /********************************************************************
  Title : HiRiskLeadScreen
@@ -183,7 +179,8 @@ public class HiRiskLeadScreen implements ArdenRule {
 	
 	public String doAction() {
 		int index = 0, nindex = 0, endindex = 0, startindex = 0;
-		String tempstr, variable, outStr = "";
+		String tempstr, variable;
+		StringBuilder outStr = new StringBuilder("");
 		String inStr = userVarMap.get("ActionStr");
 		
 		tempstr = inStr;
@@ -195,31 +192,31 @@ public class HiRiskLeadScreen implements ArdenRule {
 				startindex = index + 2;
 				endindex = nindex;
 				variable = inStr.substring(startindex, endindex).trim();
-				outStr += userVarMap.get(variable);
+				outStr.append(userVarMap.get(variable));
 				index = tempstr.indexOf("||", nindex + 2);
 			}
 			while (index > 0) {
 				if (nindex == 0) { // Are we starting now
 					startindex = nindex;
 					endindex = index;
-					outStr += tempstr.substring(startindex, endindex);
+					outStr.append(tempstr.substring(startindex, endindex));
 				} else {
 					startindex = nindex + 2;
 					endindex = index;
-					outStr += tempstr.substring(startindex, endindex);
+					outStr.append(tempstr.substring(startindex, endindex));
 				}
 				nindex = tempstr.indexOf("||", index + 2);
 				startindex = index + 2;
 				endindex = nindex;
 				variable = inStr.substring(startindex, endindex).trim();
-				outStr += userVarMap.get(variable);
+				outStr.append(userVarMap.get(variable));
 				index = tempstr.indexOf("||", nindex + 2);
 			}
-			outStr += tempstr.substring(nindex + 2);
+			outStr.append(tempstr.substring(nindex + 2));
 		} else {
-			outStr += tempstr;
+			outStr.append(tempstr);
 		}
-		return outStr;
+		return outStr.toString();
 	}
 	
 	public void printDebug() {

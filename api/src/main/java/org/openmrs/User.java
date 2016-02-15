@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -24,17 +20,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.RoleConstants;
 import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.load.Replace;
-import org.simpleframework.xml.load.Validate;
 
 /**
  * Defines a User Account in the system. This account belongs to a {@link Person} in the system,
@@ -105,18 +99,21 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	public boolean hasPrivilege(String privilege) {
 		
 		// All authenticated users have the "" (empty) privilege
-		if (privilege == null || privilege.equals(""))
+		if (StringUtils.isEmpty(privilege)) {
 			return true;
+		}
 		
-		if (isSuperUser())
+		if (isSuperUser()) {
 			return true;
+		}
 		
 		Set<Role> tmproles = getAllRoles();
 		
 		// loop over the roles and check each for the privilege
 		for (Iterator<Role> i = tmproles.iterator(); i.hasNext();) {
-			if (i.next().hasPrivilege(privilege))
+			if (i.next().hasPrivilege(privilege)) {
 				return true;
+			}
 		}
 		
 		return false;
@@ -142,25 +139,36 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 *         user is a superUser
 	 */
 	public boolean hasRole(String r, boolean ignoreSuperUser) {
-		if (ignoreSuperUser == false) {
-			if (isSuperUser())
+		if (!ignoreSuperUser) {
+			if (isSuperUser()) {
 				return true;
+			}
 		}
 		
-		if (roles == null)
+		if (roles == null) {
 			return false;
+		}
 		
 		Set<Role> tmproles = getAllRoles();
 		
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("User #" + userId + " has roles: " + tmproles);
+		}
 		
 		return containsRole(r);
 	}
 	
-	private boolean containsRole(String roleName) {
+	/**
+	 * Checks if the user has a given role. Role name comparisons are not case sensitive.
+	 * @param  roleName the name of the role to check
+	 * @return true if the user has the given role, else false
+	 * @should return true if the user has the given role
+	 * @should return false if the user does not have the given role
+	 * @should be case insensitive
+	 */
+	public boolean containsRole(String roleName) {
 		for (Role role : getAllRoles()) {
-			if (role.getRole().equals(roleName)) {
+			if (role.getRole().equalsIgnoreCase(roleName)) {
 				return true;
 			}
 		}
@@ -181,8 +189,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 		for (Iterator<Role> i = tmproles.iterator(); i.hasNext();) {
 			role = i.next();
 			Collection<Privilege> privs = role.getPrivileges();
-			if (privs != null)
+			if (privs != null) {
 				privileges.addAll(privs);
+			}
 		}
 		
 		return privileges;
@@ -208,8 +217,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 			totalRoles.addAll(getRoles());
 		}
 		
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("User's base roles: " + baseRoles);
+		}
 		
 		try {
 			for (Role r : baseRoles) {
@@ -249,10 +259,12 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @return Returns this user with the given role attached
 	 */
 	public User addRole(Role role) {
-		if (roles == null)
+		if (roles == null) {
 			roles = new HashSet<Role>();
-		if (!roles.contains(role) && role != null)
+		}
+		if (!roles.contains(role) && role != null) {
 			roles.add(role);
+		}
 		
 		return this;
 	}
@@ -264,8 +276,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @return this user with the given role removed
 	 */
 	public User removeRole(Role role) {
-		if (roles != null)
+		if (roles != null) {
 			roles.remove(role);
+		}
 		
 		return this;
 	}
@@ -310,10 +323,11 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @see org.openmrs.Attributable#serialize()
 	 */
 	public String serialize() {
-		if (getUserId() != null)
+		if (getUserId() != null) {
 			return "" + getUserId();
-		else
+		} else {
 			return "";
+		}
 	}
 	
 	/**
@@ -321,8 +335,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 */
 	public String getDisplayString() {
 		String returnString = "";
-		if (getPersonName() != null)
+		if (getPersonName() != null) {
 			returnString += getPersonName().getFullName() + " ";
+		}
 		
 		returnString += "(" + getUsername() + ")";
 		return returnString;
@@ -362,14 +377,6 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	}
 	
 	/**
-	 * @deprecated see {@link #setPerson(Person)}
-	 */
-	@Deprecated
-	public void setPersonId(Integer personId) {
-		throw new APIException("You need to call setPerson(Person)");
-	}
-	
-	/**
 	 * @return the person
 	 * @since 1.6
 	 */
@@ -381,8 +388,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @return the person, creating a new object if person is null
 	 */
 	private Person getPersonMaybeCreate() {
-		if (person == null)
+		if (person == null) {
 			person = new Person();
+		}
 		return person;
 	}
 	
@@ -410,20 +418,6 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 		this.username = username;
 	}
 	
-	/**
-	 * @return Returns the secretQuestion.
-	 */
-	public String getSecretQuestion() {
-		return secretQuestion;
-	}
-	
-	/**
-	 * @param secretQuestion The secretQuestion to set.
-	 */
-	public void setSecretQuestion(String secretQuestion) {
-		this.secretQuestion = secretQuestion;
-	}
-	
 	@Override
 	public String toString() {
 		return username;
@@ -433,13 +427,14 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @return Returns the userProperties.
 	 */
 	public Map<String, String> getUserProperties() {
-		if (userProperties == null)
+		if (userProperties == null) {
 			userProperties = new HashMap<String, String>();
+		}
 		return userProperties;
 	}
 	
 	/**
-	 * @param userProperties A Map<String,String> of the properties to set.
+	 * @param userProperties A Map&lt;String,String&gt; of the properties to set.
 	 */
 	public void setUserProperties(Map<String, String> userProperties) {
 		this.userProperties = userProperties;
@@ -456,8 +451,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * Convenience method. Removes the given property from the user's properties
 	 */
 	public void removeUserProperty(String prop) {
-		if (getUserProperties() != null && userProperties.containsKey(prop))
+		if (getUserProperties() != null && userProperties.containsKey(prop)) {
 			userProperties.remove(prop);
+		}
 	}
 	
 	/**
@@ -468,8 +464,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @return property value
 	 */
 	public String getUserProperty(String prop) {
-		if (getUserProperties() != null && userProperties.containsKey(prop))
+		if (getUserProperties() != null && userProperties.containsKey(prop)) {
 			return userProperties.get(prop);
+		}
 		
 		return "";
 	}
@@ -484,8 +481,9 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	 * @see #getUserProperty(java.lang.String)
 	 */
 	public String getUserProperty(String prop, String defaultValue) {
-		if (getUserProperties() != null && userProperties.containsKey(prop))
+		if (getUserProperties() != null && userProperties.containsKey(prop)) {
 			return userProperties.get(prop);
+		}
 		
 		return defaultValue;
 	}
@@ -528,53 +526,7 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	public Set<PersonName> getNames() {
 		return person.getNames();
 	}
-	
-	/**
-	 * @deprecated use <tt>getGivenName</tt> on <tt>Person</tt>
-	 * @return String user's first name
-	 */
-	@Deprecated
-	public String getFirstName() {
-		return getGivenName();
-	}
-	
-	/**
-	 * @deprecated use <tt>getFamilyName</tt> on <tt>Person</tt>
-	 * @return String user's last name
-	 */
-	@Deprecated
-	public String getLastName() {
-		return getFamilyName();
-	}
-	
-	/**
-	 * If the serializer wishes, don't serialize this entire object, just the important parts
-	 * 
-	 * @param sessionMap serialization session information
-	 * @return User object to serialize
-	 * @see OpenmrsUtil#isShortSerialization(Map)
-	 */
-	@Replace
-	public User replaceSerialization(Map<?, ?> sessionMap) {
-		if (OpenmrsUtil.isShortSerialization(sessionMap)) {
-			// only serialize the user id
-			return new User(getUserId());
-		}
 		
-		// don't do short serialization
-		return this;
-	}
-	
-	@Validate
-	public void validateSerialization(Map<?, ?> sessionMap) {
-		if (OpenmrsUtil.isShortSerialization(sessionMap)) {
-			// only serialize the user id
-			
-		}
-		
-		return;
-	}
-	
 	/**
 	 * Returns a list of Locales for which the User is considered proficient.
 	 * 
@@ -594,7 +546,7 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 						Locale proficientLocale = LocaleUtility.fromSpecification(proficientLocaleSpec);
 						if (!proficientLocales.contains(proficientLocale)) {
 							proficientLocales.add(proficientLocale);
-							if (!"".equals(proficientLocale.getCountry())) {
+							if (StringUtils.isNotEmpty(proficientLocale.getCountry())) {
 								// add the language also
 								Locale languageOnlyLocale = LocaleUtility.fromSpecification(proficientLocale.getLanguage());
 								if (!proficientLocales.contains(languageOnlyLocale)) {

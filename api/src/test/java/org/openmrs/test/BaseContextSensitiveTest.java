@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.test;
 
@@ -30,7 +26,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
@@ -45,6 +43,8 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dbunit.DatabaseUnitException;
@@ -55,27 +55,41 @@ import org.dbunit.dataset.DefaultDataSet;
 import org.dbunit.dataset.DefaultTable;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ReplacementDataSet;
+import org.dbunit.dataset.stream.StreamingDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
+import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.dataset.xml.XmlDataSet;
 import org.dbunit.ext.h2.H2DataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.H2Dialect;
+import org.hibernate.jdbc.ReturningWork;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.Before;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.openmrs.ConceptName;
+import org.openmrs.Drug;
 import org.openmrs.User;
+import org.openmrs.annotation.OpenmrsProfileExcludeFilter;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ContextAuthenticationException;
+import org.openmrs.api.context.ContextMockHelper;
 import org.openmrs.module.ModuleConstants;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsConstants;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
 import org.springframework.transaction.annotation.Transactional;
+import org.xml.sax.InputSource;
 
 /**
  * This is the base for spring/context tests. Tests that NEED to use calls to the Context class and
@@ -142,6 +156,16 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	private User authenticatedUser;
 	
 	/**
+	 * Allows mocking services returned by Context. See {@link ContextMockHelper}
+	 * 
+	 * @since 1.11, 1.10, 1.9.9
+	 */
+	@InjectMocks
+	protected ContextMockHelper contextMockHelper;
+	
+	private static volatile BaseContextSensitiveTest instance;
+	
+	/**
 	 * Basic constructor for the super class to all openmrs api unit tests. This constructor sets up
 	 * the classloader and the properties file so that by the type spring gets around to finally
 	 * starting, the openmrs runtime properties are already in place A static load count is kept to
@@ -161,6 +185,26 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 		Context.setRuntimeProperties(props);
 		
 		loadCount++;
+		
+		instance = this;
+	}
+	
+	/**
+	 * Initializes fields annotated with {@link Mock}.
+	 * 
+	 * @since 1.11, 1.10, 1.9.9
+	 */
+	@Before
+	public void initMocks() {
+		MockitoAnnotations.initMocks(this);
+	}
+	
+	/**
+	 * @since 1.11, 1.10, 1.9.9
+	 */
+	@After
+	public void revertContextMocks() {
+		contextMockHelper.revertMocks();
 	}
 	
 	/**
@@ -176,6 +220,49 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 			throw new RuntimeException(
 			        "Module unit test classes should extend BaseModuleContextSensitiveTest, not just BaseContextSensitiveTest");
 		}
+	}
+	
+	/**
+	 * Allows to ignore the test if the environment does not match the given parameters.
+	 * 
+	 * @param openmrsPlatformVersion
+	 * @param modules
+	 * @since 1.11.3, 1.10.2, 1.9.9
+	 */
+	public void assumeOpenmrsProfile(String openmrsPlatformVersion, String... modules) {
+		OpenmrsProfileExcludeFilter filter = new OpenmrsProfileExcludeFilter();
+		Map<String, Object> profile = new HashMap<String, Object>();
+		profile.put("openmrsPlatformVersion", openmrsPlatformVersion);
+		if (modules != null) {
+			profile.put("modules", modules);
+		} else {
+			profile.put("modules", new String[0]);
+		}
+		String errorMessage = "Ignored. Expected profile: {openmrsPlatformVersion=" + openmrsPlatformVersion + ", modules=["
+		        + StringUtils.join((String[]) profile.get("modules"), ", ") + "]}";
+		Assume.assumeTrue(errorMessage, filter.matchOpenmrsProfileAttributes(profile));
+	}
+	
+	/**
+	 * Allows to ignore the test if the given modules are not running.
+	 * 
+	 * @param module in the format moduleId:version
+	 * @param modules additional list of modules in the format moduleId:version
+	 * @since 1.11.3, 1.10.2, 1.9.9
+	 */
+	public void assumeOpenmrsModules(String module, String... modules) {
+		String[] allModules = ArrayUtils.addAll(modules, module);
+		assumeOpenmrsProfile(null, allModules);
+	}
+	
+	/**
+	 * Allows to ignore the test if the environment does not match the given OpenMRS version.
+	 * 
+	 * @param openmrsPlatformVersion
+	 * @since 1.11.3, 1.10.2, 1.9.9
+	 */
+	public void assumeOpenmrsPlatformVersion(String openmrsPlatformVersion) {
+		assumeOpenmrsProfile(openmrsPlatformVersion);
 	}
 	
 	/**
@@ -217,18 +304,41 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 		// properties
 		if (useInMemoryDatabase() == true) {
 			runtimeProperties.setProperty(Environment.DIALECT, H2Dialect.class.getName());
-			runtimeProperties.setProperty(Environment.URL, "jdbc:h2:mem:openmrs;DB_CLOSE_DELAY=30;LOCK_TIMEOUT=10000");
+			String url = "jdbc:h2:mem:openmrs;DB_CLOSE_DELAY=30;LOCK_TIMEOUT=10000";
+			runtimeProperties.setProperty(Environment.URL, url);
 			runtimeProperties.setProperty(Environment.DRIVER, "org.h2.Driver");
 			runtimeProperties.setProperty(Environment.USER, "sa");
 			runtimeProperties.setProperty(Environment.PASS, "");
 			
-			// these two properties need to be set in case the user has this exact
+			// these properties need to be set in case the user has this exact
 			// phrasing in their runtime file.
 			runtimeProperties.setProperty("connection.username", "sa");
 			runtimeProperties.setProperty("connection.password", "");
+			runtimeProperties.setProperty("connection.url", url);
 			
 			// automatically create the tables defined in the hbm files
 			runtimeProperties.setProperty(Environment.HBM2DDL_AUTO, "create-drop");
+		}
+		else {
+			String url = System.getProperty("databaseUrl");
+			String username = System.getProperty("databaseUsername");
+			String password = System.getProperty("databasePassword");
+			
+			runtimeProperties.setProperty(Environment.URL, url);
+			runtimeProperties.setProperty(Environment.DRIVER, System.getProperty("databaseDriver"));
+			runtimeProperties.setProperty(Environment.USER, username);
+			runtimeProperties.setProperty(Environment.PASS, password);
+			runtimeProperties.setProperty(Environment.DIALECT, System.getProperty("databaseDialect"));
+			
+			// these properties need to be set in case the user has this exact
+			// phrasing in their runtime file.
+			runtimeProperties.setProperty("connection.username", username);
+			runtimeProperties.setProperty("connection.password", password);
+			runtimeProperties.setProperty("connection.url", url);
+			
+			//for the first time, automatically create the tables defined in the hbm files
+			//after that, just update, if there are any changes. This is for performance reasons.
+			runtimeProperties.setProperty(Environment.HBM2DDL_AUTO, "update");
 		}
 		
 		// we don't want to try to load core modules in tests
@@ -242,7 +352,7 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 			
 			runtimeProperties.setProperty(OpenmrsConstants.APPLICATION_DATA_DIRECTORY_RUNTIME_PROPERTY, tempappdir
 			        .getAbsolutePath());
-			OpenmrsConstants.APPLICATION_DATA_DIRECTORY = tempappdir.getAbsolutePath();
+			OpenmrsUtil.setApplicationDataDirectory(tempappdir.getAbsolutePath());
 		}
 		catch (IOException e) {
 			log.error("Unable to create temp dir", e);
@@ -426,7 +536,7 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	 * @return true/false whether or not to use an in memory database
 	 */
 	public Boolean useInMemoryDatabase() {
-		return true;
+		return !"false".equals(System.getProperty("useInMemoryDatabase"));
 	}
 	
 	/**
@@ -441,7 +551,13 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	public Connection getConnection() {
 		SessionFactory sessionFactory = (SessionFactory) applicationContext.getBean("sessionFactory");
 		
-		return sessionFactory.getCurrentSession().connection();
+		return sessionFactory.getCurrentSession().doReturningWork(new ReturningWork<Connection>() {
+			
+			@Override
+			public Connection execute(Connection connection) throws SQLException {
+				return connection;
+			}
+		});
 	}
 	
 	/**
@@ -453,6 +569,15 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 		if (!useInMemoryDatabase())
 			throw new Exception(
 			        "You shouldn't be initializing a NON in-memory database. Consider unoverriding useInMemoryDatabase");
+		/*
+		 * Hbm2ddl used in tests creates primary key columns, which are not auto incremented, if
+		 * NativeIfNotAssignedIdentityGenerator is used. We need to alter those columns in tests.
+		 */
+		List<String> tables = Arrays.asList("concept");
+		for (String table : tables) {
+			getConnection().prepareStatement("ALTER TABLE " + table + " ALTER COLUMN " + table + "_id INT AUTO_INCREMENT")
+			        .execute();
+		}
 		
 		executeDataSet(INITIAL_XML_DATASET_PACKAGE_PATH);
 	}
@@ -546,13 +671,48 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	}
 	
 	/**
+	 * Runs the large flat xml dataset. It does not cache the file as opposed to
+	 * {@link #executeDataSet(String)}.
+	 * 
+	 * @param datasetFilename
+	 * @throws Exception
+	 * @since 1.10
+	 */
+	public void executeLargeDataSet(String datasetFilename) throws Exception {
+		InputStream inputStream = null;
+		try {
+			final File file = new File(datasetFilename);
+			if (file.exists()) {
+				inputStream = new FileInputStream(datasetFilename);
+			} else {
+				inputStream = getClass().getClassLoader().getResourceAsStream(datasetFilename);
+				if (inputStream == null)
+					throw new FileNotFoundException("Unable to find '" + datasetFilename + "' in the classpath");
+			}
+			
+			final FlatXmlProducer flatXmlProducer = new FlatXmlProducer(new InputSource(inputStream));
+			final StreamingDataSet streamingDataSet = new StreamingDataSet(flatXmlProducer);
+			
+			final ReplacementDataSet replacementDataSet = new ReplacementDataSet(streamingDataSet);
+			replacementDataSet.addReplacementObject("[NULL]", null);
+			
+			executeDataSet(replacementDataSet);
+			
+			inputStream.close();
+		}
+		finally {
+			IOUtils.closeQuietly(inputStream);
+		}
+	}
+	
+	/**
 	 * Runs the xml data file at the classpath location specified by <code>datasetFilename</code>
 	 * using XmlDataSet. It simply creates an {@link IDataSet} and calls
-	 * {@link #executeDataSet(IDataSet)}. <br/>
-	 * <br/>
+	 * {@link #executeDataSet(IDataSet)}. <br>
+	 * <br>
 	 * This method is different than {@link #executeDataSet(String)} in that this one does not
-	 * expect a flat file xml but instead a true XmlDataSet. <br/>
-	 * <br/>
+	 * expect a flat file xml but instead a true XmlDataSet. <br>
+	 * <br>
 	 * In addition, there is no replacing of [NULL] values in strings.
 	 * 
 	 * @param datasetFilename String path/filename on the classpath of the xml data set to clean
@@ -635,6 +795,8 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	 * @throws Exception
 	 */
 	public void deleteAllData() throws Exception {
+		Context.clearSession();
+		
 		Connection connection = getConnection();
 		
 		turnOffDBConstraints(connection);
@@ -654,16 +816,9 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 		
 		turnOnDBConstraints(connection);
 		
-		// clear the (hibernate) session to make sure nothing is cached, etc
-		Context.clearSession();
-		
-		// needed because the authenticatedUser is the only object that sticks
-		// around after tests and the clearSession call
-		if (Context.isSessionOpen())
-			Context.logout();
-		
-		//Commit, but note that it will be committed even earlier when turning on DB constraints
 		connection.commit();
+		
+		updateSearchIndex();
 		
 		isBaseSetup = false;
 	}
@@ -702,31 +857,63 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 			Context.openSession();
 		}
 		
-		// The skipBaseSetup flag is controlled by the @SkipBaseSetup
-		// annotation. If it is deflagged or if the developer has
-		// marked this class as a non-inmemory database, skip these base steps.
-		if (useInMemoryDatabase()) {
-			if (!skipBaseSetup) {
-				if (!isBaseSetup) {
+		// The skipBaseSetup flag is controlled by the @SkipBaseSetup annotation. 		if (useInMemoryDatabase()) {
+		if (!skipBaseSetup) {
+			if (!isBaseSetup) {
+				
+				deleteAllData();
+				
+				if (useInMemoryDatabase()) {
 					initializeInMemoryDatabase();
-					
-					executeDataSet(EXAMPLE_XML_DATASET_PACKAGE_PATH);
-					
-					//Commit so that it is not rolled back after a test.
-					getConnection().commit();
-					
-					isBaseSetup = true;
+				}
+				else {
+					executeDataSet(INITIAL_XML_DATASET_PACKAGE_PATH);
 				}
 				
-				authenticate();
-			} else {
-				if (isBaseSetup) {
-					deleteAllData();
-				}
+				executeDataSet(EXAMPLE_XML_DATASET_PACKAGE_PATH);
+				
+				//Commit so that it is not rolled back after a test.
+				getConnection().commit();
+				
+				updateSearchIndex();
+				
+				isBaseSetup = true;
+			}
+			
+			authenticate();
+		} else {
+			if (isBaseSetup) {
+				deleteAllData();
 			}
 		}
 		
 		Context.clearSession();
+	}
+	
+	public Class<?>[] getIndexedTypes() {
+		return new Class<?>[] { ConceptName.class, Drug.class };
+	}
+	
+	/**
+	 * It needs to be call if you want to do a concept search after you modify a concept in a test.
+	 * It is because index is automatically updated only after transaction is committed, which
+	 * happens only at the end of a test in our transactional tests.
+	 */
+	public void updateSearchIndex() {
+		for (Class<?> indexType : getIndexedTypes()) {
+			Context.updateSearchIndexForType(indexType);
+		}
+	}
+	
+	@After
+	public void clearSessionAfterEachTest() {
+		// clear the session to make sure nothing is cached, etc
+		Context.clearSession();
+		
+		// needed because the authenticatedUser is the only object that sticks
+		// around after tests and the clearSession call
+		if (Context.isSessionOpen())
+			Context.logout();
 	}
 	
 	/**
@@ -735,11 +922,25 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	 * surrounded by a pair of open/close session calls.
 	 * 
 	 * @throws Exception
-	 * @deprecated As of 1.10 it does nothing.
 	 */
 	@AfterClass
-	@Deprecated
 	public static void closeSessionAfterEachClass() throws Exception {
+		//Some tests add data via executeDataset()
+		//We need to delete it in order not to interfere with others
+		if (instance != null) {
+			try {
+				instance.deleteAllData();
+			}
+			catch (Exception ex) {
+				//No need to worry about this
+			}
+			instance = null;
+		}
+		
+		// clean up the session so we don't leak memory
+		if (Context.isSessionOpen()) {
+			Context.closeSession();
+		}
 	}
 	
 	/**

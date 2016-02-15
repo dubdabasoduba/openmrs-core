@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web;
 
@@ -22,6 +18,7 @@ import java.io.StringReader;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +35,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
+import org.openmrs.PersonName;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.MandatoryModuleException;
 import org.openmrs.module.Module;
@@ -49,15 +47,17 @@ import org.openmrs.scheduler.SchedulerUtil;
 import org.openmrs.util.DatabaseUpdateException;
 import org.openmrs.util.DatabaseUpdater;
 import org.openmrs.util.InputRequiredException;
+import org.openmrs.util.MemoryLeakUtil;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.web.filter.initialization.InitializationFilter;
 import org.openmrs.web.filter.update.UpdateFilter;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.EntityResolver;
@@ -72,15 +72,19 @@ import org.xml.sax.SAXException;
  */
 public final class Listener extends ContextLoader implements ServletContextListener { // extends ContextLoaderListener {
 
+	protected final Log log = LogFactory.getLog(getClass());
+	
 	private static boolean runtimePropertiesFound = false;
 	
 	private static Throwable errorAtStartup = null;
 	
+	private static boolean setupNeeded = false;
+	
 	/**
 	 * Boolean flag set on webapp startup marking whether there is a runtime properties file or not.
 	 * If there is not, then the {@link InitializationFilter} takes over any openmrs url and
-	 * redirects to the {@link #SETUP_PAGE_URL}
-	 * 
+	 * redirects to the {@link WebConstants#SETUP_PAGE_URL}
+	 *
 	 * @return true/false whether an openmrs runtime properties file is defined
 	 */
 	public static boolean runtimePropertiesFound() {
@@ -90,7 +94,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	/**
 	 * Boolean flag set by the {@link #contextInitialized(ServletContextEvent)} method if an error
 	 * occurred when trying to start up. The StartupErrorFilter displays the error to the admin
-	 * 
+	 *
 	 * @return true/false if an error occurred when starting up
 	 */
 	public static boolean errorOccurredAtStartup() {
@@ -98,18 +102,35 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	}
 	
 	/**
-	 * Get the error thrown at startup
+	 * Boolean flag that tells if we need to run the database setup wizard.
 	 * 
+	 * @return true if setup is needed, else false.
+	 */
+	public static boolean isSetupNeeded() {
+		return setupNeeded;
+	}
+	
+	/**
+	 * Get the error thrown at startup
+	 *
 	 * @return get the error thrown at startup
 	 */
 	public static Throwable getErrorAtStartup() {
 		return errorAtStartup;
 	}
 	
+	public static void setRuntimePropertiesFound(boolean runtimePropertiesFound) {
+		Listener.runtimePropertiesFound = runtimePropertiesFound;
+	}
+	
+	public static void setErrorAtStartup(Throwable errorAtStartup) {
+		Listener.errorAtStartup = errorAtStartup;
+	}
+	
 	/**
 	 * This method is called when the servlet context is initialized(when the Web Application is
 	 * deployed). You can initialize servlet context related data here.
-	 * 
+	 *
 	 * @param event
 	 */
 	@Override
@@ -134,7 +155,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 			Properties props = getRuntimeProperties();
 			if (props != null) {
 				// the user has defined a runtime properties file
-				runtimePropertiesFound = true;
+				setRuntimePropertiesFound(true);
 				// set props to the context so that they can be
 				// used during sessionFactory creation
 				Context.setRuntimeProperties(props);
@@ -154,18 +175,20 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				 * Copied here instead of calling that so that the context is not cached
 				 * and hence not garbage collected
 				 */
-				ApplicationContext parent = loadParentContext(servletContext);
-				WebApplicationContext context = createWebApplicationContext(servletContext, parent);
+				XmlWebApplicationContext context = (XmlWebApplicationContext) createWebApplicationContext(servletContext);
+				configureAndRefreshWebApplicationContext(context, servletContext);
 				servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, context);
-				/** */
 				
 				WebDaemon.startOpenmrs(event.getServletContext());
 			}
+			else {
+				setupNeeded = true;
+			}
 			
 		}
-		catch (Throwable t) {
-			errorAtStartup = t;
-			log.fatal("Got exception while starting up: ", t);
+		catch (Exception e) {
+			setErrorAtStartup(e);
+			log.fatal("Got exception while starting up: ", e);
 		}
 		
 	}
@@ -174,19 +197,20 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	 * This method knows about all the filters that openmrs uses for setup. Currently those are the
 	 * {@link InitializationFilter} and the {@link UpdateFilter}. If either of these have to do
 	 * something, openmrs won't start in this Listener.
-	 * 
+	 *
 	 * @return true if one of the filters needs to take some action
 	 */
 	private boolean setupNeeded() throws Exception {
-		if (!runtimePropertiesFound)
+		if (!runtimePropertiesFound) {
 			return true;
+		}
 		
 		return DatabaseUpdater.updatesRequired() && !DatabaseUpdater.allowAutoUpdate();
 	}
 	
 	/**
 	 * Do the work of starting openmrs.
-	 * 
+	 *
 	 * @param servletContext
 	 * @throws ServletException
 	 */
@@ -201,7 +225,8 @@ public final class Listener extends ContextLoader implements ServletContextListe
 		// start openmrs
 		try {
 			Context.openSession();
-			
+			PersonName.setFormat(Context.getAdministrationService().getGlobalProperty(
+			    OpenmrsConstants.GLOBAL_PROPERTY_LAYOUT_NAME_FORMAT, OpenmrsConstants.PERSON_NAME_FORMAT_SHORT));
 			// load bundled modules that are packaged into the webapp
 			Listener.loadBundledModules(servletContext);
 			
@@ -232,7 +257,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 			// start the scheduled tasks
 			SchedulerUtil.startup(getRuntimeProperties());
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			Context.shutdown();
 			WebModuleUtil.shutdownModules(servletContext);
 			throw new ServletException(t);
@@ -244,7 +269,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	
 	/**
 	 * Load the openmrs constants with values from web.xml init parameters
-	 * 
+	 *
 	 * @param servletContext startup context (web.xml)
 	 */
 	private void loadConstants(ServletContext servletContext) {
@@ -255,7 +280,10 @@ public final class Listener extends ContextLoader implements ServletContextListe
 		// "application_data_directory" runtime property is set
 		String appDataDir = servletContext.getInitParameter("application.data.directory");
 		if (StringUtils.hasLength(appDataDir)) {
-			OpenmrsConstants.APPLICATION_DATA_DIRECTORY = appDataDir;
+			OpenmrsUtil.setApplicationDataDirectory(appDataDir);
+		} else if (!"openmrs".equalsIgnoreCase(WebConstants.WEBAPP_NAME)) {
+			OpenmrsUtil.setApplicationDataDirectory(OpenmrsUtil.getApplicationDataDirectory() + File.separator
+			        + WebConstants.WEBAPP_NAME);
 		}
 	}
 	
@@ -263,7 +291,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	 * Hacky way to get the current contextPath. This will usually be "openmrs". This method will be
 	 * obsolete when servlet api ~2.6 comes out...at which point a call like
 	 * servletContext.getContextRoot() would be sufficient
-	 * 
+	 *
 	 * @return current contextPath of this webapp without initial slash
 	 */
 	private String getContextPath(ServletContext servletContext) {
@@ -282,16 +310,17 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				contextPath = contextPath.substring(contextPath.lastIndexOf("/"));
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				log.error(e);
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			log.error(e);
 		}
 		
 		// trim off initial slash if it exists
-		if (contextPath.indexOf("/") != -1)
+		if (contextPath.indexOf("/") != -1) {
 			contextPath = contextPath.substring(1);
+		}
 		
 		return contextPath;
 	}
@@ -299,7 +328,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	/**
 	 * Convenience method to empty out the dwr-modules.xml file to fix any errors that might have
 	 * occurred in it when loading or unloading modules.
-	 * 
+	 *
 	 * @param servletContext
 	 */
 	private void clearDWRFile(ServletContext servletContext) {
@@ -324,28 +353,37 @@ public final class Listener extends ContextLoader implements ServletContextListe
 			elem.setTextContent("");
 			OpenmrsUtil.saveDocument(doc, dwrFile);
 		}
-		catch (Throwable t) {
+		catch (Exception e) {
 			// got here because the dwr-modules.xml file is empty for some reason.  This might
 			// happen because the servlet container (i.e. tomcat) crashes when first loading this file
-			log.debug("Error clearing dwr-modules.xml", t);
+			log.debug("Error clearing dwr-modules.xml", e);
 			dwrFile.delete();
+			FileWriter writer = null;
 			try {
-				FileWriter writer = new FileWriter(dwrFile);
+				writer = new FileWriter(dwrFile);
 				writer
 				        .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE dwr PUBLIC \"-//GetAhead Limited//DTD Direct Web Remoting 2.0//EN\" \"http://directwebremoting.org/schema/dwr20.dtd\">\n<dwr></dwr>");
-				writer.close();
 			}
 			catch (IOException io) {
 				log.error("Unable to clear out the " + dwrFile.getAbsolutePath()
 				        + " file.  Please redeploy the openmrs war file", io);
 			}
-			
+			finally {
+				if (writer != null) {
+					try {
+						writer.close();
+					}
+					catch (IOException io) {
+						log.warn("Couldn't close Writer: " + io);
+					}
+				}
+			}
 		}
 	}
 	
 	/**
 	 * Copy the customization scripts over into the webapp
-	 * 
+	 *
 	 * @param servletContext
 	 */
 	private void copyCustomizationIntoWebapp(ServletContext servletContext, Properties props) {
@@ -365,8 +403,9 @@ public final class Listener extends ContextLoader implements ServletContextListe
 		custom.put("custom.messages_es", "/WEB-INF/custom_messages_es.properties");
 		custom.put("custom.messages_de", "/WEB-INF/custom_messages_de.properties");
 		
-		for (String prop : custom.keySet()) {
-			String webappPath = custom.get(prop);
+		for (Map.Entry<String, String> entry : custom.entrySet()) {
+			String prop = entry.getKey();
+			String webappPath = entry.getValue();
 			String userOverridePath = props.getProperty(prop);
 			// if they defined the variable
 			if (userOverridePath != null) {
@@ -406,7 +445,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	
 	/**
 	 * Copies file pointed to by <code>fromPath</code> to <code>toPath</code>
-	 * 
+	 *
 	 * @param fromPath
 	 * @param toPath
 	 * @return true/false whether the copy was a success
@@ -426,15 +465,17 @@ public final class Listener extends ContextLoader implements ServletContextListe
 		}
 		finally {
 			try {
-				if (inputStream != null)
+				if (inputStream != null) {
 					inputStream.close();
+				}
 			}
 			catch (IOException io) {
 				log.warn("Unable to close input stream", io);
 			}
 			try {
-				if (outputStream != null)
+				if (outputStream != null) {
 					outputStream.close();
+				}
 			}
 			catch (IOException io) {
 				log.warn("Unable to close input stream", io);
@@ -444,11 +485,11 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	}
 	
 	/**
-	 * Load the pre-packaged modules from web/WEB-INF/bundledModules. <br/>
-	 * <br/>
+	 * Load the pre-packaged modules from web/WEB-INF/bundledModules. <br>
+	 * <br>
 	 * This method assumes that the api startup() and WebModuleUtil.startup() will be called later
 	 * for modules that loaded here
-	 * 
+	 *
 	 * @param servletContext the current servlet context for the webapp
 	 */
 	public static void loadBundledModules(ServletContext servletContext) {
@@ -474,8 +515,8 @@ public final class Listener extends ContextLoader implements ServletContextListe
 					Module mod = ModuleFactory.loadModule(f);
 					log.debug("Loaded bundled module: " + mod + " successfully");
 				}
-				catch (Throwable t) {
-					log.warn("Error while trying to load bundled module " + f.getName() + "", t);
+				catch (Exception e) {
+					log.warn("Error while trying to load bundled module " + f.getName() + "", e);
 				}
 			}
 		}
@@ -484,9 +525,10 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	/**
 	 * Called when the webapp is shut down properly Must call Context.shutdown() and then shutdown
 	 * all the web layers of the modules
-	 * 
+	 *
 	 * @see org.springframework.web.context.ContextLoaderListener#contextDestroyed(javax.servlet.ServletContextEvent)
 	 */
+	@SuppressWarnings("squid:S1215")
 	@Override
 	public void contextDestroyed(ServletContextEvent event) {
 		
@@ -498,12 +540,12 @@ public final class Listener extends ContextLoader implements ServletContextListe
 			WebModuleUtil.shutdownModules(event.getServletContext());
 			
 		}
-		catch (Throwable t) {
+		catch (Exception e) {
 			// don't print the unhelpful "contextDAO is null" message
-			if (!"contextDAO is null".equals(t.getMessage())) {
+			if (!"contextDAO is null".equals(e.getMessage())) {
 				// not using log.error here so it can be garbage collected
 				System.out.println("Listener.contextDestroyed: Error while shutting down openmrs: ");
-				t.printStackTrace();
+				log.error(e);
 			}
 		}
 		finally {
@@ -534,23 +576,27 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				}
 			}
 		}
-		catch (Throwable e) {
+		catch (Exception e) {
 			System.err.println("Listener.contextDestroyed: Failed to cleanup drivers in webapp");
-			e.printStackTrace();
+			log.error(e);
 		}
+		
+		MemoryLeakUtil.shutdownMysqlCancellationTimer();
+		MemoryLeakUtil.shutdownKeepAliveTimer();
 		
 		OpenmrsClassLoader.onShutdown();
 		
 		LogManager.shutdown();
 		
 		// just to make things nice and clean.
+		// Suppressing sonar issue squid:S1215
 		System.gc();
 		System.gc();
 	}
 	
 	/**
 	 * Finds and loads the runtime properties
-	 * 
+	 *
 	 * @return Properties
 	 * @see OpenmrsUtil#getRuntimeProperties(String)
 	 */
@@ -560,16 +606,21 @@ public final class Listener extends ContextLoader implements ServletContextListe
 	
 	/**
 	 * Call WebModuleUtil.startModule on each started module
-	 * 
+	 *
 	 * @param servletContext
 	 * @throws ModuleMustStartException if the context cannot restart due to a
 	 *             {@link MandatoryModuleException} or {@link OpenmrsCoreModuleException}
 	 */
-	public static void performWebStartOfModules(ServletContext servletContext) throws ModuleMustStartException, Throwable {
-		Log log = LogFactory.getLog(Listener.class);
-		
+	public static void performWebStartOfModules(ServletContext servletContext) throws ModuleMustStartException, Exception {
 		List<Module> startedModules = new ArrayList<Module>();
 		startedModules.addAll(ModuleFactory.getStartedModules());
+		performWebStartOfModules(startedModules, servletContext);
+	}
+	
+	public static void performWebStartOfModules(Collection<Module> startedModules, ServletContext servletContext)
+	        throws ModuleMustStartException, Exception {
+		Log log = LogFactory.getLog(Listener.class);
+		
 		boolean someModuleNeedsARefresh = false;
 		for (Module mod : startedModules) {
 			try {
@@ -577,8 +628,8 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				/* delayContextRefresh */true);
 				someModuleNeedsARefresh = someModuleNeedsARefresh || thisModuleCausesRefresh;
 			}
-			catch (Throwable t) {
-				mod.setStartupErrorMessage("Unable to start module", t);
+			catch (Exception e) {
+				mod.setStartupErrorMessage("Unable to start module", e);
 			}
 		}
 		
@@ -590,8 +641,18 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				// pass this up to the calling method so that openmrs loading stops
 				throw ex;
 			}
-			catch (Throwable t) {
-				log.fatal("Unable to refresh the spring application context. Unloading all modules,  Error was:", t);
+			catch (BeanCreationException ex) {
+				// pass this up to the calling method so that openmrs loading stops
+				throw ex;
+			}
+			catch (Exception e) {
+				Throwable rootCause = getActualRootCause(e, true);
+				if (rootCause != null) {
+					log.fatal("Unable to refresh the spring application context.  Root Cause was:", rootCause);
+				} else {
+					log.fatal("Unable to refresh the spring application context. Unloading all modules,  Error was:", e);
+				}
+				
 				try {
 					WebModuleUtil.shutdownModules(servletContext);
 					for (Module mod : ModuleFactory.getLoadedModules()) {// use loadedModules to avoid a concurrentmodificationexception
@@ -599,7 +660,7 @@ public final class Listener extends ContextLoader implements ServletContextListe
 							try {
 								ModuleFactory.stopModule(mod, true, true);
 							}
-							catch (Throwable t3) {
+							catch (Exception t3) {
 								// just keep going if we get an error shutting down.  was probably caused by the module 
 								// that actually got us to this point!
 								log.trace("Unable to shutdown module:" + mod, t3);
@@ -611,9 +672,9 @@ public final class Listener extends ContextLoader implements ServletContextListe
 				catch (MandatoryModuleException ex) {
 					// pass this up to the calling method so that openmrs loading stops
 					throw new MandatoryModuleException(ex.getModuleId(), "Got an error while starting a mandatory module: "
-					        + t.getMessage() + ". Check the server logs for more information");
+					        + e.getMessage() + ". Check the server logs for more information");
 				}
-				catch (Throwable t2) {
+				catch (Exception t2) {
 					// a mandatory or core module is causing spring to fail to start up.  We don't want those
 					// stopped so we must report this error to the higher authorities
 					log.warn("caught another error: ", t2);
@@ -628,6 +689,26 @@ public final class Listener extends ContextLoader implements ServletContextListe
 			WebModuleUtil.loadServlets(mod, servletContext);
 			WebModuleUtil.loadFilters(mod, servletContext);
 		}
+	}
+	
+	/**
+	 * Convenience method that recursively attempts to pull the root case from a Throwable
+	 *
+	 * @param t the Throwable object
+	 * @param isOriginalError specifies if the passed in Throwable is the original Exception that
+	 *            was thrown
+	 * @return the root cause if any was found
+	 */
+	private static Throwable getActualRootCause(Throwable t, boolean isOriginalError) {
+		if (t.getCause() != null) {
+			return getActualRootCause(t.getCause(), false);
+		}
+		
+		if (!isOriginalError) {
+			return t;
+		}
+		
+		return null;
 	}
 	
 }

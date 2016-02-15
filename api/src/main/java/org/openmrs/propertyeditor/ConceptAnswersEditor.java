@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.propertyeditor;
 
@@ -44,10 +40,11 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 	 * @param originalAnswers the list on the pojo
 	 */
 	public ConceptAnswersEditor(Collection<ConceptAnswer> originalAnswers) {
-		if (originalAnswers == null)
+		if (originalAnswers == null) {
 			originalConceptAnswers = new HashSet<ConceptAnswer>();
-		else
+		} else {
 			originalConceptAnswers = originalAnswers;
+		}
 	}
 	
 	/**
@@ -65,8 +62,9 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 			//set up parameter answer Set for easier add/delete functions and removal of duplicates
 			for (String id : conceptIds) {
 				id = id.trim();
-				if (!id.equals("") && !requestConceptIds.contains(id)) //remove whitespace, blank lines, and duplicates
+				if (!id.equals("") && !requestConceptIds.contains(id)) { //remove whitespace, blank lines, and duplicates
 					requestConceptIds.add(id);
+				}
 			}
 			
 			Collection<ConceptAnswer> deletedConceptAnswers = new HashSet<ConceptAnswer>();
@@ -79,15 +77,17 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 					Integer drugId = getDrugId(conceptId);
 					Drug answerDrug = origConceptAnswer.getAnswerDrug();
 					if (id.equals(origConceptAnswer.getAnswerConcept().getConceptId())) {
-						if (drugId == null && answerDrug == null)
+						if (drugId == null && answerDrug == null) {
 							answerDeleted = false;
-						else if ((drugId != null && answerDrug != null)
-						        && drugId.equals(origConceptAnswer.getAnswerDrug().getDrugId()))
+						} else if ((drugId != null && answerDrug != null)
+						        && drugId.equals(origConceptAnswer.getAnswerDrug().getDrugId())) {
 							answerDeleted = false;
+						}
 					}
 				}
-				if (answerDeleted)
+				if (answerDeleted) {
 					deletedConceptAnswers.add(origConceptAnswer);
+				}
 			}
 			
 			// loop over those deleted answers to delete them
@@ -103,18 +103,20 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 				for (ConceptAnswer origConceptAnswer : originalConceptAnswers) {
 					Drug answerDrug = origConceptAnswer.getAnswerDrug();
 					if (id.equals(origConceptAnswer.getAnswerConcept().getConceptId())) {
-						if (drugId == null && answerDrug == null)
+						if (drugId == null && answerDrug == null) {
 							newAnswerConcept = false;
-						else if ((drugId != null && answerDrug != null) && drugId.equals(answerDrug.getDrugId()))
+						} else if ((drugId != null && answerDrug != null) && drugId.equals(answerDrug.getDrugId())) {
 							newAnswerConcept = false;
+						}
 					}
 				}
 				// if the current request answer is new, add it to the originals
 				if (newAnswerConcept) {
 					Concept answer = cs.getConcept(id);
 					Drug drug = null;
-					if (drugId != null)
+					if (drugId != null) {
 						drug = cs.getDrug(drugId);
+					}
 					ConceptAnswer ac = new ConceptAnswer(answer, drug);
 					originalConceptAnswers.add(ac);
 				}
@@ -166,12 +168,14 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 			}
 			
 			log.debug("originalConceptAnswers.getConceptId(): ");
-			for (ConceptAnswer a : originalConceptAnswers)
+			for (ConceptAnswer a : originalConceptAnswers) {
 				log.debug("id: " + a.getAnswerConcept().getConceptId());
+			}
 			
 			log.debug("requestConceptIds: ");
-			for (String i : requestConceptIds)
+			for (String i : requestConceptIds) {
 				log.debug("id: " + i);
+			}
 		} else {
 			originalConceptAnswers.clear();
 		}
@@ -199,10 +203,11 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 	 * @return
 	 */
 	private Integer getConceptId(String conceptId) {
-		if (conceptId.contains("^"))
+		if (conceptId.contains("^")) {
 			return Integer.valueOf(conceptId.substring(0, conceptId.indexOf("^")));
-		else
+		} else {
 			return Integer.valueOf(conceptId);
+		}
 	}
 	
 	/**
@@ -213,8 +218,9 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 	 * @return
 	 */
 	private Integer getDrugId(String conceptId) {
-		if (conceptId.contains("^"))
+		if (conceptId.contains("^")) {
 			return Integer.valueOf(conceptId.substring(conceptId.indexOf("^") + 1, conceptId.length()));
+		}
 		
 		return null;
 	}

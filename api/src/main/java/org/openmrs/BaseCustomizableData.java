@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
@@ -25,7 +21,7 @@ import org.openmrs.customdatatype.Customizable;
 
 /**
  * Extension of {@link BaseOpenmrsData} for classes that support customization via user-defined attributes.
- * @param <AttrClass> the type of attribute held
+ * @param <A> the type of attribute held
  * @since 1.9
  */
 public abstract class BaseCustomizableData<A extends Attribute> extends BaseOpenmrsData implements Customizable<A> {
@@ -53,10 +49,13 @@ public abstract class BaseCustomizableData<A extends Attribute> extends BaseOpen
 	@Override
 	public Collection<A> getActiveAttributes() {
 		List<A> ret = new ArrayList<A>();
-		if (getAttributes() != null)
-			for (A attr : getAttributes())
-				if (!attr.isVoided())
+		if (getAttributes() != null) {
+			for (A attr : getAttributes()) {
+				if (!attr.isVoided()) {
 					ret.add(attr);
+				}
+			}
+		}
 		return ret;
 	}
 	
@@ -66,20 +65,24 @@ public abstract class BaseCustomizableData<A extends Attribute> extends BaseOpen
 	@Override
 	public List<A> getActiveAttributes(CustomValueDescriptor ofType) {
 		List<A> ret = new ArrayList<A>();
-		if (getAttributes() != null)
-			for (A attr : getAttributes())
-				if (attr.getAttributeType().equals(ofType) && !attr.isVoided())
+		if (getAttributes() != null) {
+			for (A attr : getAttributes()) {
+				if (attr.getAttributeType().equals(ofType) && !attr.isVoided()) {
 					ret.add(attr);
+				}
+			}
+		}
 		return ret;
 	}
 	
 	/**
-	 * @see org.openmrs.customdatatype.Customizable#addAttribute(org.openmrs.customdatatype.SingleCustomValue)
+	 * @see org.openmrs.customdatatype.Customizable#addAttribute(Attribute)
 	 */
 	@Override
 	public void addAttribute(A attribute) {
-		if (getAttributes() == null)
+		if (getAttributes() == null) {
 			setAttributes(new LinkedHashSet<A>());
+		}
 		// TODO validate
 		getAttributes().add(attribute);
 		attribute.setOwner(this);
@@ -87,10 +90,10 @@ public abstract class BaseCustomizableData<A extends Attribute> extends BaseOpen
 	
 	/**
 	 * Convenience method that voids all existing attributes of the given type, and sets this new one.
-	 * TODO fail if minOccurs > 1
+	 * TODO fail if minOccurs &gt; 1
 	 * TODO decide whether this should require maxOccurs=1
 	 * @should void the attribute if an attribute with same attribute type already exists and the maxOccurs is set to 1
-	 * 
+	 *
 	 * @param attribute
 	 */
 	@SuppressWarnings("unchecked")
@@ -105,21 +108,25 @@ public abstract class BaseCustomizableData<A extends Attribute> extends BaseOpen
 			if (existing.getValue().equals(attribute.getValue())) {
 				// do nothing, since the value is already as-specified
 			} else {
-				if (existing.getId() != null)
+				if (existing.getId() != null) {
 					existing.setVoided(true);
-				else
+				} else {
 					getAttributes().remove(existing);
+				}
 				getAttributes().add(attribute);
 				attribute.setOwner(this);
 			}
 			
 		} else {
-			for (A existing : getActiveAttributes(attribute.getAttributeType()))
-				if (existing.getAttributeType().equals(attribute.getAttributeType()))
-					if (existing.getId() != null)
+			for (A existing : getActiveAttributes(attribute.getAttributeType())) {
+				if (existing.getAttributeType().equals(attribute.getAttributeType())) {
+					if (existing.getId() != null) {
 						existing.setVoided(true);
-					else
+					} else {
 						getAttributes().remove(existing);
+					}
+				}
+			}
 			getAttributes().add(attribute);
 			attribute.setOwner(this);
 		}

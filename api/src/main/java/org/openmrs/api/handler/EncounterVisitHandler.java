@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.handler;
 
@@ -25,7 +21,7 @@ import org.openmrs.api.context.Context;
  * visit. An admin can decide how they want their Encounters automatically assigned to Visits by
  * choosing different handlers.
  * 
- * @see EncounterService#getVisitAssignmentHandlers()
+ * @see EncounterService#getEncounterVisitHandlers()
  * @since 1.9
  */
 public interface EncounterVisitHandler {
@@ -45,8 +41,8 @@ public interface EncounterVisitHandler {
 	/**
 	 * Implementations of this method should look at the given <code>encounter</code> and choose
 	 * whether or not it should be assigned to a {@link Visit} that is already open or if it should
-	 * be part of a new visit. <br/>
-	 * <br/>
+	 * be part of a new visit. <br>
+	 * <br>
 	 * The decision of what to do is up to the handler, but it should call
 	 * {@link Encounter#setVisit(Visit)} with the outcome. The visit assigned to the encounter will
 	 * be persisted to the database after this method is returned, so the handler is not required to

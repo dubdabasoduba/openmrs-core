@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.scheduler.timer;
 
@@ -29,7 +25,6 @@ import java.util.WeakHashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
-import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.scheduler.SchedulerConstants;
 import org.openmrs.scheduler.SchedulerException;
@@ -69,7 +64,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	 * should run as a daemon. A deamon thread is called for if the timer will be used to schedule
 	 * repeating "maintenance activities", which must be performed as long as the application is
 	 * running, but should not prolong the lifetime of the application.
-	 * 
+	 *
 	 * @see java.util.Timer#Timer(boolean)
 	 */
 	private Map<TaskDefinition, Timer> taskDefinitionTimerMap = new HashMap<TaskDefinition, Timer>();
@@ -113,10 +108,18 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 					}
 					
 				}
-				catch (Throwable t) {
-					log.error("Failed to schedule task for class " + taskDefinition.getTaskClass(), t);
+				catch (Exception e) {
+					log.error("Failed to schedule task for class " + taskDefinition.getTaskClass(), e);
 				}
 			}
+		}
+	}
+	
+	public static void setScheduledTasks(Map<Integer, TimerSchedulerTask> scheduledTasks) {
+		if (scheduledTasks != null) {
+			TimerSchedulerServiceImpl.scheduledTasks = scheduledTasks;
+		} else {
+			TimerSchedulerServiceImpl.scheduledTasks = new WeakHashMap<Integer, TimerSchedulerTask>();
 		}
 	}
 	
@@ -134,7 +137,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 			log.error("Failed to stop all tasks due to API exception", e);
 		}
 		finally {
-			scheduledTasks = null;
+			setScheduledTasks(null);
 		}
 		
 	}
@@ -172,7 +175,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	/**
 	 * Get the {@link Timer} that is assigned to the given {@link TaskDefinition} object. If a Timer
 	 * doesn't exist yet, one is created, added to {@link #taskDefinitionTimerMap} and then returned
-	 * 
+	 *
 	 * @param taskDefinition the {@link TaskDefinition} to look for
 	 * @return the {@link Timer} associated with the given {@link TaskDefinition}
 	 */
@@ -190,7 +193,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Schedule the given task according to the given schedule.
-	 * 
+	 *
 	 * @param taskDefinition the task to be scheduled
 	 * @should should handle zero repeat interval
 	 */
@@ -224,8 +227,9 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 					// we record by seconds.  
 					
 					long repeatInterval = 0;
-					if (taskDefinition.getRepeatInterval() != null)
+					if (taskDefinition.getRepeatInterval() != null) {
 						repeatInterval = taskDefinition.getRepeatInterval() * SchedulerConstants.SCHEDULER_MILLIS_PER_SECOND;
+					}
 					
 					if (taskDefinition.getStartTime() != null) {
 						// Need to calculate the "next execution time" because the scheduled time is most likely in the past
@@ -262,7 +266,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 					
 					// Update the timer status in the database
 					taskDefinition.setStarted(true);
-					saveTask(taskDefinition);
+					saveTaskDefinition(taskDefinition);
 				}
 			}
 			catch (Exception e) {
@@ -275,7 +279,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Stops a running task.
-	 * 
+	 *
 	 * @param taskDefinition the task to be stopped
 	 * @see org.openmrs.scheduler.SchedulerService#shutdownTask(TaskDefinition)
 	 */
@@ -290,7 +294,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 			
 			// Update task that has been started
 			taskDefinition.setStarted(false);
-			saveTask(taskDefinition);
+			saveTaskDefinition(taskDefinition);
 		}
 	}
 	
@@ -319,7 +323,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Register a new task by adding it to our task map with an empty schedule map.
-	 * 
+	 *
 	 * @param definition task to register
 	 */
 	public void registerTask(TaskDefinition definition) {
@@ -328,18 +332,20 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Get all scheduled tasks.
-	 * 
+	 *
 	 * @return all scheduled tasks
 	 */
 	public Collection<TaskDefinition> getScheduledTasks() {
 		// The real list of scheduled tasks is kept up-to-date in the scheduledTasks map
 		// TODO change the index for the scheduledTasks map to be the TaskDefinition rather than the ID
 		List<TaskDefinition> list = new ArrayList<TaskDefinition>();
-		Set<Integer> taskIds = scheduledTasks.keySet();
-		for (Integer id : taskIds) {
-			TaskDefinition task = getTask(id);
-			log.debug("Adding scheduled task " + id + " to list (" + task.getRepeatInterval() + ")");
-			list.add(task);
+		if (scheduledTasks != null) {
+			Set<Integer> taskIds = scheduledTasks.keySet();
+			for (Integer id : taskIds) {
+				TaskDefinition task = getTask(id);
+				log.debug("Adding scheduled task " + id + " to list (" + task.getRepeatInterval() + ")");
+				list.add(task);
+			}
 		}
 		return list;
 		
@@ -347,7 +353,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Get all registered tasks.
-	 * 
+	 *
 	 * @return all registerd tasks
 	 */
 	@Transactional(readOnly = true)
@@ -357,25 +363,27 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Get the task with the given identifier.
-	 * 
+	 *
 	 * @param id the identifier of the task
 	 */
 	@Transactional(readOnly = true)
 	public TaskDefinition getTask(Integer id) {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("get task " + id);
+		}
 		return getSchedulerDAO().getTask(id);
 	}
 	
 	/**
 	 * Get the task with the given name.
-	 * 
+	 *
 	 * @param name name of the task
 	 */
 	@Transactional(readOnly = true)
 	public TaskDefinition getTaskByName(String name) {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("get task " + name);
+		}
 		TaskDefinition foundTask = null;
 		try {
 			foundTask = getSchedulerDAO().getTaskByName(name);
@@ -384,16 +392,6 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 			log.warn("getTaskByName(" + name + ") failed, because: " + orfe);
 		}
 		return foundTask;
-	}
-	
-	/**
-	 * Save a task in the database.
-	 * 
-	 * @param task the <code>TaskDefinition</code> to save
-	 * @deprecated use saveTaskDefinition which follows correct naming standard
-	 */
-	public void saveTask(TaskDefinition task) {
-		Context.getSchedulerService().saveTaskDefinition(task);
 	}
 	
 	/**
@@ -411,14 +409,14 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Delete the task with the given identifier.
-	 * 
+	 *
 	 * @param id the identifier of the task
 	 */
 	public void deleteTask(Integer id) {
 		
 		TaskDefinition task = getTask(id);
 		if (task.getStarted()) {
-			throw new APIException("Started tasks should not be deleted. They should be stopped first, and then deleted.");
+			throw new APIException("Scheduler.timer.task.delete", (Object[]) null);
 		}
 		
 		// delete the task
@@ -429,7 +427,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	 * Get system variables.
 	 */
 	public SortedMap<String, String> getSystemVariables() {
-		TreeMap<String, String> systemVariables = new TreeMap<String, String>();
+		SortedMap<String, String> systemVariables = new TreeMap<String, String>();
 		// scheduler username and password can be found in the global properties
 		// TODO Look into java.util.concurrent.TimeUnit class.  
 		// TODO Remove this from global properties.  This is a constant value that should never change.  
@@ -439,7 +437,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	
 	/**
 	 * Saves and stops all active tasks
-	 * 
+	 *
 	 * @return OpenmrsMemento
 	 */
 	public OpenmrsMemento saveToMemento() {
@@ -464,7 +462,7 @@ public class TimerSchedulerServiceImpl extends BaseOpenmrsService implements Sch
 	}
 	
 	/**
-	 * 
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	public void restoreFromMemento(OpenmrsMemento memento) {

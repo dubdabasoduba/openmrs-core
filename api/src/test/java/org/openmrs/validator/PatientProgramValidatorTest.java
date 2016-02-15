@@ -1,18 +1,15 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.validator;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
@@ -37,7 +34,7 @@ import org.springframework.validation.Errors;
 public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the patient field is blank", method = "validate(Object,Errors)")
@@ -49,7 +46,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test(expected = IllegalArgumentException.class)
 	@Verifies(value = "should fail validation if obj is null", method = "validate(Object,Errors)")
@@ -58,7 +55,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if any patient state has an end date before its start date", method = "validate(Object,Errors)")
@@ -76,7 +73,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if there is more than one patientState with the same states and startDates", method = "validate(Object,Errors)")
@@ -94,7 +91,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if any patient state has a null work flow state", method = "validate(Object,Errors)")
@@ -109,7 +106,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the program property is null", method = "validate(Object,Errors)")
@@ -119,7 +116,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if any patient states overlap each other in the same work flow", method = "validate(Object,Errors)")
@@ -146,7 +143,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass for a valid program", method = "validate(Object,Errors)")
@@ -159,7 +156,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a patient program has duplicate states in the same work flow", method = "validate(Object,Errors)")
@@ -177,7 +174,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a patientState has an invalid work flow state", method = "validate(Object,Errors)")
@@ -193,7 +190,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a patient is in multiple states in the same work flow", method = "validate(Object,Errors)")
@@ -210,7 +207,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass if a patient is in multiple states in different work flows", method = "validate(Object,Errors)")
@@ -228,7 +225,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass if the start date of the first patient state in the work flow is null", method = "validate(Object,Errors)")
@@ -244,7 +241,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass for patient states that have the same start dates in the same work flow", method = "validate(Object,Errors)")
@@ -261,7 +258,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if there is more than one state with a null start date in the same workflow", method = "validate(Object,Errors)")
@@ -288,7 +285,7 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link PatientProgramValidator#validate(Object,Errors)}
+	 * @see PatientProgramValidator#validate(Object,Errors)
 	 * this test is to specifically validate fix for https://tickets.openmrs.org/browse/TRUNK-3670
 	 */
 	@Test
@@ -318,4 +315,108 @@ public class PatientProgramValidatorTest extends BaseContextSensitiveTest {
 		Assert.assertEquals(false, errors.hasFieldErrors("states"));
 	}
 	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail if patient program end date comes before its enrolled date", method = "validate(Object,Errors)")
+	public void validate_shouldFailIfPatientProgramEndDateComesBeforeItsEnrolledDate() throws Exception {
+		PatientProgram program = Context.getProgramWorkflowService().getPatientProgram(1);
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		Date dateEnrolled = sdf.parse("12/04/2014");
+		Date dateCompleted = sdf.parse("21/03/2014");
+		program.setDateEnrolled(dateEnrolled);
+		program.setDateCompleted(dateCompleted);
+		
+		BindException errors = new BindException(program, "");
+		new PatientProgramValidator().validate(program, errors);
+		Assert.assertTrue(errors.hasFieldErrors("dateCompleted"));
+	}
+	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail if patient program enrolled date is in future", method = "validate(Object,Errors)")
+	public void validate_shouldFailIfPatientProgramEnrolledDateIsInFuture() throws Exception {
+		PatientProgram program = Context.getProgramWorkflowService().getPatientProgram(1);
+		Date date10DaysAfterSystemCurrentDate = new Date(System.currentTimeMillis() + 10 * 24 * 60 * 60 * 1000);
+		program.setDateEnrolled(date10DaysAfterSystemCurrentDate);
+		
+		BindException errors = new BindException(program, "");
+		new PatientProgramValidator().validate(program, errors);
+		Assert.assertTrue(errors.hasFieldErrors("dateEnrolled"));
+	}
+	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail if patient program end date is in future", method = "validate(Object,Errors)")
+	public void validate_shouldFailIfPatientProgramEndDateIsInFuture() throws Exception {
+		PatientProgram program = Context.getProgramWorkflowService().getPatientProgram(1);
+		Date date10DaysAfterSystemCurrentDate = new Date(System.currentTimeMillis() + 10 * 24 * 60 * 60 * 1000);
+		program.setDateCompleted(date10DaysAfterSystemCurrentDate);
+		
+		BindException errors = new BindException(program, "");
+		new PatientProgramValidator().validate(program, errors);
+		Assert.assertTrue(errors.hasFieldErrors("dateCompleted"));
+	}
+	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail if patient program enroll date is empty", method = "validate(Object,Errors)")
+	public void validate_shouldFailIfPatientProgramEnrollDateIsEmpty() throws Exception {
+		PatientProgram program = Context.getProgramWorkflowService().getPatientProgram(1);
+		program.setDateEnrolled(null);
+		
+		BindException errors = new BindException(program, "");
+		new PatientProgramValidator().validate(program, errors);
+		Assert.assertTrue(errors.hasFieldErrors("dateEnrolled"));
+	}
+	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should pass validation if field lengths are correct", method = "validate(Object,Errors)")
+	public void validate_shouldPassValidationIfFieldLengthsAreCorrect() throws Exception {
+		ProgramWorkflowService pws = Context.getProgramWorkflowService();
+		Patient patient = Context.getPatientService().getPatient(6);
+		
+		PatientProgram pp = new PatientProgram();
+		pp.setPatient(patient);
+		pp.setProgram(pws.getProgram(1));
+		pp.setDateEnrolled(new Date());
+		
+		pp.setVoidReason("voidReason");
+		
+		BindException errors = new BindException(pp, "program");
+		new PatientProgramValidator().validate(pp, errors);
+		Assert.assertEquals(false, errors.hasErrors());
+	}
+	
+	/**
+	 * @see PatientProgramValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail validation if field lengths are not correct", method = "validate(Object,Errors)")
+	public void validate_shouldFailValidationIfFieldLengthsAreNotCorrect() throws Exception {
+		ProgramWorkflowService pws = Context.getProgramWorkflowService();
+		Patient patient = Context.getPatientService().getPatient(6);
+		
+		PatientProgram pp = new PatientProgram();
+		pp.setPatient(patient);
+		pp.setProgram(pws.getProgram(1));
+		pp.setDateEnrolled(new Date());
+		
+		pp
+		        .setVoidReason("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		
+		BindException errors = new BindException(pp, "program");
+		new PatientProgramValidator().validate(pp, errors);
+		Assert.assertEquals(true, errors.hasFieldErrors("voidReason"));
+	}
 }

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db;
 
@@ -91,7 +87,7 @@ public interface FormDAO {
 	 * Get all field types
 	 * 
 	 * @param includeRetired boolean - include retired field types as well?
-	 * @return List<FieldTypes> object with all FieldTypes, possibly including retired ones
+	 * @return List&lt;FieldTypes&gt; object with all FieldTypes, possibly including retired ones
 	 * @throws DAOException
 	 */
 	public List<FieldType> getAllFieldTypes(boolean includeRetired) throws DAOException;
@@ -109,7 +105,7 @@ public interface FormDAO {
 	 * Returns all forms in the database, possibly including retired ones
 	 * 
 	 * @param includeRetired boolean - include retired forms?
-	 * @return List<Form> object of all forms, possibly including retired ones
+	 * @return List&lt;Form&gt; object of all forms, possibly including retired ones
 	 * @throws DAOException
 	 */
 	public List<Form> getAllForms(boolean includeRetired) throws DAOException;
@@ -117,7 +113,7 @@ public interface FormDAO {
 	/**
 	 * Returns all FormFields in the database
 	 * 
-	 * @return List<FormField> object of all FormFields in the database
+	 * @return List&lt;FormField&gt; object of all FormFields in the database
 	 * @throws DAOException
 	 */
 	public List<FormField> getAllFormFields() throws DAOException;
@@ -193,8 +189,8 @@ public interface FormDAO {
 	 *            fields must be
 	 * @param concepts <code>Collection</code> of <code>Concepts</code> which the fields must point
 	 *            to
-	 * @param tableNames <code>Collection of <code>TableName</code>s which the fields must point to
-	 * @param attributeNames <code>Collection of <code>String</code> attribute names which the
+	 * @param tableNames Collection of <code>TableName</code>s which the fields must point to
+	 * @param attributeNames Collection of <code>String</code> attribute names which the
 	 *            fields must point to
 	 * @param selectMultiple <code>Boolean</code> value that matching fields must have for
 	 *            selectMultiple
@@ -255,36 +251,36 @@ public interface FormDAO {
 	public void deleteFieldType(FieldType fieldType) throws DAOException;
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return field or null
 	 */
 	public Field getFieldByUuid(String uuid);
 	
 	public FieldAnswer getFieldAnswerByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return field type or null
 	 */
 	public FieldType getFieldTypeByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
+	 * Return fieldType  associated with given name
+	 *
+	 * @param name Name of the fileType to query
+	 * @return fieldType object associate with given name
+	 */
+	public FieldType getFieldTypeByName(String name);
+	
+	/**
 	 * @param uuid
-	 * @return
+	 * @return form or null
 	 */
 	public Form getFormByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return form field or null
 	 */
 	public FormField getFormFieldByUuid(String uuid);
 	

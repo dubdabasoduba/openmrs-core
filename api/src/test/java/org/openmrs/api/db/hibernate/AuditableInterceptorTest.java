@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -22,6 +18,9 @@ import org.junit.Test;
 import org.openmrs.Auditable;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.User;
+import org.openmrs.Person;
+import org.openmrs.PersonAddress;
+import org.openmrs.PersonName;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.scheduler.Task;
@@ -91,6 +90,33 @@ public class AuditableInterceptorTest extends BaseContextSensitiveTest {
 		Assert.assertNotNull(currentState[1]);
 	}
 	
+	@Test
+	public void onFlushDirty_shouldAddPersonChangedByForPerson() throws Exception {
+		AuditableInterceptor interceptor = new AuditableInterceptor();
+		
+		Person person = new Person();
+		
+		String[] propertyNames = new String[] { "personChangedBy" };
+		Object[] currentState = new Object[] { null };
+		
+		interceptor.onFlushDirty(person, null, currentState, null, propertyNames, null);
+		Assert.assertNotNull(currentState[0]);
+	}
+	
+	@Test
+	public void onFlushDirty_shouldAddPersonDateChangedForPerson() throws Exception {
+		AuditableInterceptor interceptor = new AuditableInterceptor();
+		
+		Person person = new Person();
+		
+		String[] propertyNames = new String[] { "personDateChanged" };
+		
+		Object[] currentState = new Object[] { null };
+		
+		interceptor.onFlushDirty(person, null, currentState, null, propertyNames, null);
+		Assert.assertNotNull(currentState[0]);
+	}
+	
 	/**
 	 * @see AuditableInterceptor#onFlushDirty(Object,Serializable,Object[],Object[],String[],Type[])
 	 * @verifies set the dateChanged field
@@ -124,7 +150,7 @@ public class AuditableInterceptorTest extends BaseContextSensitiveTest {
 		
 		Date beforeDate = u.getDateChanged();
 		
-		Context.getUserService().saveUser(u, null);
+		Context.getUserService().saveUser(u);
 		
 		Date afterDate = u.getDateChanged();
 		
@@ -132,7 +158,7 @@ public class AuditableInterceptorTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditableInterceptor#onFlushDirty(Object,Serializable,null,null,null,null)}
+	 * @see AuditableInterceptor#onFlushDirty(Object,Serializable,null,null,null,null)
 	 * @verifies should not fail when the daemon user modifies something
 	 */
 	@Test
@@ -227,10 +253,51 @@ public class AuditableInterceptorTest extends BaseContextSensitiveTest {
 		u.setSystemId("user");
 		u.setPerson(Context.getPersonService().getPerson(1));
 		
-		Context.getUserService().saveUser(u, "Admin123");
+		Context.getUserService().createUser(u, "Admin123");
 		
 		Assert.assertSame(Context.getAuthenticatedUser(), u.getCreator());
 		Assert.assertNotNull(u.getDateCreated());
 	}
 	
+	@Test
+	public void onSave_shouldPopulateDateCreatedForPersonIfNull() {
+		Person person = createPersonWithNameAndAddress();
+		Context.getPersonService().savePerson(person);
+		Assert.assertNotNull(person.getDateCreated());
+		Assert.assertNotNull(person.getPersonDateCreated());
+	}
+	
+	@Test
+	public void onSave_shouldPopulateCreatorForPersonIfNull() {
+		Person person = createPersonWithNameAndAddress();
+		Context.getPersonService().savePerson(person);
+		Assert.assertNotNull(person.getCreator());
+		Assert.assertNotNull(person.getPersonCreator());
+	}
+	
+	@Test
+	public void onSave_shouldPopulatePersonChangedByandPersonDateChangedIfPersonAlreadyExists() throws Exception {
+		Person person = Context.getPersonService().getPerson(1);
+		
+		Assert.assertNull(person.getPersonChangedBy());
+		Assert.assertNull(person.getPersonDateChanged());
+		
+		person.setGender("F");
+		Context.flushSession();
+		Context.getPersonService().savePerson(person);
+		
+		Assert.assertNotNull(person.getPersonChangedBy());
+		Assert.assertNotNull(person.getPersonDateChanged());
+	}
+	
+	private Person createPersonWithNameAndAddress() {
+		Person person = new Person();
+		person.setGender("M");
+		PersonName name = new PersonName("givenName", "middleName", "familyName");
+		person.addName(name);
+		PersonAddress address = new PersonAddress();
+		address.setAddress1("some address");
+		person.addAddress(address);
+		return person;
+	}
 }

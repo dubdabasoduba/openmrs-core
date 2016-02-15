@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util.databasechange;
 
@@ -62,7 +58,7 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 	
 	/**
 	 * Does the work of adding UUIDs to all rows.
-	 * 
+	 *
 	 * @see liquibase.change.custom.CustomTaskChange#execute(liquibase.database.Database)
 	 */
 	public void execute(Database database) throws CustomChangeException {
@@ -71,7 +67,7 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 	
 	/**
 	 * Executes all the changes to the concept names as a batch update.
-	 * 
+	 *
 	 * @param connection The database connection
 	 */
 	private void runBatchInsert(JdbcConnection connection) throws CustomChangeException {
@@ -85,8 +81,9 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 			if (userId == null || userId < 1) {
 				userId = getInt(connection, "SELECT min(user_id) FROM users");
 				//leave it as null rather than setting it to 0
-				if (userId < 1)
+				if (userId < 1) {
 					userId = null;
+				}
 			}
 			
 			//userId is not a param, because it's easier this way if it's null
@@ -205,7 +202,7 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 	
 	/**
 	 * returns an integer resulting from the execution of an sql statement
-	 * 
+	 *
 	 * @param connection a DatabaseConnection
 	 * @param sql the sql statement to execute
 	 * @return integer resulting from the execution of the sql statement
@@ -217,10 +214,11 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 			stmt = connection.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			
-			if (rs.next())
+			if (rs.next()) {
 				result = rs.getInt(1);
-			else
+			} else {
 				log.warn("No row returned by getInt() method");
+			}
 			
 			if (rs.next()) {
 				log.warn("Multiple rows returned by getInt() method");
@@ -251,7 +249,7 @@ public class AddConceptMapTypesChangeset implements CustomTaskChange {
 	/**
 	 * Get the comma separated value of the concept map types names passed in as values for
 	 * parameters
-	 * 
+	 *
 	 * @see liquibase.change.custom.CustomChange#setUp()
 	 */
 	public void setUp() throws SetupException {

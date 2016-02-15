@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.web.filter.startuperror;
 
@@ -53,21 +49,22 @@ public class StartupErrorFilter extends StartupFilter {
 	/**
 	 * The velocity macro page to redirect to if an error occurs or on initial startup
 	 */
-	private final String DEFAULT_PAGE = "generalerror.vm";
+	private static final String DEFAULT_PAGE = "generalerror.vm";
 	
 	/**
 	 * Called by {@link #doFilter(ServletRequest, ServletResponse, FilterChain)} on GET requests
-	 * 
+	 *
 	 * @param httpRequest
 	 * @param httpResponse
 	 */
 	protected void doGet(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException,
 	        ServletException {
 		
-		if (getModel().errorAtStartup instanceof OpenmrsCoreModuleException)
+		if (getModel().errorAtStartup instanceof OpenmrsCoreModuleException) {
 			renderTemplate("coremoduleerror.vm", new HashMap<String, Object>(), httpResponse);
-		else
+		} else {
 			renderTemplate(DEFAULT_PAGE, new HashMap<String, Object>(), httpResponse);
+		}
 	}
 	
 	/**
@@ -80,8 +77,9 @@ public class StartupErrorFilter extends StartupFilter {
 		// if they are uploading modules
 		if (getModel().errorAtStartup instanceof OpenmrsCoreModuleException) {
 			RequestContext requestContext = new ServletRequestContext(httpRequest);
-			if (!ServletFileUpload.isMultipartContent(requestContext))
+			if (!ServletFileUpload.isMultipartContent(requestContext)) {
 				throw new ServletException("The request is not a valid multipart/form-data upload request");
+			}
 			
 			FileItemFactory factory = new DiskFileItemFactory();
 			ServletFileUpload upload = new ServletFileUpload(factory);
@@ -117,7 +115,7 @@ public class StartupErrorFilter extends StartupFilter {
 	}
 	
 	/**
-	 * @see org.openmrs.web.filter.StartupFilter#skipFilter()
+	 * @see org.openmrs.web.filter.StartupFilter#skipFilter(HttpServletRequest)
 	 */
 	public boolean skipFilter(HttpServletRequest request) {
 		return !Listener.errorOccurredAtStartup();

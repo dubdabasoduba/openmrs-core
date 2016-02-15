@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -42,7 +38,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return a list of visit type objects.
 	 * @should get all visit types
 	 */
-	@Authorized( { PrivilegeConstants.VIEW_VISIT_TYPES })
+	@Authorized( { PrivilegeConstants.GET_VISIT_TYPES })
 	List<VisitType> getAllVisitTypes();
 	
 	/**
@@ -63,7 +59,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return the visit type object found with the given id, else null.
 	 * @should get correct visit type
 	 */
-	@Authorized( { PrivilegeConstants.VIEW_VISIT_TYPES })
+	@Authorized( { PrivilegeConstants.GET_VISIT_TYPES })
 	VisitType getVisitType(Integer visitTypeId);
 	
 	/**
@@ -73,7 +69,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return the visit type object found with the given uuid, else null.
 	 * @should get correct visit type
 	 */
-	@Authorized( { PrivilegeConstants.VIEW_VISIT_TYPES })
+	@Authorized( { PrivilegeConstants.GET_VISIT_TYPES })
 	VisitType getVisitTypeByUuid(String uuid);
 	
 	/**
@@ -83,7 +79,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return a list of all visit types with names similar to or containing the given phrase
 	 * @should get correct visit types
 	 */
-	@Authorized( { PrivilegeConstants.VIEW_VISIT_TYPES })
+	@Authorized( { PrivilegeConstants.GET_VISIT_TYPES })
 	List<VisitType> getVisitTypes(String fuzzySearchPhrase);
 	
 	/**
@@ -136,7 +132,7 @@ public interface VisitService extends OpenmrsService {
 	 * @throws APIException
 	 * @should return all unvoided visits
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public List<Visit> getAllVisits() throws APIException;
 	
 	/**
@@ -146,7 +142,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return the visit object found with the given id, else null.
 	 * @throws APIException
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public Visit getVisit(Integer visitId) throws APIException;
 	
 	/**
@@ -157,7 +153,7 @@ public interface VisitService extends OpenmrsService {
 	 * @throws APIException
 	 * @should return a visit matching the specified uuid
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public Visit getVisitByUuid(String uuid) throws APIException;
 	
 	/**
@@ -256,7 +252,7 @@ public interface VisitService extends OpenmrsService {
 	 * @should get all visits with given attribute values
 	 * @should not find any visits if none have given attribute values
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public List<Visit> getVisits(Collection<VisitType> visitTypes, Collection<Patient> patients,
 	        Collection<Location> locations, Collection<Concept> indications, Date minStartDatetime, Date maxStartDatetime,
 	        Date minEndDatetime, Date maxEndDatetime, Map<VisitAttributeType, Object> attributeValues,
@@ -270,7 +266,7 @@ public interface VisitService extends OpenmrsService {
 	 * @throws APIException
 	 * @should return all unvoided visits for the specified patient
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public List<Visit> getVisitsByPatient(Patient patient) throws APIException;
 	
 	/**
@@ -280,7 +276,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return a list of visits
 	 * @throws APIException
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public List<Visit> getActiveVisitsByPatient(Patient patient) throws APIException;
 	
 	/**
@@ -295,7 +291,7 @@ public interface VisitService extends OpenmrsService {
 	 * @should return all unvoided visits for the specified patient
 	 * @should return all active visits for the specified patient
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	public List<Visit> getVisitsByPatient(Patient patient, boolean includeInactive, boolean includeVoided)
 	        throws APIException;
 	
@@ -303,7 +299,7 @@ public interface VisitService extends OpenmrsService {
 	 * @return all {@link VisitAttributeType}s
 	 * @should return all visit attribute types including retired ones
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISIT_ATTRIBUTE_TYPES)
+	@Authorized(PrivilegeConstants.GET_VISIT_ATTRIBUTE_TYPES)
 	List<VisitAttributeType> getAllVisitAttributeTypes();
 	
 	/**
@@ -312,7 +308,7 @@ public interface VisitService extends OpenmrsService {
 	 * @should return the visit attribute type with the given id
 	 * @should return null if no visit attribute type exists with the given id
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISIT_ATTRIBUTE_TYPES)
+	@Authorized(PrivilegeConstants.GET_VISIT_ATTRIBUTE_TYPES)
 	VisitAttributeType getVisitAttributeType(Integer id);
 	
 	/**
@@ -321,7 +317,7 @@ public interface VisitService extends OpenmrsService {
 	 * @should return the visit attribute type with the given uuid
 	 * @should return null if no visit attribute type exists with the given uuid
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISIT_ATTRIBUTE_TYPES)
+	@Authorized(PrivilegeConstants.GET_VISIT_ATTRIBUTE_TYPES)
 	VisitAttributeType getVisitAttributeTypeByUuid(String uuid);
 	
 	/**
@@ -370,7 +366,7 @@ public interface VisitService extends OpenmrsService {
 	 * @should get the visit attribute with the given uuid
 	 * @should return null if no visit attribute has the given uuid
 	 */
-	@Authorized(PrivilegeConstants.VIEW_VISITS)
+	@Authorized(PrivilegeConstants.GET_VISITS)
 	VisitAttribute getVisitAttributeByUuid(String uuid);
 	
 	/**

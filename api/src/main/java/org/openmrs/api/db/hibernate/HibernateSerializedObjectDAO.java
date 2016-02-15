@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
@@ -21,8 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Restrictions;
 import org.openmrs.Auditable;
 import org.openmrs.OpenmrsData;
 import org.openmrs.OpenmrsMetadata;
@@ -93,7 +89,7 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 		SerializedObject ret = null;
 		if (uuid != null) {
 			Criteria c = sessionFactory.getCurrentSession().createCriteria(SerializedObject.class);
-			c.add(Expression.eq("uuid", uuid));
+			c.add(Restrictions.eq("uuid", uuid));
 			ret = (SerializedObject) c.uniqueResult();
 		}
 		return ret;
@@ -111,23 +107,23 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 	}
 	
 	/**
-	 * @see SerializedObjectDAO#getAllObjectsByName(Class, String)
+	 * @see SerializedObjectDAO#getAllSerializedObjectsByName(Class, String, boolean)
 	 */
 	@SuppressWarnings("unchecked")
 	public List<SerializedObject> getAllSerializedObjectsByName(Class<?> type, String name, boolean exactMatchOnly)
 	        throws DAOException {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(SerializedObject.class);
-		c.add(Expression.or(Expression.eq("type", type.getName()), Expression.eq("subtype", type.getName())));
+		c.add(Restrictions.or(Restrictions.eq("type", type.getName()), Restrictions.eq("subtype", type.getName())));
 		if (exactMatchOnly) {
-			c.add(Expression.eq("name", name));
+			c.add(Restrictions.eq("name", name));
 		} else {
-			c.add(Expression.ilike("name", name, MatchMode.ANYWHERE));
+			c.add(Restrictions.ilike("name", name, MatchMode.ANYWHERE));
 		}
 		return (List<SerializedObject>) c.list();
 	}
 	
 	/**
-	 * @see SerializedObjectDAO#getAllObjectsByName(Class, String)
+	 * @see SerializedObjectDAO#getAllObjectsByName(Class, String, boolean)
 	 */
 	public <T extends OpenmrsMetadata> List<T> getAllObjectsByName(Class<T> type, String name, boolean exactMatchOnly)
 	        throws DAOException {
@@ -145,9 +141,9 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 	@SuppressWarnings("unchecked")
 	public List<SerializedObject> getAllSerializedObjects(Class<?> type, boolean includeRetired) throws DAOException {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(SerializedObject.class);
-		c.add(Expression.or(Expression.eq("type", type.getName()), Expression.eq("subtype", type.getName())));
+		c.add(Restrictions.or(Restrictions.eq("type", type.getName()), Restrictions.eq("subtype", type.getName())));
 		if (!includeRetired) {
-			c.add(Expression.like("retired", false));
+			c.add(Restrictions.like("retired", false));
 		}
 		return (List<SerializedObject>) c.list();
 	}
@@ -196,6 +192,22 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 		if (serializer == null) {
 			serializer = getSerializer(serializedObject);
 		}
+		
+		if (object instanceof Auditable) {
+			Auditable auditableObj = (Auditable) object;
+			if (auditableObj.getCreator() == null) {
+				auditableObj.setCreator(Context.getAuthenticatedUser());
+			}
+			serializedObject.setCreator(auditableObj.getCreator());
+			
+			if (auditableObj.getDateCreated() == null) {
+				auditableObj.setDateCreated(new Date());
+			}
+			serializedObject.setDateCreated(auditableObj.getDateCreated());
+			serializedObject.setChangedBy(auditableObj.getChangedBy());
+			serializedObject.setDateChanged(auditableObj.getDateChanged());
+		}
+		
 		String data = null;
 		try {
 			data = serializer.serialize(object);
@@ -210,20 +222,6 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 		serializedObject.setSerializationClass(serializer.getClass());
 		serializedObject.setSerializedData(data);
 		
-		if (object instanceof Auditable) {
-			Auditable auditableObj = (Auditable) object;
-			serializedObject.setCreator(auditableObj.getCreator());
-			serializedObject.setDateCreated(auditableObj.getDateCreated());
-			if (serializedObject.getCreator() == null) {
-				serializedObject.setCreator(Context.getAuthenticatedUser());
-			}
-			if (serializedObject.getDateCreated() == null) {
-				serializedObject.setDateCreated(new Date());
-			}
-			serializedObject.setChangedBy(auditableObj.getChangedBy());
-			serializedObject.setDateChanged(auditableObj.getDateChanged());
-		}
-		
 		if (object instanceof OpenmrsMetadata) {
 			OpenmrsMetadata metaObj = (OpenmrsMetadata) object;
 			serializedObject.setName(metaObj.getName());
@@ -236,7 +234,7 @@ public class HibernateSerializedObjectDAO implements SerializedObjectDAO {
 		
 		if (object instanceof OpenmrsData) {
 			OpenmrsData dataObj = (OpenmrsData) object;
-			serializedObject.setRetired(dataObj.isVoided() == Boolean.TRUE);
+			serializedObject.setRetired(dataObj.isVoided());
 			serializedObject.setRetiredBy(dataObj.getVoidedBy());
 			serializedObject.setDateRetired(dataObj.getDateVoided());
 			serializedObject.setRetireReason(dataObj.getVoidReason());

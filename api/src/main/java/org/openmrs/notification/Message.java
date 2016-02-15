@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.notification;
 
@@ -19,13 +15,13 @@ import java.util.Date;
 public class Message implements Serializable {
 	
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -5392076713513109152L;
 	
 	private Integer id;
 	
-	private StringBuffer recipients = new StringBuffer();
+	private StringBuilder recipients = new StringBuilder();
 	
 	private String sender;
 	
@@ -100,13 +96,14 @@ public class Message implements Serializable {
 	
 	/**
 	 * Auto generated method comment
-	 * 
+	 *
 	 * @param recipients
 	 * @should set multiple recipients
 	 */
 	public void setRecipients(String recipients) {
-		if (recipients != null)
-			this.recipients = new StringBuffer(recipients);
+		if (recipients != null) {
+			this.recipients = new StringBuilder(recipients);
+		}
 	}
 	
 	public String getRecipients() {
@@ -117,7 +114,7 @@ public class Message implements Serializable {
 	 * Add a new receiver of this message. Will append to current list of recipients by inserting a
 	 * comma. If no recipients exist, this method has no effect (TODO is this the correct
 	 * behavior??!).
-	 * 
+	 *
 	 * @param recipient a new address to assign
 	 * @should add new recipient
 	 */

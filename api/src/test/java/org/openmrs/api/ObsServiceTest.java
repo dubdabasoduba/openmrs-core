@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -47,12 +43,14 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptProposal;
 import org.openmrs.Encounter;
 import org.openmrs.Location;
 import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.Person;
+import org.openmrs.Allergy;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.ObsServiceImpl;
 import org.openmrs.obs.ComplexData;
@@ -63,8 +61,8 @@ import org.openmrs.obs.handler.TextHandler;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsConstants;
-import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.OpenmrsConstants.PERSON_TYPE;
+import org.openmrs.util.OpenmrsUtil;
 
 /**
  * TODO clean up and add tests for all methods in ObsService
@@ -72,6 +70,8 @@ import org.openmrs.util.OpenmrsConstants.PERSON_TYPE;
 public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	protected static final String INITIAL_OBS_XML = "org/openmrs/api/include/ObsServiceTest-initial.xml";
+	
+	protected static final String ENCOUNTER_OBS_XML = "org/openmrs/api/include/ObsServiceTest-EncounterOverwrite.xml";
 	
 	protected static final String COMPLEX_OBS_XML = "org/openmrs/api/include/ObsServiceTest-complex.xml";
 	
@@ -431,7 +431,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		// end create gif file
 		ObsService os = Context.getObsService();
 		
-		Obs complexObs = os.getComplexObs(44, OpenmrsConstants.RAW_VIEW);
+		Obs complexObs = os.getComplexObs(44, ComplexObsHandler.RAW_VIEW);
 		
 		Assert.assertNotNull(complexObs);
 		Assert.assertTrue(complexObs.isComplex());
@@ -502,7 +502,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		ObsService os = Context.getObsService();
 		
-		Obs normalObs = os.getComplexObs(7, OpenmrsConstants.RAW_VIEW);
+		Obs normalObs = os.getComplexObs(7, ComplexObsHandler.RAW_VIEW);
 		
 		Assert.assertFalse(normalObs.isComplex());
 	}
@@ -709,7 +709,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 			try {
 				previouslyCreatedFile.delete();
 			}
-			catch (Throwable t) {
+			catch (Exception e) {
 				// pass
 			}
 		}
@@ -801,44 +801,47 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get all obs assigned to given encounters", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get all obs assigned to given encounters", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldGetAllObsAssignedToGivenEncounters() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, Collections.singletonList(new Encounter(4)), null, null, null,
-		    null, null, null, null, null, null, false);
+		    null, null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(6, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get count of all obs assigned to given encounters", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get count of all obs assigned to given encounters", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldGetCountOfObsAssignedToGivenEncounters() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, Collections.singletonList(new Encounter(4)), null, null, null,
-		    null, null, null, null, false);
+		    null, null, null, null, false, null);
 		
 		Assert.assertEquals(6, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get all obs with answer concept in given answers parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get all obs with answer concept in given answers parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldGetAllObsWithAnswerConceptInGivenAnswersParameter() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, Collections.singletonList(new Concept(7)), null, null,
-		    null, null, null, null, null, false);
+		    null, null, null, null, null, false, null);
 		
 		// obs 11 in INITIAL_OBS_XML and obs 13 in standardTestDataset
 		Assert.assertEquals(2, obss.size());
@@ -852,16 +855,17 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get count of obs with answer concept in given answers parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get count of obs with answer concept in given answers parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldGetCountOfObsWithAnswerConceptInGivenAnswersParameter() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, Collections.singletonList(new Concept(7)), null,
-		    null, null, null, null, false);
+		    null, null, null, null, false, null);
 		
 		Assert.assertEquals(2, count.intValue());
 		
@@ -869,44 +873,47 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get all obs with question concept in given questions parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get all obs with question concept in given questions parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldGetAllObsWithQuestionConceptInGivenQuestionsParameter() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, Collections.singletonList(new Concept(5497)), null, null,
-		    null, null, null, null, null, null, false);
+		    null, null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(2, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should get count of obs with question concept in given questions parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should get count of obs with question concept in given questions parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldGetCountOfObsWithQuestionConceptInGivenQuestionsParameter() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, Collections.singletonList(new Concept(5497)), null, null,
-		    null, null, null, null, false);
+		    null, null, null, null, false, null);
 		
 		Assert.assertEquals(2, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should include voided obs if includeVoidedObs is true", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should include voided obs if includeVoidedObs is true", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldIncludeVoidedObsIfIncludeVoidedObsIsTrue() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(Collections.singletonList(new Person(9)), null, null, null, null, null,
-		    null, null, null, null, null, true);
+		    null, null, null, null, null, true, null);
 		
 		Assert.assertEquals(2, obss.size());
 		
@@ -916,16 +923,17 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should include voided obs in count if includeVoidedObs is true", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should include voided obs in count if includeVoidedObs is true", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldIncludeVoidedObsInTheCountIfIncludeVoidedObsIsTrue() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer obss = obsService.getObservationCount(Collections.singletonList(new Person(9)), null, null, null, null,
-		    null, null, null, null, true);
+		    null, null, null, null, true, null);
 		
 		Assert.assertEquals(2, obss.intValue());
 		
@@ -933,16 +941,17 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should limit number of obs returned to mostReturnN parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should limit number of obs returned to mostReturnN parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldLimitNumberOfObsReturnedToMostReturnNParameter() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> count = obsService.getObservations(Collections.singletonList(new Person(8)), null, null, null, null, null,
-		    null, 1, null, null, null, false);
+		    null, 1, null, null, null, false, null);
 		
 		Assert.assertEquals(1, count.size());
 		
@@ -950,16 +959,17 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should not include voided obs", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should not include voided obs", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldNotIncludeVoidedObs() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(Collections.singletonList(new Person(9)), null, null, null, null, null,
-		    null, null, null, null, null, false);
+		    null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(1, obss.size());
 		
@@ -968,186 +978,213 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should not include voided obs in count", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should not include voided obs in count", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldNotIncludeVoidedObsInCount() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer obss = obsService.getObservationCount(Collections.singletonList(new Person(9)), null, null, null, null,
-		    null, null, null, null, false);
+		    null, null, null, null, false, null);
 		
 		Assert.assertEquals(1, obss.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return obs whose groupId is given obsGroupId", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return obs whose groupId is given obsGroupId", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldReturnObsWhoseGroupIdIsGivenObsGroupId() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, null, null, null, null, null, 2 /*obsGroupId*/, null,
-		    null, false);
+		    null, false, null);
 		
 		Assert.assertEquals(1, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return count of obs whose groupId is given obsGroupId", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of obs whose groupId is given obsGroupId", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldReturnCountOfObsWhoseGroupIdIsGivenObsGroupId() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, null, null, null, 2 /*obsGroupId*/, null, null,
-		    false);
+		    false, null);
 		
 		Assert.assertEquals(1, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return obs whose person is a patient only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return obs whose person is a patient only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldReturnObsWhosePersonIsAPatientOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, null, Collections.singletonList(PERSON_TYPE.PATIENT),
-		    null, null, null, null, null, null, false);
+		    null, null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(13, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return count of obs whose person is a patient only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of obs whose person is a patient only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldReturnCountOfObsWhosePersonIsAPatientOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, null, Collections
-		        .singletonList(PERSON_TYPE.PATIENT), null, null, null, null, false);
+		        .singletonList(PERSON_TYPE.PATIENT), null, null, null, null, false, null);
 		
 		Assert.assertEquals(13, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return all obs whose person is a person only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return all obs whose person is a person only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldReturnAllObsWhosePersonIsAPersonOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, null, Collections.singletonList(PERSON_TYPE.PERSON),
-		    null, null, null, null, null, null, false);
+		    null, null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(15, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return count of all obs whose person is a person only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of all obs whose person is a person only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldReturnCountOfAllObsWhosePersonIsAPersonOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, null,
-		    Collections.singletonList(PERSON_TYPE.PERSON), null, null, null, null, false);
+		    Collections.singletonList(PERSON_TYPE.PERSON), null, null, null, null, false, null);
 		
 		Assert.assertEquals(15, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return obs whose person is a user only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return obs whose person is a user only", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldReturnObsWhosePersonIsAUserOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, null, Collections.singletonList(PERSON_TYPE.USER),
-		    null, null, null, null, null, null, false);
+		    null, null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(1, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return count of obs whose person is a user only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of obs whose person is a user only", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldReturnCountOfObsWhosePersonIsAUserOnly() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, null, Collections.singletonList(PERSON_TYPE.USER),
-		    null, null, null, null, false);
+		    null, null, null, null, false, null);
 		
 		Assert.assertEquals(1, count.intValue());
 	}
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return obs with location in given locations parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return obs with location in given locations parameter", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldReturnObsWithLocationInGivenLocationsParameter() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(null, null, null, null, null,
-		    Collections.singletonList(new Location(1)), null, null, null, null, null, false);
+		    Collections.singletonList(new Location(1)), null, null, null, null, null, false, null);
 		
 		Assert.assertEquals(8, obss.size());
 	}
 	
 	/**
 	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should return count of obs with location in given locations parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of obs with location in given locations parameter", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
 	public void getObservationCount_shouldReturnCountOfObsWithLocationInGivenLocationsParameter() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		Integer count = obsService.getObservationCount(null, null, null, null, null, Collections.singletonList(new Location(
-		        1)), null, null, null, false);
+		        1)), null, null, null, false, null);
 		
 		Assert.assertEquals(8, count.intValue());
 	}
 	
 	/**
-	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should sort returned obs by conceptId if sort is concept", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should return count of obs with matching accession number", method = "getObservationCount(List,List,List,List,List,List,Integer,Date,Date,boolean,String)")
+	public void getObservationCount_shouldReturnCountOfObsWithMatchingAccessionNumber() throws Exception {
+		executeDataSet(INITIAL_OBS_XML);
+		
+		ObsService obsService = Context.getObsService();
+		
+		Integer count = obsService.getObservationCount(null, null, null, null, null, null, null, null, null, false, "AN1");
+		
+		Assert.assertEquals(2, count.intValue());
+	}
+	
+	/**
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
+	 */
+	@Test
+	@Verifies(value = "should sort returned obs by conceptId if sort is concept", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldSortReturnedObsByConceptIdIfSortIsConcept() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(Collections.singletonList(new Person(7)), null, null, null, null, null,
-		    Arrays.asList(new String[] { "concept", "obsDatetime" }), null, null, null, null, false);
+		    Arrays.asList(new String[] { "concept", "obsDatetime" }), null, null, null, null, false, null);
 		
 		// check the order of a few of the obs returned
 		Assert.assertEquals(11, obss.get(0).getObsId().intValue());
@@ -1157,19 +1194,44 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	
 	/**
 	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
 	 */
 	@Test
-	@Verifies(value = "should sort returned obs by obsDatetime if sort is empty", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean)")
+	@Verifies(value = "should sort returned obs by obsDatetime if sort is empty", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
 	public void getObservations_shouldSortReturnedObsByObsDatetimeIfSortIsEmpty() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
 		
 		ObsService obsService = Context.getObsService();
 		
 		List<Obs> obss = obsService.getObservations(Collections.singletonList(new Person(8)), null, null, null, null, null,
-		    new ArrayList<String>(), null, null, null, null, false);
+		    new ArrayList<String>(), null, null, null, null, false, null);
 		
 		Assert.assertEquals(8, obss.get(0).getObsId().intValue());
 		Assert.assertEquals(7, obss.get(1).getObsId().intValue());
+	}
+	
+	/**
+	 * @see ObsService#getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)
+	 */
+	@Test
+	@Verifies(value = "should only return observations with matching accession number", method = "getObservations(List,List,List,List,List,List,List,Integer,Integer,Date,Date,boolean,String)")
+	public void getObservations_shouldOnlyReturnedObsWithMatchingAccessionNumber() throws Exception {
+		executeDataSet(INITIAL_OBS_XML);
+		
+		ObsService obsService = Context.getObsService();
+		
+		List<Obs> obss1 = obsService.getObservations(null, null, null, null, null, null, null, null, null, null, null,
+		    false, "AN1");
+		
+		List<Obs> obss2 = obsService.getObservations(Collections.singletonList(new Person(6)), null, null, null, null, null,
+		    null, null, null, null, null, false, "AN2");
+		
+		List<Obs> obss3 = obsService.getObservations(Collections.singletonList(new Person(8)), null, null, null, null, null,
+		    null, null, null, null, null, false, "AN2");
+		
+		Assert.assertEquals(2, obss1.size());
+		Assert.assertEquals(1, obss2.size());
+		Assert.assertEquals(0, obss3.size());
 	}
 	
 	/**
@@ -1296,7 +1358,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Encounter encounter = new Encounter(3);
 		Date datetime = new Date();
 		Location location = new Location(1);
-		Integer valueGroupId = new Integer(7);
+		Integer valueGroupId = Integer.valueOf(7);
 		Date valueDatetime = new Date();
 		Concept valueCoded = new Concept(3);
 		Double valueNumeric = 2.0;
@@ -1520,7 +1582,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ObsService#getObservationCount(List, boolean)}
+	 * @see ObsService#getObservationCount(List, boolean)
 	 */
 	@Test
 	@Verifies(value = "should include voided observations using the specified conceptNames as answers", method = "getObservationCount(List, boolean)")
@@ -1554,7 +1616,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ObsService#getObservationCount(List, boolean)}
+	 * @see ObsService#getObservationCount(List, boolean)
 	 */
 	@Test
 	@Verifies(value = "should return the count of all observations using the specified conceptNames as answers", method = "getObservationCount(List, boolean)")
@@ -1589,7 +1651,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ObsService#getObservationCount(List, boolean)}
+	 * @see ObsService#getObservationCount(List, boolean)
 	 */
 	@Test
 	@Verifies(value = "should return zero if no observation is using any of the concepNames in the list", method = "getObservationCount(List, boolean)")
@@ -1648,4 +1710,82 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		assertEquals(changeMessage, obs.getVoidReason());
 	}
 	
+	@Test
+	@Verifies(value = "should overwrite ObsPerson Value With EncounterPatient", method = "saveObs(Obs,String)")
+	public void saveObs_shouldOverwriteObsPersonValueWithEncounterPatient() throws Exception {
+		String changeMessage = "Testing TRUNK-3283";
+		
+		executeDataSet(ENCOUNTER_OBS_XML);
+		ObsService obsService = Context.getObsService();
+		Obs obs = obsService.getObs(13);
+		//overwrite ObsPerson with EncounterPatient
+		Obs obsSaved = obsService.saveObs(obs, changeMessage);
+		
+		assertEquals(obs.getPerson(), obsSaved.getEncounter().getPatient());
+	}
+
+	/**
+	 * @see ObsService#purgeObs(Obs,boolean)
+	 */
+	@Test
+	@Verifies(value = "should delete any obsGroupMembers before deleting the obs", method = "purgeObs(Obs,boolean)")
+	public void purgeObs_shouldDeleteAnyObsGroupMembersBeforeDeletingTheObs() throws Exception {
+
+		executeDataSet(INITIAL_OBS_XML);
+		ObsService obsService = Context.getObsService();
+
+		final int parentObsId = 1;
+		Obs obs = obsService.getObs(parentObsId);
+
+		final int childObsId = 2;
+		final int unrelatedObsId = 3;
+		final int orderReferencingObsId = 4;
+		Obs unrelatedObservation = obsService.getObs(unrelatedObsId);
+		obs.addGroupMember(obsService.getObs(childObsId));
+		obs.addGroupMember(obsService.getObs(orderReferencingObsId));
+
+		final int conceptProposalObsId = 5;
+		ConceptProposal conceptProposal = new ConceptProposal();
+		conceptProposal.setObs(obsService.getObs(conceptProposalObsId));
+		obs.addGroupMember(conceptProposal.getObs());
+
+		//before calling purgeObs method the Obs exists
+		Assert.assertNotNull(obsService.getObs(parentObsId));
+		Assert.assertNotNull(obsService.getObs(childObsId));
+		Assert.assertNotNull(obsService.getObs(unrelatedObsId));
+		Assert.assertNotNull(obsService.getObs(orderReferencingObsId));
+		Assert.assertNotNull(obsService.getObs(conceptProposalObsId));
+
+		Context.getObsService().purgeObs(obs, false);
+
+		//	After calling purgeObs method Obs are deleted
+		Assert.assertNull(obsService.getObs(parentObsId));
+		Assert.assertNull(obsService.getObs(childObsId));
+		Assert.assertNotNull(obsService.getObs(unrelatedObsId));
+		Assert.assertNull(obsService.getObs(orderReferencingObsId));
+		Assert.assertNull(obsService.getObs(conceptProposalObsId));
+	}
+
+	/**
+	 * @see ObsService#purgeObs(Obs,boolean)
+	 */
+	@Test
+	@Verifies(value = "should not delete referenced orders when purging obs", method = "purgeObs(Obs,boolean)")
+	public void purgeObs_shouldNotDeleteReferencedOrdersWhenPurgingObs() throws Exception {
+
+		executeDataSet(INITIAL_OBS_XML);
+		ObsService obsService = Context.getObsService();
+		final OrderService orderService = Context.getOrderService();
+
+		final int orderReferencingObsId = 4;
+		final Obs obs = obsService.getObs(orderReferencingObsId);
+
+		final Order order = obs.getOrder();
+		final Integer referencedOrderId = order.getOrderId();
+
+		Context.getObsService().purgeObs(obs, false);
+
+		Assert.assertNull(obsService.getObs(orderReferencingObsId));
+		Assert.assertNotNull(orderService.getOrder(referencedOrderId));
+	}
 }

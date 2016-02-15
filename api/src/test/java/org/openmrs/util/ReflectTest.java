@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.util;
 
@@ -44,8 +40,8 @@ public class ReflectTest {
 		Reflect reflect = new Reflect(OpenmrsObject.class);
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals("genericCollectionField", allFields.get(0).getName());
-		Assert.assertTrue(reflect.hasField(allFields.get(0)));
+		Field genericCollectionField = findFieldByName(allFields, "genericCollectionField");
+		Assert.assertTrue(reflect.hasField(genericCollectionField));
 	}
 	
 	/**
@@ -57,25 +53,36 @@ public class ReflectTest {
 		Reflect reflect = new Reflect(OpenmrsObject.class);
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals("normalClassField", allFields.get(3).getName());
-		Assert.assertFalse(reflect.hasField(allFields.get(3)));
+		Field normalClassField = findFieldByName(allFields, "normalClassField");
+		
+		Assert.assertFalse(reflect.hasField(normalClassField));
+	}
+	
+	private Field findFieldByName(List<Field> fields, String name) {
+		for (Field field : fields) {
+			if (name.equals(field.getName())) {
+				return field;
+			}
+		}
+		throw new IllegalArgumentException("Field not found!");
 	}
 	
 	/**
-	 * @see {@link Reflect#getAllFields(Class<*>)}
+	 * @see Reflect#getAllFields(Class<*>)
 	 */
 	@Test
 	@Verifies(value = "should return all fields include private and super classes", method = "getAllFields(Class<*>)")
 	public void getAllFields_shouldReturnAllFieldsIncludePrivateAndSuperClasses() throws Exception {
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals(4, allFields.size());
-		Assert.assertEquals("subClassField", allFields.get(1).getName());
-		Assert.assertEquals("normalClassField", allFields.get(3).getName());
+		findFieldByName(allFields, "subClassField");
+		findFieldByName(allFields, "normalClassField");
+		findFieldByName(allFields, "nonCollectionField");
+		findFieldByName(allFields, "genericCollectionField");
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollection(Class<*>)}
+	 * @see Reflect#isCollection(Class<*>)
 	 */
 	@Test
 	@Verifies(value = "should return false if given fieldClass is not a Collection class", method = "isCollection(Class<*>)")
@@ -83,12 +90,12 @@ public class ReflectTest {
 		Reflect reflect = new Reflect(OpenmrsObject.class);
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals("nonCollectionField", allFields.get(2).getName());
-		Assert.assertFalse(reflect.isCollectionField(allFields.get(2)));
+		Field nonCollectionField = findFieldByName(allFields, "nonCollectionField");
+		Assert.assertFalse(reflect.isCollectionField(nonCollectionField));
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollection(Class<*>)}
+	 * @see Reflect#isCollection(Class<*>)
 	 */
 	@Test
 	@Verifies(value = "should return true if given fieldClass is Collection class", method = "isCollection(Class<*>)")
@@ -97,7 +104,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollection(Object)}
+	 * @see Reflect#isCollection(Object)
 	 */
 	@Test
 	@Verifies(value = "should return false if given object is not a Collection", method = "isCollection(Object)")
@@ -106,7 +113,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollection(Object)}
+	 * @see Reflect#isCollection(Object)
 	 */
 	@Test
 	@Verifies(value = "should return true if given object is Collection class", method = "isCollection(Object)")
@@ -115,7 +122,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#Reflect(Class)}
+	 * @see Reflect#Reflect(Class)
 	 */
 	@Test(expected = NullPointerException.class)
 	@Verifies(value = "should throw exception when null is passed", method = "Reflect(Class)")
@@ -124,7 +131,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#getInheritedFields(Class)}
+	 * @see Reflect#getInheritedFields(Class)
 	 */
 	@Test
 	@Verifies(value = "should return only the sub class fields of given parameterized class", method = "getInheritedFields(Class)")
@@ -134,13 +141,16 @@ public class ReflectTest {
 		
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals(3, fields.size());
-		Assert.assertEquals("normalClassField", allFields.get(3).getName());
-		Assert.assertFalse(fields.contains(allFields.get(3)));
+		findFieldByName(fields, "subClassField");
+		findFieldByName(fields, "nonCollectionField");
+		findFieldByName(fields, "genericCollectionField");
+		
+		Field normalClassField = findFieldByName(allFields, "normalClassField");
+		Assert.assertFalse(fields.contains(normalClassField));
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollectionField(Field)}
+	 * @see Reflect#isCollectionField(Field)
 	 */
 	@Test
 	@Verifies(value = "should return true if given field is Collection and its element type is given parameterized", method = "isCollectionField(Field)")
@@ -154,7 +164,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollectionField(Field)}
+	 * @see Reflect#isCollectionField(Field)
 	 */
 	@Test
 	@Verifies(value = "should return false if given field is not a Collection", method = "isCollectionField(Field)")
@@ -163,7 +173,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isCollectionField(Field)}
+	 * @see Reflect#isCollectionField(Field)
 	 */
 	@Test
 	@Verifies(value = "should return false if given field is Collection and element type is other than given", method = "isCollectionField(Field)")
@@ -171,12 +181,12 @@ public class ReflectTest {
 		Reflect reflect = new Reflect(OpenmrsObject.class);
 		List<Field> allFields = Reflect.getAllFields(OpenmrsObjectImp.class);
 		
-		Assert.assertEquals("genericCollectionField", allFields.get(0).getName());
-		Assert.assertFalse(reflect.isCollectionField(allFields.get(0)));
+		Field genericCollectionField = findFieldByName(allFields, "genericCollectionField");
+		Assert.assertFalse(reflect.isCollectionField(genericCollectionField));
 	}
 	
 	/**
-	 * @see {@link Reflect#isSuperClass(Class)}
+	 * @see Reflect#isSuperClass(Class)
 	 */
 	@Test
 	@Verifies(value = "should return false if given subClass is not accessible from given parameterized class", method = "isSuperClass(Class)")
@@ -187,7 +197,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isSuperClass(Class)}
+	 * @see Reflect#isSuperClass(Class)
 	 */
 	@Test
 	@Verifies(value = "should return true if given subClass is accessible from given parameterized class", method = "isSuperClass(Class)")
@@ -198,7 +208,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isSuperClass(Object)}
+	 * @see Reflect#isSuperClass(Object)
 	 */
 	@Test
 	@Verifies(value = "should return false if given object is not accessible from given parameterized class", method = "isSuperClass(Object)")
@@ -209,7 +219,7 @@ public class ReflectTest {
 	}
 	
 	/**
-	 * @see {@link Reflect#isSuperClass(Object)}
+	 * @see Reflect#isSuperClass(Object)
 	 */
 	@Test
 	@Verifies(value = "should return true if given object is accessible from given parameterized class", method = "isSuperClass(Object)")

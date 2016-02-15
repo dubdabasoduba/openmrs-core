@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -77,7 +73,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	 * updated value. To use in MySQL database: Uncomment method useInMemoryDatabase() and comment
 	 * out call to initializeInMemoryDatabase() and executeDataSet() within onSetupTransaction() .
 	 * 
-	 * @see {@link ProgramWorkflowService#savePatientProgram(PatientProgram)}
+	 * @see ProgramWorkflowService#savePatientProgram(PatientProgram)
 	 */
 	@Test
 	@Verifies(value = "should update patient program", method = "savePatientProgram(PatientProgram)")
@@ -130,7 +126,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Tests creating a new program containing workflows and states
 	 * 
-	 * @see {@link ProgramWorkflowService#saveProgram(Program)}
+	 * @see ProgramWorkflowService#saveProgram(Program)
 	 */
 	@Test
 	@Verifies(value = "should create program workflows", method = "saveProgram(Program)")
@@ -178,7 +174,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getConceptStateConversionByUuid(String)}
+	 * @see ProgramWorkflowService#getConceptStateConversionByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getConceptStateConversionByUuid(String)")
@@ -190,7 +186,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getConceptStateConversionByUuid(String)}
+	 * @see ProgramWorkflowService#getConceptStateConversionByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getConceptStateConversionByUuid(String)")
@@ -199,7 +195,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getPatientProgramByUuid(String)}
+	 * @see ProgramWorkflowService#getPatientProgramByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getPatientProgramByUuid(String)")
@@ -210,7 +206,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getPatientProgramByUuid(String)}
+	 * @see ProgramWorkflowService#getPatientProgramByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getPatientProgramByUuid(String)")
@@ -219,7 +215,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getPatientStateByUuid(String)}
+	 * @see ProgramWorkflowService#getPatientStateByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getPatientStateByUuid(String)")
@@ -230,7 +226,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getPatientStateByUuid(String)}
+	 * @see ProgramWorkflowService#getPatientStateByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getPatientStateByUuid(String)")
@@ -239,7 +235,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getProgramByUuid(String)}
+	 * @see ProgramWorkflowService#getProgramByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getProgramByUuid(String)")
@@ -250,7 +246,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getProgramByUuid(String)}
+	 * @see ProgramWorkflowService#getProgramByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getProgramByUuid(String)")
@@ -259,7 +255,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getStateByUuid(String)}
+	 * @see ProgramWorkflowService#getStateByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getStateByUuid(String)")
@@ -270,7 +266,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getStateByUuid(String)}
+	 * @see ProgramWorkflowService#getStateByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getStateByUuid(String)")
@@ -279,7 +275,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getWorkflowByUuid(String)}
+	 * @see ProgramWorkflowService#getWorkflowByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getWorkflowByUuid(String)")
@@ -290,7 +286,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#getWorkflowByUuid(String)}
+	 * @see ProgramWorkflowService#getWorkflowByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getWorkflowByUuid(String)")
@@ -302,7 +298,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	 * THIS TEST SHOULD BE IN THE CLASS 'PROGRAMWORKFLOWTEST.JAVA' BUT IT REQUIRES ACCESS TO THE DAO
 	 * LAYER
 	 * 
-	 * @see {@link ProgramWorkflow#getSortedStates()}
+	 * @see ProgramWorkflow#getSortedStates()
 	 */
 	
 	@Test
@@ -344,7 +340,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 		executeDataSet(PROGRAM_WITH_OUTCOMES_XML);
 		
 		List<Concept> possibleOutcomes = Context.getProgramWorkflowService().getPossibleOutcomes(4);
-		assertEquals(2, possibleOutcomes.size());
+		assertEquals(4, possibleOutcomes.size());
 	}
 	
 	@Test
@@ -389,7 +385,7 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link ProgramWorkflowService#triggerStateConversion(Patient,Concept,Date)}
+	 * @see ProgramWorkflowService#triggerStateConversion(Patient,Concept,Date)
 	 */
 	@Test
 	@Verifies(value = "should skip past patient programs that are already completed", method = "triggerStateConversion(Patient,Concept,Date)")
@@ -405,7 +401,6 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 		Assert.assertNotNull(pp.getProgram().getWorkflow(1).getState(diedConcept));
 		
 		Thread.sleep(10);//delay so that we have a time difference
-		pws.triggerStateConversion(pp.getPatient(), diedConcept, new Date());
 		
 		pp = pws.getPatientProgram(patientProgramId);
 		Assert.assertEquals(originalDateCompleted, pp.getDateCompleted());
@@ -423,6 +418,47 @@ public class ProgramWorkflowServiceTest extends BaseContextSensitiveTest {
 	public void getProgramByName_shouldReturnNullWhenNoProgramForGivenName() {
 		Program p = pws.getProgramByName("unexisting program");
 		assertNull(p);
+	}
+	
+	@Test
+	@Verifies(value = "should save the retire program with resaon", method = "retireProgram(Program program,String reason)")
+	public void retireProgram_shouldSaveTheRetiredProgramWithReason() throws APIException {
+		String reason = "Feeling well.";
+		
+		String uuid = "eae98b4c-e195-403b-b34a-82d94103b2c0";
+		Program program = Context.getProgramWorkflowService().getProgramByUuid(uuid);
+		
+		Program retireProgram = pws.retireProgram(program, reason);
+		
+		assertTrue(retireProgram.getRetired());
+		assertEquals(reason, retireProgram.getRetireReason());
+		for (ProgramWorkflow programWorkflow : program.getAllWorkflows()) {
+			assertTrue(programWorkflow.getRetired());
+			for (ProgramWorkflowState programWorkflowState : programWorkflow.getStates()) {
+				assertTrue(programWorkflowState.getRetired());
+			}
+		}
+		
+	}
+	
+	@Test
+	@Verifies(value = "should purge program with patients enrolled", method = "purgeProgram(Program program, boolean cascade)")
+	public void purgeProgram_shouldPurgeProgramWithPatientsEnrolled() {
+		Program program = Context.getProgramWorkflowService().getProgram(2);
+		
+		// program has at least one patient enrolled
+		List<PatientProgram> patientPrograms = Context.getProgramWorkflowService().getPatientPrograms(null, program, null,
+		    null, null, null, true);
+		assertTrue(patientPrograms.size() > 0);
+		
+		Context.getProgramWorkflowService().purgeProgram(program);
+		
+		// should cascade to patient programs
+		for (PatientProgram patientProgram : patientPrograms) {
+			assertNull(Context.getProgramWorkflowService().getPatientProgram(patientProgram.getId()));
+		}
+		// make sure that the program was deleted properly
+		assertNull(Context.getProgramWorkflowService().getProgram(2));
 	}
 	
 	//	/**

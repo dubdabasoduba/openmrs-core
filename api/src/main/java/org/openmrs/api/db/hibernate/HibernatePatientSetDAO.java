@@ -1,19 +1,14 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db.hibernate;
 
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -26,19 +21,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,7 +32,6 @@ import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.ProjectionList;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -61,7 +45,6 @@ import org.openmrs.EncounterType;
 import org.openmrs.Form;
 import org.openmrs.Location;
 import org.openmrs.Obs;
-import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
@@ -69,16 +52,11 @@ import org.openmrs.PatientProgram;
 import org.openmrs.PatientState;
 import org.openmrs.Person;
 import org.openmrs.PersonAttributeType;
-import org.openmrs.PersonName;
 import org.openmrs.Program;
 import org.openmrs.ProgramWorkflow;
 import org.openmrs.ProgramWorkflowState;
 import org.openmrs.Relationship;
 import org.openmrs.RelationshipType;
-import org.openmrs.User;
-import org.openmrs.api.EncounterService;
-import org.openmrs.api.ObsService;
-import org.openmrs.api.PatientService;
 import org.openmrs.api.PatientSetService;
 import org.openmrs.api.PatientSetService.Modifier;
 import org.openmrs.api.PatientSetService.PatientLocationMethod;
@@ -86,12 +64,10 @@ import org.openmrs.api.PatientSetService.TimeModifier;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.DAOException;
 import org.openmrs.api.db.PatientSetDAO;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
- * Hibernate specific implementation of the PatientSetDAO. <br/>
- * <br/>
+ * Hibernate specific implementation of the PatientSetDAO. <br>
+ * <br>
  * This class should not be instantiated. Rather, it is injected into the PatientSetService by
  * Spring.
  * 
@@ -116,348 +92,8 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
-	
-	/**
-	 * @deprecated
-	 * @see org.openmrs.api.db.PatientSetDAO#exportXml(org.openmrs.Cohort)
-	 */
-	public String exportXml(Cohort ps) throws DAOException {
-		StringBuffer ret = new StringBuffer("<patientset>");
-		for (Integer patientId : ps.getMemberIds()) {
-			ret.append(exportXml(patientId));
-		}
-		ret.append("</patientset>");
-		return ret.toString();
-	}
-	
-	private String formatUserName(User u) {
-		return u.getPersonName().getFullName();
-	}
-	
-	private String formatUser(User u) {
-		StringBuilder ret = new StringBuilder();
-		ret.append(u.getUserId() + "^" + formatUserName(u));
-		return ret.toString();
-	}
-	
-	DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	
-	private Element obsElementHelper(Document doc, Locale locale, Obs obs) {
-		Element obsNode = doc.createElement("obs");
-		Concept c = obs.getConcept();
-		
-		obsNode.setAttribute("obs_id", obs.getObsId().toString());
-		obsNode.setAttribute("concept_id", c.getConceptId().toString());
-		obsNode.setAttribute("concept_name", c.getName(locale).getName());
-		
-		if (obs.getObsDatetime() != null) {
-			obsNode.setAttribute("datetime", df.format(obs.getObsDatetime()));
-		}
-		if (obs.getAccessionNumber() != null) {
-			obsNode.setAttribute("accession_number", obs.getAccessionNumber());
-		}
-		if (obs.getComment() != null) {
-			obsNode.setAttribute("comment", obs.getComment());
-		}
-		if (obs.getObsGroup() != null) {
-			obsNode.setAttribute("obs_group_id", obs.getObsGroup().getObsId().toString());
-		}
-		if (obs.getValueGroupId() != null) {
-			obsNode.setAttribute("value_group_id", obs.getValueGroupId().toString());
-		}
-		
-		String value = null;
-		String dataType = null;
-		
-		if (obs.getValueCoded() != null) {
-			Concept valueConcept = obs.getValueCoded();
-			obsNode.setAttribute("value_coded_id", valueConcept.getConceptId().toString());
-			obsNode.setAttribute("value_coded", valueConcept.getName(locale).getName());
-			dataType = "coded";
-			value = valueConcept.getName(locale).getName();
-		}
-		if (obs.getValueAsBoolean() != null) {
-			obsNode.setAttribute("value_boolean", obs.getValueAsBoolean().toString());
-			dataType = "boolean";
-			value = obs.getValueAsBoolean().toString();
-		}
-		if (obs.getValueDatetime() != null) {
-			obsNode.setAttribute("value_datetime", df.format(obs.getValueDatetime()));
-			dataType = "datetime";
-			value = obs.getValueDatetime().toString();
-		}
-		if (obs.getValueNumeric() != null) {
-			obsNode.setAttribute("value_numeric", obs.getValueNumeric().toString());
-			dataType = "numeric";
-			value = obs.getValueNumeric().toString();
-		}
-		if (obs.getValueText() != null) {
-			obsNode.setAttribute("value_text", obs.getValueText());
-			dataType = "text";
-			value = obs.getValueText();
-		}
-		if (obs.getValueModifier() != null) {
-			obsNode.setAttribute("value_modifier", obs.getValueModifier());
-			if (value != null) {
-				value = obs.getValueModifier() + " " + value;
-			}
-		}
-		obsNode.setAttribute("data_type", dataType);
-		obsNode.appendChild(doc.createTextNode(value));
-		
-		return obsNode;
-	}
-	
-	/**
-	 * Note that the formatting may depend on locale
-	 * 
-	 * @deprecated
-	 */
-	@Deprecated
-	public String exportXml(Integer patientId) throws DAOException {
-		Locale locale = Context.getLocale();
-		
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		Document doc = null;
-		
-		PatientService patientService = Context.getPatientService();
-		EncounterService encounterService = Context.getEncounterService();
-		
-		Patient p = patientService.getPatient(patientId);
-		List<Encounter> encounters = encounterService.getEncountersByPatientId(patientId);
-		
-		try {
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			doc = builder.newDocument();
-			
-			Element root = (Element) doc.createElement("patient_data");
-			doc.appendChild(root);
-			
-			Element patientNode = doc.createElement("patient");
-			patientNode.setAttribute("patient_id", p.getPatientId().toString());
-			
-			boolean firstName = true;
-			Element namesNode = doc.createElement("names");
-			for (PersonName name : p.getNames()) {
-				if (firstName) {
-					if (name.getGivenName() != null) {
-						patientNode.setAttribute("given_name", name.getGivenName());
-					}
-					if (name.getMiddleName() != null) {
-						patientNode.setAttribute("middle_name", name.getMiddleName());
-					}
-					if (name.getFamilyName() != null) {
-						patientNode.setAttribute("family_name", name.getFamilyName());
-					}
-					if (name.getFamilyName2() != null) {
-						patientNode.setAttribute("family_name2", name.getFamilyName2());
-					}
-					firstName = false;
-				}
-				Element nameNode = doc.createElement("name");
-				if (name.getGivenName() != null) {
-					nameNode.setAttribute("given_name", name.getGivenName());
-				}
-				if (name.getMiddleName() != null) {
-					nameNode.setAttribute("middle_name", name.getMiddleName());
-				}
-				if (name.getFamilyName() != null) {
-					nameNode.setAttribute("family_name", name.getFamilyName());
-				}
-				if (name.getFamilyName2() != null) {
-					nameNode.setAttribute("family_name2", name.getFamilyName2());
-				}
-				namesNode.appendChild(nameNode);
-			}
-			patientNode.appendChild(namesNode);
-			patientNode.setAttribute("gender", p.getGender());
-			
-			/*
-			if (p.getRace() != null) {
-				patientNode.setAttribute("race", p.getRace());
-			}
-			 */
-			if (p.getBirthdate() != null) {
-				patientNode.setAttribute("birthdate", df.format(p.getBirthdate()));
-			}
-			if (p.getBirthdateEstimated() != null) {
-				patientNode.setAttribute("birthdate_estimated", p.getBirthdateEstimated().toString());
-			}
-			/*
-			if (p.getBirthplace() != null) {
-				patientNode.setAttribute("birthplace", p.getBirthplace());
-			}
-			*/
-			/*
-			if (p.getCitizenship() != null) {
-				patientNode.setAttribute("citizenship", p.getCitizenship());
-			}
-			 */
-			/*
-			if (p.getMothersName() != null) {
-				patientNode.setAttribute("mothers_name", p.getMothersName());
-			}
-			if (p.getCivilStatus() != null) {
-				patientNode.setAttribute("civil_status", p.getCivilStatus().getName(locale, false).getName());
-			}
-			 */
-			if (p.getDeathDate() != null) {
-				patientNode.setAttribute("death_date", df.format(p.getDeathDate()));
-			}
-			if (p.getDeathdateEstimated() != null) {
-				patientNode.setAttribute("deathdate_estimated", p.getDeathdateEstimated().toString());
-			}
-			
-			if (p.getCauseOfDeath() != null) {
-				patientNode.setAttribute("cause_of_death", p.getCauseOfDeath().getName(locale, false).getName());
-			}
-			/*
-			if (p.getHealthDistrict() != null) {
-				patientNode.setAttribute("health_district", p.getHealthDistrict());
-			}
-			if (p.getHealthCenter() != null) {
-				patientNode.setAttribute("health_center", p.getHealthCenter().getName());
-				patientNode.setAttribute("health_center_id", p.getHealthCenter().getLocationId().toString());
-			}
-			 */
 
-			for (Encounter e : encounters) {
-				Element encounterNode = doc.createElement("encounter");
-				if (e.getEncounterDatetime() != null) {
-					encounterNode.setAttribute("datetime", df.format(e.getEncounterDatetime()));
-				}
-				
-				Element metadataNode = doc.createElement("metadata");
-				{
-					Location l = e.getLocation();
-					if (l != null) {
-						Element temp = doc.createElement("location");
-						temp.setAttribute("location_id", l.getLocationId().toString());
-						temp.appendChild(doc.createTextNode(l.getName()));
-						metadataNode.appendChild(temp);
-					}
-					EncounterType t = e.getEncounterType();
-					if (t != null) {
-						Element temp = doc.createElement("encounter_type");
-						temp.setAttribute("encounter_type_id", t.getEncounterTypeId().toString());
-						temp.appendChild(doc.createTextNode(t.getName()));
-						metadataNode.appendChild(temp);
-					}
-					Form f = e.getForm();
-					if (f != null) {
-						Element temp = doc.createElement("form");
-						temp.setAttribute("form_id", f.getFormId().toString());
-						temp.appendChild(doc.createTextNode(f.getName()));
-						metadataNode.appendChild(temp);
-					}
-					Person u = e.getProvider();
-					if (u != null) {
-						Element temp = doc.createElement("provider");
-						temp.setAttribute("provider_id", u.getPersonId().toString());
-						temp.appendChild(doc.createTextNode(u.getPersonName().getFullName()));
-						metadataNode.appendChild(temp);
-					}
-				}
-				encounterNode.appendChild(metadataNode);
-				
-				Collection<Obs> observations = e.getObs();
-				if (observations != null && observations.size() > 0) {
-					Element observationsNode = doc.createElement("observations");
-					for (Obs obs : observations) {
-						Element obsNode = obsElementHelper(doc, locale, obs);
-						observationsNode.appendChild(obsNode);
-					}
-					encounterNode.appendChild(observationsNode);
-				}
-				
-				Set<Order> orders = e.getOrders();
-				if (orders != null && orders.size() != 0) {
-					Element ordersNode = doc.createElement("orders");
-					for (Order order : orders) {
-						Element orderNode = doc.createElement("order");
-						orderNode.setAttribute("order_id", order.getOrderId().toString());
-						
-						Concept concept = order.getConcept();
-						orderNode.setAttribute("concept_id", concept.getConceptId().toString());
-						orderNode.appendChild(doc.createTextNode(concept.getName(locale).getName()));
-						
-						if (order.getInstructions() != null) {
-							orderNode.setAttribute("instructions", order.getInstructions());
-						}
-						if (order.getStartDate() != null) {
-							orderNode.setAttribute("start_date", df.format(order.getStartDate()));
-						}
-						if (order.getAutoExpireDate() != null) {
-							orderNode.setAttribute("auto_expire_date", df.format(order.getAutoExpireDate()));
-						}
-						if (order.getOrderer() != null) {
-							orderNode.setAttribute("orderer", order.getOrderer().getProviderId() + "^"
-							        + order.getOrderer().getName());
-						}
-						if (order.getDiscontinued() != null) {
-							orderNode.setAttribute("discontinued", order.getDiscontinued().toString());
-						}
-						if (order.getDiscontinuedDate() != null) {
-							orderNode.setAttribute("discontinued_date", df.format(order.getDiscontinuedDate()));
-						}
-						if (order.getDiscontinuedReason() != null) {
-							orderNode.setAttribute("discontinued_reason", order.getDiscontinuedReason());
-						}
-						
-						ordersNode.appendChild(orderNode);
-					}
-				}
-				
-				patientNode.appendChild(encounterNode);
-			}
-			
-			ObsService obsService = Context.getObsService();
-			List<Obs> allObservations = obsService.getObservationsByPerson(p);
-			if (allObservations != null && allObservations.size() > 0) {
-				log.debug("allObservations has " + allObservations.size() + " obs");
-				Set<Obs> undoneObservations = new HashSet<Obs>();
-				for (Obs obs : allObservations) {
-					if (obs.getEncounter() == null) {
-						undoneObservations.add(obs);
-					}
-				}
-				log.debug("undoneObservations has " + undoneObservations.size() + " obs");
-				
-				if (undoneObservations.size() > 0) {
-					Element observationsNode = doc.createElement("observations");
-					for (Obs obs : undoneObservations) {
-						Element obsNode = obsElementHelper(doc, locale, obs);
-						observationsNode.appendChild(obsNode);
-						log.debug("added node " + obsNode + " to observationsNode");
-					}
-					patientNode.appendChild(observationsNode);
-				}
-			}
-			
-			root.appendChild(patientNode);
-			
-		}
-		catch (Exception ex) {
-			throw new DAOException(ex);
-		}
-		
-		String ret = null;
-		
-		try {
-			Source source = new DOMSource(doc);
-			StringWriter sw = new StringWriter();
-			Result result = new StreamResult(sw);
-			
-			Transformer xformer = TransformerFactory.newInstance().newTransformer();
-			xformer.transform(source, result);
-			ret = sw.toString();
-		}
-		catch (Exception ex) {
-			throw new DAOException(ex);
-		}
-		
-		return ret;
-	}
+	DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	@SuppressWarnings("unchecked")
 	public Cohort getAllPatients() {
@@ -488,35 +124,40 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		List<Integer> stateIds = null;
 		if (stateList != null && stateList.size() > 0) {
 			stateIds = new ArrayList<Integer>();
-			for (ProgramWorkflowState state : stateList)
+			for (ProgramWorkflowState state : stateList) {
 				stateIds.add(state.getProgramWorkflowStateId());
+			}
 		}
 		
 		List<String> clauses = new ArrayList<String>();
 		clauses.add("pp.voided = false");
-		if (programId != null)
+		if (programId != null) {
 			clauses.add("pp.program_id = :programId");
+		}
 		if (stateIds != null) {
 			clauses.add("ps.state in (:stateIds)");
 			clauses.add("ps.voided = false");
 		}
 		if (fromDate != null) {
 			clauses.add("(pp.date_completed is null or pp.date_completed >= :fromDate)");
-			if (stateIds != null)
+			if (stateIds != null) {
 				clauses.add("(ps.end_date is null or ps.end_date >= :fromDate)");
+			}
 		}
 		if (toDate != null) {
 			clauses.add("(pp.date_enrolled is null or pp.date_enrolled <= :toDate)");
-			if (stateIds != null)
+			if (stateIds != null) {
 				clauses.add("(ps.start_date is null or ps.start_date <= :toDate)");
+			}
 		}
 		
 		StringBuilder sql = new StringBuilder();
 		sql.append("select pp.patient_id ");
 		sql.append("from patient_program pp ");
 		sql.append("inner join patient p on pp.patient_id = p.patient_id and p.voided = false ");
-		if (stateIds != null)
+		if (stateIds != null) {
 			sql.append("inner join patient_state ps on pp.patient_program_id = ps.patient_program_id ");
+		}
 		for (ListIterator<String> i = clauses.listIterator(); i.hasNext();) {
 			sql.append(i.nextIndex() == 0 ? " where " : " and ");
 			sql.append(i.next());
@@ -525,14 +166,18 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		log.debug("query: " + sql);
 		
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sql.toString());
-		if (programId != null)
+		if (programId != null) {
 			query.setInteger("programId", programId);
-		if (stateIds != null)
+		}
+		if (stateIds != null) {
 			query.setParameterList("stateIds", stateIds);
-		if (fromDate != null)
+		}
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			query.setDate("toDate", toDate);
+		}
 		
 		return new Cohort(query.list());
 	}
@@ -546,36 +191,43 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		String sql = "select pp.patient_id from patient_program pp ";
 		sql += " inner join patient p on pp.patient_id = p.patient_id and p.voided = false ";
 		sql += " where pp.voided = false and pp.program_id = :programId ";
-		if (fromDate != null)
+		if (fromDate != null) {
 			sql += " and (date_completed is null or date_completed >= :fromDate) ";
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			sql += " and (date_enrolled is null or date_enrolled <= :toDate) ";
+		}
 		log.debug("sql: " + sql);
 		
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sql);
 		query.setCacheMode(CacheMode.IGNORE);
 		
 		query.setInteger("programId", programId);
-		if (fromDate != null)
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			query.setDate("toDate", toDate);
+		}
 		
 		return new Cohort(query.list());
 	}
 	
 	public Cohort getPatientsHavingObs(Integer conceptId, PatientSetService.TimeModifier timeModifier,
 	        PatientSetService.Modifier modifier, Object value, Date fromDate, Date toDate) {
-		if (conceptId == null && value == null)
+		if (conceptId == null && value == null) {
 			throw new IllegalArgumentException("Can't have conceptId == null and value == null");
-		if (conceptId == null && (timeModifier != TimeModifier.ANY && timeModifier != TimeModifier.NO))
+		}
+		if (conceptId == null && (timeModifier != TimeModifier.ANY && timeModifier != TimeModifier.NO)) {
 			throw new IllegalArgumentException("If conceptId == null, timeModifier must be ANY or NO");
+		}
 		if (conceptId == null && modifier != Modifier.EQUAL) {
 			throw new IllegalArgumentException("If conceptId == null, modifier must be EQUAL");
 		}
 		Concept concept = null;
-		if (conceptId != null)
+		if (conceptId != null) {
 			concept = Context.getConceptService().getConcept(conceptId);
+		}
 		Number numericValue = null;
 		String stringValue = null;
 		Concept codedValue = null;
@@ -583,27 +235,31 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		String valueSql = null;
 		if (value != null) {
 			if (concept == null) {
-				if (value instanceof Concept)
+				if (value instanceof Concept) {
 					codedValue = (Concept) value;
-				else
+				} else {
 					codedValue = Context.getConceptService().getConceptByName(value.toString());
+				}
 				valueSql = "o.value_coded";
 			} else if (concept.getDatatype().isNumeric()) {
-				if (value instanceof Number)
+				if (value instanceof Number) {
 					numericValue = (Number) value;
-				else
+				} else {
 					numericValue = new Double(value.toString());
+				}
 				valueSql = "o.value_numeric";
 			} else if (concept.getDatatype().isText()) {
 				stringValue = value.toString();
 				valueSql = "o.value_text";
-				if (modifier == null)
+				if (modifier == null) {
 					modifier = Modifier.EQUAL;
+				}
 			} else if (concept.getDatatype().isCoded()) {
-				if (value instanceof Concept)
+				if (value instanceof Concept) {
 					codedValue = (Concept) value;
-				else
+				} else {
 					codedValue = Context.getConceptService().getConceptByName(value.toString());
+				}
 				valueSql = "o.value_coded";
 			} else if (concept.getDatatype().isDate()) {
 				if (value instanceof Date) {
@@ -623,10 +279,11 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 					codedValue = (Concept) value;
 				} else {
 					boolean asBoolean = false;
-					if (value instanceof Boolean)
+					if (value instanceof Boolean) {
 						asBoolean = ((Boolean) value).booleanValue();
-					else
+					} else {
 						asBoolean = Boolean.valueOf(value.toString());
+					}
 					codedValue = asBoolean ? Context.getConceptService().getTrueConcept() : Context.getConceptService()
 					        .getFalseConcept();
 				}
@@ -652,14 +309,16 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		}
 		
 		if (timeModifier == TimeModifier.ANY || timeModifier == TimeModifier.NO) {
-			if (timeModifier == TimeModifier.NO)
+			if (timeModifier == TimeModifier.NO) {
 				doInvert = true;
+			}
 			sb
 			        .append("select o.person_id from obs o "
 			                + "inner join patient p on o.person_id = p.patient_id and p.voided = false "
 			                + "where o.voided = false ");
-			if (conceptId != null)
+			if (conceptId != null) {
 				sb.append("and concept_id = :concept_id ");
+			}
 			sb.append(dateSql);
 			
 		} else if (timeModifier == TimeModifier.FIRST || timeModifier == TimeModifier.LAST) {
@@ -688,32 +347,37 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			sb.append(valueSql + " ");
 			sb.append(modifier.getSqlRepresentation() + " :value");
 		}
-		if (!doSqlAggregation)
+		if (!doSqlAggregation) {
 			sb.append(" group by o.person_id ");
+		}
 		
 		log.debug("query: " + sb);
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sb.toString());
 		query.setCacheMode(CacheMode.IGNORE);
 		
-		if (conceptId != null)
+		if (conceptId != null) {
 			query.setInteger("concept_id", conceptId);
+		}
 		if (useValue) {
-			if (numericValue != null)
+			if (numericValue != null) {
 				query.setDouble("value", numericValue.doubleValue());
-			else if (codedValue != null)
+			} else if (codedValue != null) {
 				query.setInteger("value", codedValue.getConceptId());
-			else if (stringValue != null)
+			} else if (stringValue != null) {
 				query.setString("value", stringValue);
-			else if (dateValue != null)
+			} else if (dateValue != null) {
 				query.setDate("value", dateValue);
-			else
+			} else {
 				throw new IllegalArgumentException(
 				        "useValue is true, but numeric, coded, string, boolean, and date values are all null");
+			}
 		}
-		if (fromDate != null)
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			query.setDate("toDate", toDate);
+		}
 		
 		Cohort ret;
 		if (doInvert) {
@@ -743,28 +407,36 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		List<Integer> encTypeIds = null;
 		if (encounterTypeList != null && encounterTypeList.size() > 0) {
 			encTypeIds = new ArrayList<Integer>();
-			for (EncounterType t : encounterTypeList)
+			for (EncounterType t : encounterTypeList) {
 				encTypeIds.add(t.getEncounterTypeId());
+			}
 		}
 		Integer locationId = location == null ? null : location.getLocationId();
 		Integer formId = form == null ? null : form.getFormId();
 		List<String> whereClauses = new ArrayList<String>();
 		whereClauses.add("e.voided = false");
-		if (encTypeIds != null)
+		if (encTypeIds != null) {
 			whereClauses.add("e.encounter_type in (:encTypeIds)");
-		if (locationId != null)
+		}
+		if (locationId != null) {
 			whereClauses.add("e.location_id = :locationId");
-		if (formId != null)
+		}
+		if (formId != null) {
 			whereClauses.add("e.form_id = :formId");
-		if (fromDate != null)
+		}
+		if (fromDate != null) {
 			whereClauses.add("e.encounter_datetime >= :fromDate");
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			whereClauses.add("e.encounter_datetime <= :toDate");
+		}
 		List<String> havingClauses = new ArrayList<String>();
-		if (minCount != null)
+		if (minCount != null) {
 			havingClauses.add("count(*) >= :minCount");
-		if (maxCount != null)
+		}
+		if (maxCount != null) {
 			havingClauses.add("count(*) >= :maxCount");
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(" select e.patient_id from encounter e ");
 		sb.append(" inner join patient p on e.patient_id = p.patient_id and p.voided = false ");
@@ -780,20 +452,27 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		log.debug("query: " + sb);
 		
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sb.toString());
-		if (encTypeIds != null)
+		if (encTypeIds != null) {
 			query.setParameterList("encTypeIds", encTypeIds);
-		if (locationId != null)
+		}
+		if (locationId != null) {
 			query.setInteger("locationId", locationId);
-		if (formId != null)
+		}
+		if (formId != null) {
 			query.setInteger("formId", formId);
-		if (fromDate != null)
+		}
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			query.setDate("toDate", toDate);
-		if (minCount != null)
+		}
+		if (minCount != null) {
 			query.setInteger("minCount", minCount);
-		if (maxCount != null)
+		}
+		if (maxCount != null) {
 			query.setInteger("maxCount", maxCount);
+		}
 		
 		return new Cohort(query.list());
 	}
@@ -838,14 +517,17 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		boolean doInvert = false;
 		
 		String dateSql = "";
-		if (fromDate != null)
+		if (fromDate != null) {
 			dateSql += " and o.obs_datetime >= :fromDate ";
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			dateSql += " and o.obs_datetime <= :toDate ";
+		}
 		
 		if (timeModifier == TimeModifier.ANY || timeModifier == TimeModifier.NO) {
-			if (timeModifier == TimeModifier.NO)
+			if (timeModifier == TimeModifier.NO) {
 				doInvert = true;
+			}
 			sb.append("select o.person_id from obs o " + "where voided = false and concept_id = :concept_id ");
 			sb.append(dateSql);
 		} else if (timeModifier == TimeModifier.FIRST || timeModifier == TimeModifier.LAST) {
@@ -869,8 +551,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			sb.append(valueSql + " ");
 			sb.append(modifier.getSqlRepresentation() + " :value");
 		}
-		if (!doSqlAggregation)
+		if (!doSqlAggregation) {
 			sb.append(" group by o.person_id ");
+		}
 		
 		log.debug("query: " + sb);
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sb.toString());
@@ -880,10 +563,12 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		if (useValue) {
 			query.setDouble("value", value.doubleValue());
 		}
-		if (fromDate != null)
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
-		if (toDate != null)
+		}
+		if (toDate != null) {
 			query.setDate("toDate", fromDate);
+		}
 		
 		Cohort ret;
 		if (doInvert) {
@@ -1078,8 +763,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.add(Restrictions.eq("concept", concept));
 		
 		// only add this where clause if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("person.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		criteria.addOrder(org.hibernate.criterion.Order.desc("obsDatetime"));
@@ -1115,29 +801,30 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			List<String> classNames = new Vector<String>();
 			if (attribute == null) {
 				columns = findObsValueColumnName(c);
-				if (columns.size() > 1)
+				if (columns.size() > 1) {
 					conditional = true;
+				}
 				continue;
 				//log.debug("c: " + c.getConceptId() + " attribute: " + attribute);
-			} else if (attribute.equals("valueDate")) {
+			} else if ("valueDate".equals(attribute)) {
 				// pass -- same column name
-			} else if (attribute.equals("valueTime")) {
+			} else if ("valueTime".equals(attribute)) {
 				// pass -- same column name
-			} else if (attribute.equals("valueDatetime")) {
+			} else if ("valueDatetime".equals(attribute)) {
 				// pass -- same column name
-			} else if (attribute.equals("obsDatetime")) {
+			} else if ("obsDatetime".equals(attribute)) {
 				// pass -- same column name
-			} else if (attribute.equals("location")) {
+			} else if ("location".equals(attribute)) {
 				// pass -- same column name
 				classNames.add("obs.location");
 				attribute = "location.name";
-			} else if (attribute.equals("comment")) {
+			} else if ("comment".equals(attribute)) {
 				// pass -- same column name
-			} else if (attribute.equals("encounterType")) {
+			} else if ("encouterType".equals(attribute)) {
 				classNames.add("obs.encounter");
 				classNames.add("encounter.encounterType");
 				attribute = "encounterType.name";
-			} else if (attribute.equals("provider")) {
+			} else if ("provider".equals(attribute)) {
 				classNames.add("obs.encounter");
 				attribute = "encounter.provider";
 			} else {
@@ -1161,24 +848,27 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		ProjectionList projections = Projections.projectionList();
 		projections.add(Projections.property("obs.personId"));
 		for (String col : columns) {
-			if (col.contains("."))
+			if (col.contains(".")) {
 				projections.add(Projections.property(col));
-			else
+			} else {
 				projections.add(Projections.property(aliasName + "." + col));
+			}
 		}
 		criteria.setProjection(projections);
 		
 		// only restrict on patient ids if some were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("obs.personId", patients.getMemberIds()));
+		}
 		
-		criteria.add(Expression.eq("obs.concept", c));
-		criteria.add(Expression.eq("obs.voided", false));
+		criteria.add(Restrictions.eq("obs.concept", c));
+		criteria.add(Restrictions.eq("obs.voided", false));
 		
-		if (showMostRecentFirst)
+		if (showMostRecentFirst) {
 			criteria.addOrder(org.hibernate.criterion.Order.desc("obs.obsDatetime"));
-		else
+		} else {
 			criteria.addOrder(org.hibernate.criterion.Order.asc("obs.obsDatetime"));
+		}
 		
 		long start = System.currentTimeMillis();
 		List<Object[]> rows = criteria.list();
@@ -1205,14 +895,17 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 				while (index < rowArray.length) {
 					Object value = rowArray[index++];
 					if (tmpConditional) {
-						if (index == 2 && value != null) // skip null first value if we must
+						if (index == 2 && value != null) {
+							// skip null first value if we must
 							row.add(value);
-						else
+						} else {
 							row.add(rowArray[index]);
+						}
 						tmpConditional = false;
 						index++; // increment counter for next column.  (Skips over value_concept)
-					} else
+					} else {
 						row.add(value == null ? "" : value);
+					}
 				}
 				
 				// if we haven't seen a different row for this patient already:
@@ -1237,17 +930,18 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		String abbrev = c.getDatatype().getHl7Abbreviation();
 		List<String> columns = new Vector<String>();
 		
-		if (abbrev.equals("BIT"))
+		if ("BIT".equals(abbrev)) {
 			columns.add("valueCoded");
-		else if (abbrev.equals("CWE")) {
+		} else if ("CWE".equals(abbrev)) {
 			columns.add("valueDrug");
 			columns.add("valueCoded");
-		} else if (abbrev.equals("NM") || abbrev.equals("SN"))
+		} else if ("NM".equals(abbrev) || "SN".equals(abbrev)) {
 			columns.add("valueNumeric");
-		else if (abbrev.equals("DT") || abbrev.equals("TM") || abbrev.equals("TS"))
+		} else if ("DT".equals(abbrev) || "TM".equals(abbrev) || "TS".equals(abbrev)) {
 			columns.add("valueDatetime");
-		else if (abbrev.equals("ST"))
+		} else if ("ST".equals(abbrev)) {
 			columns.add("valueText");
+		}
 		
 		return columns;
 	}
@@ -1261,13 +955,15 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only necessary if patients were passed in
-		if (patients != null && patients.size() > 0)
+		if (patients != null && patients.size() > 0) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
-		if (encTypes != null && encTypes.size() > 0)
+		if (encTypes != null && encTypes.size() > 0) {
 			criteria.add(Restrictions.in("encounterType", encTypes));
+		}
 		
 		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
 		criteria.addOrder(org.hibernate.criterion.Order.desc("encounterDatetime"));
@@ -1276,9 +972,10 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		
 		// set up the return map
 		for (Encounter enc : encounters) {
-			Integer ptId = enc.getPatientId();
-			if (!ret.containsKey(ptId))
+			Integer ptId = enc.getPatient().getPatientId();
+			if (!ret.containsKey(ptId)) {
 				ret.put(ptId, enc);
+			}
 		}
 		
 		return ret;
@@ -1298,13 +995,15 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only necessary if patients were passed in
-		if (patients != null && patients.size() > 0)
+		if (patients != null && patients.size() > 0) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
-		if (forms != null && forms.size() > 0)
+		if (forms != null && forms.size() > 0) {
 			criteria.add(Restrictions.in("form", forms));
+		}
 		
 		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
 		criteria.addOrder(org.hibernate.criterion.Order.desc("encounterDatetime"));
@@ -1323,31 +1022,35 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only necessary if patients were specified
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
-		if (encTypes != null && encTypes.size() > 0)
+		if (encTypes != null && encTypes.size() > 0) {
 			criteria.add(Restrictions.in("encounterType", encTypes));
+		}
 		
 		criteria.setProjection(Projections.projectionList().add(Projections.property("patient.personId")).add(
 		    Projections.property(attr)));
 		
 		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
 		
-		if (earliestFirst)
+		if (earliestFirst) {
 			criteria.addOrder(org.hibernate.criterion.Order.asc("encounterDatetime"));
-		else
+		} else {
 			criteria.addOrder(org.hibernate.criterion.Order.desc("encounterDatetime"));
+		}
 		
 		List<Object[]> attrs = criteria.list();
 		
 		// set up the return map
 		for (Object[] row : attrs) {
 			Integer ptId = (Integer) row[0];
-			if (!ret.containsKey(ptId))
+			if (!ret.containsKey(ptId)) {
 				ret.put(ptId, row[1]);
+			}
 		}
 		
 		return ret;
@@ -1362,8 +1065,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// only include this where clause if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
@@ -1374,9 +1078,10 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		
 		// set up the return map
 		for (Encounter enc : encounters) {
-			Integer ptId = enc.getPatientId();
-			if (!ret.containsKey(ptId))
+			Integer ptId = enc.getPatient().getPatientId();
+			if (!ret.containsKey(ptId)) {
 				ret.put(ptId, enc);
+			}
 		}
 		
 		return ret;
@@ -1391,13 +1096,15 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only needed if patients were specified
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		
-		if (types != null && types.size() > 0)
+		if (types != null && types.size() > 0) {
 			criteria.add(Restrictions.in("encounterType", types));
+		}
 		
 		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
 		criteria.addOrder(org.hibernate.criterion.Order.asc("encounterDatetime"));
@@ -1406,9 +1113,10 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		
 		// set up the return map
 		for (Encounter enc : encounters) {
-			Integer ptId = enc.getPatientId();
-			if (!ret.containsKey(ptId))
+			Integer ptId = enc.getPatient().getPatientId();
+			if (!ret.containsKey(ptId)) {
 				ret.put(ptId, enc);
+			}
 		}
 		
 		return ret;
@@ -1425,12 +1133,13 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		Criteria criteria = null;
 		
 		// make 'patient.**' reference 'patient' like alias instead of object
-		if (className.equals("org.openmrs.Patient"))
+		if ("org.openmrs.Patient".equals(className)) {
 			criteria = sessionFactory.getCurrentSession().createCriteria("org.openmrs.Patient", "patient");
-		else if (className.equals("org.openmrs.Person"))
+		} else if ("org.openmrs.Person".equals(className)) {
 			criteria = sessionFactory.getCurrentSession().createCriteria("org.openmrs.Person", "person");
-		else
+		} else {
 			criteria = sessionFactory.getCurrentSession().createCriteria(className);
+		}
 		
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
@@ -1442,28 +1151,31 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			projectionList.add(Projections.property("person.personId"));
 			projectionList.add(Projections.property(property));
 			
-			if (patients != null)
+			if (patients != null) {
 				criteria.add(Restrictions.in("person.personId", patients.getMemberIds()));
+			}
 			
 			// do not include voided person rows
-			if (className.equals("org.openmrs.Person"))
-				// the voided column on the person table is mapped to the person object 
-				// through the getPersonVoided() to distinguish it from patient/user.voided 
-				criteria.add(Expression.eq("personVoided", false));
-			else
+			if ("org.openmrs.Person".equals(className)) {
+				// the voided column on the person table is mapped to the person object
+				// through the getPersonVoided() to distinguish it from patient/user.voided
+				criteria.add(Restrictions.eq("personVoided", false));
+			} else {
 				// this is here to support PersonName and PersonAddress
-				criteria.add(Expression.eq("voided", false));
+				criteria.add(Restrictions.eq("voided", false));
+			}
 		}
 		// if one of the Patient tables
 		else {
 			projectionList.add(Projections.property("patient.personId"));
 			projectionList.add(Projections.property(property));
 			
-			if (patients != null)
+			if (patients != null) {
 				criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+			}
 			
 			// do not include voided patients
-			criteria.add(Expression.eq("voided", false));
+			criteria.add(Restrictions.eq("voided", false));
 		}
 		criteria.setProjection(projectionList);
 		
@@ -1471,12 +1183,14 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		try {
 			boolean hasPreferred = false;
 			for (Field f : Class.forName(className).getDeclaredFields()) {
-				if (f.getName().equals("preferred"))
+				if ("preferred".equals(f.getName())) {
 					hasPreferred = true;
+				}
 			}
 			
-			if (hasPreferred)
+			if (hasPreferred) {
 				criteria.addOrder(org.hibernate.criterion.Order.desc("preferred"));
+			}
 		}
 		catch (ClassNotFoundException e) {
 			log.warn("Class not found: " + className);
@@ -1505,8 +1219,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			for (Object[] row : rows) {
 				Integer ptId = (Integer) row[0];
 				Object columnValue = row[1];
-				if (!ret.containsKey(ptId))
+				if (!ret.containsKey(ptId)) {
 					ret.put(ptId, columnValue);
+				}
 			}
 		}
 		
@@ -1535,8 +1250,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			queryString.append(" joinedClass where t = attr.attributeType ");
 			queryString.append("and attr.value = joinedClass.");
 			queryString.append(joinProperty + " ");
-		} else
+		} else {
 			queryString.append("attr.value from PersonAttribute attr, PersonAttributeType t where t = attr.attributeType ");
+		}
 		
 		queryString.append("and t.name = :typeName ");
 		queryString.append("order by attr.voided asc, attr.dateCreated desc");
@@ -1566,8 +1282,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 					}
 				} else {
 					Object columnValue = row[1];
-					if (!ret.containsKey(ptId))
+					if (!ret.containsKey(ptId)) {
 						ret.put(ptId, columnValue);
+					}
 				}
 			}
 		}
@@ -1706,37 +1423,39 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	@SuppressWarnings("unchecked")
 	public Map<Integer, Collection<Integer>> getActiveDrugIds(Collection<Integer> patientIds, Date fromDate, Date toDate)
 	        throws DAOException {
-		HashSet<Integer> idsLookup = patientIds == null ? null
+		Set<Integer> idsLookup = patientIds == null ? null
 		        : (patientIds instanceof HashSet ? (HashSet<Integer>) patientIds : new HashSet<Integer>(patientIds));
 		
 		Map<Integer, Collection<Integer>> ret = new HashMap<Integer, Collection<Integer>>();
 		
 		List<String> whereClauses = new ArrayList<String>();
 		whereClauses.add("o.voided = false");
-		if (toDate != null)
-			whereClauses.add("o.start_date <= :toDate");
+		if (toDate != null) {
+			whereClauses.add("o.date_activated <= :toDate");
+		}
 		if (fromDate != null) {
 			whereClauses.add("(o.auto_expire_date is null or o.auto_expire_date > :fromDate)");
-			whereClauses.add("(o.discontinued_date is null or o.discontinued_date > :fromDate)");
+			whereClauses.add("(o.date_stopped is null or o.date_stopped > :fromDate)");
 		}
 		
-		String sql = "select o.patient_id, d.drug_inventory_id " + "from orders o "
+		StringBuilder sql = new StringBuilder("select o.patient_id, d.drug_inventory_id " + "from orders o "
 		        + "    inner join patient p on o.patient_id = p.patient_id and p.voided = false "
-		        + "    inner join drug_order d on o.order_id = d.order_id ";
+		        + "    inner join drug_order d on o.order_id = d.order_id ");
 		for (ListIterator<String> i = whereClauses.listIterator(); i.hasNext();) {
-			sql += (i.nextIndex() == 0 ? " where " : " and ");
-			sql += i.next();
+			sql.append((i.nextIndex() == 0 ? " where " : " and ")).append(i.next());
 		}
 		
 		log.debug("sql= " + sql);
 		
-		Query query = sessionFactory.getCurrentSession().createSQLQuery(sql);
+		Query query = sessionFactory.getCurrentSession().createSQLQuery(sql.toString());
 		query.setCacheMode(CacheMode.IGNORE);
 		
-		if (toDate != null)
+		if (toDate != null) {
 			query.setDate("toDate", toDate);
-		if (fromDate != null)
+		}
+		if (fromDate != null) {
 			query.setDate("fromDate", fromDate);
+		}
 		
 		List<Object[]> results = (List<Object[]>) query.list();
 		for (Object[] row : results) {
@@ -1767,8 +1486,9 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 			//criteria.add(Restrictions.in("patientProgram.patient.personId", ids));
 			
 			// only include this where clause if patients were passed in
-			if (ps != null)
+			if (ps != null) {
 				criteria.createCriteria("patientProgram").add(Restrictions.in("patient.personId", ps.getMemberIds()));
+			}
 			
 			//criteria.add(Restrictions.eq("state.programWorkflow", wf));
 			criteria.createCriteria("state").add(Restrictions.eq("programWorkflow", wf));
@@ -1803,15 +1523,18 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only necessary if patients were passed in
-		if (ps != null)
+		if (ps != null) {
 			criteria.add(Restrictions.in("patient.personId", ps.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("program", program));
-		if (!includeVoided)
+		if (!includeVoided) {
 			criteria.add(Restrictions.eq("voided", false));
+		}
 		criteria.add(Restrictions.or(Restrictions.isNull("dateEnrolled"), Restrictions.le("dateEnrolled", now)));
-		if (!includePast)
+		if (!includePast) {
 			criteria.add(Restrictions.or(Restrictions.isNull("dateCompleted"), Restrictions.ge("dateCompleted", now)));
+		}
 		log.debug("criteria: " + criteria);
 		List<PatientProgram> temp = criteria.list();
 		for (PatientProgram prog : temp) {
@@ -1834,19 +1557,21 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// this "where clause" is only necessary if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		//criteria.add(Restrictions.in("encounter.patient.personId", ids));
 		//criteria.createCriteria("encounter").add(Restrictions.in("patient.personId", ids));
-		if (drugConcepts != null)
+		if (drugConcepts != null) {
 			criteria.add(Restrictions.in("concept", drugConcepts));
+		}
 		criteria.add(Restrictions.eq("voided", false));
-		criteria.add(Restrictions.le("startDate", now));
-		criteria.add(Restrictions.or(Restrictions.and(Restrictions.eq("discontinued", false), Restrictions.or(Restrictions
-		        .isNull("autoExpireDate"), Restrictions.gt("autoExpireDate", now))), Restrictions.and(Restrictions.eq(
-		    "discontinued", true), Restrictions.gt("discontinuedDate", now))));
-		criteria.addOrder(org.hibernate.criterion.Order.asc("startDate"));
+		criteria.add(Restrictions.le("dateActivated", now));
+		criteria.add(Restrictions.and(Restrictions.or(Restrictions.isNull("autoExpireDate"), Restrictions.gt(
+		    "autoExpireDate", now)), Restrictions
+		        .or(Restrictions.isNull("dateStopped"), Restrictions.gt("dateStopped", now))));
+		criteria.addOrder(org.hibernate.criterion.Order.asc("dateActivated"));
 		log.debug("criteria: " + criteria);
 		List<DrugOrder> temp = criteria.list();
 		for (DrugOrder regimen : temp) {
@@ -1864,21 +1589,24 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	@SuppressWarnings("unchecked")
 	public Map<Integer, List<DrugOrder>> getDrugOrders(Cohort patients, List<Concept> drugConcepts) throws DAOException {
 		Map<Integer, List<DrugOrder>> ret = new HashMap<Integer, List<DrugOrder>>();
-		if (patients != null && patients.size() == 0)
+		if (patients != null && patients.size() == 0) {
 			return ret;
+		}
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(DrugOrder.class);
 		criteria.setFetchMode("patient", FetchMode.JOIN);
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// only include this where clause if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
-		if (drugConcepts != null)
+		if (drugConcepts != null) {
 			criteria.add(Restrictions.in("concept", drugConcepts));
+		}
 		criteria.add(Restrictions.eq("voided", false));
-		criteria.addOrder(org.hibernate.criterion.Order.asc("startDate"));
+		criteria.addOrder(org.hibernate.criterion.Order.asc("dateActivated"));
 		log.debug("criteria: " + criteria);
 		List<DrugOrder> temp = criteria.list();
 		for (DrugOrder regimen : temp) {
@@ -1899,12 +1627,13 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	 */
 	@SuppressWarnings("unchecked")
 	public Map<Integer, List<Person>> getRelatives(Cohort patients, RelationshipType relType, boolean forwards) {
-		if (relType == null)
+		if (relType == null) {
 			throw new IllegalArgumentException("Must give a relationship type");
+		}
 		Map<Integer, List<Person>> ret = new HashMap<Integer, List<Person>>();
-		if (patients != null)
-			if (patients.size() == 0)
-				return ret;
+		if (patients != null && patients.size() == 0) {
+			return ret;
+		}
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Relationship.class);
 		criteria.add(Restrictions.eq("voided", false));
@@ -1937,12 +1666,14 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Relationship.class);
 		criteria.setCacheMode(CacheMode.IGNORE);
-		if (relType != null)
+		if (relType != null) {
 			criteria.add(Restrictions.eq("relationshipType", relType));
+		}
 		
 		// this "where clause" is only useful if patients were passed in
-		if (patients != null)
+		if (patients != null) {
 			criteria.createCriteria("personB").add(Restrictions.in("personId", patients.getMemberIds()));
+		}
 		
 		criteria.add(Restrictions.eq("voided", false));
 		log.debug("criteria: " + criteria);
@@ -1966,73 +1697,89 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		sb.append(" inner join patient pat on pat.patient_id = p.person_id and pat.voided = false ");
 		sb.append(" inner join person_attribute a on p.person_id = a.person_id and a.voided = false ");
 		sb.append(" where p.voided = false ");
-		if (attribute != null)
+		if (attribute != null) {
 			sb.append(" and a.person_attribute_type_id = :typeId ");
-		if (value != null)
+		}
+		if (value != null) {
 			sb.append(" and a.value = :value ");
+		}
 		sb.append(" group by pat.patient_id ");
 		log.debug("query: " + sb);
 		
 		Query query = sessionFactory.getCurrentSession().createSQLQuery(sb.toString());
-		if (attribute != null)
+		if (attribute != null) {
 			query.setInteger("typeId", attribute.getPersonAttributeTypeId());
-		if (value != null)
+		}
+		if (value != null) {
 			query.setString("value", value);
+		}
 		
 		return new Cohort(query.list());
 	}
 	
 	public Cohort getPatientsHavingDrugOrder(List<Drug> drugList, List<Concept> drugConceptList, Date startDateFrom,
-	        Date startDateTo, Date stopDateFrom, Date stopDateTo, Boolean discontinued, List<Concept> discontinuedReason) {
-		if (drugList != null && drugList.size() == 0)
+	        Date startDateTo, Date stopDateFrom, Date stopDateTo, Boolean discontinued, List<Concept> orderReason) {
+		if (drugList != null && drugList.size() == 0) {
 			drugList = null;
-		if (drugConceptList != null && drugConceptList.size() == 0)
+		}
+		if (drugConceptList != null && drugConceptList.size() == 0) {
 			drugConceptList = null;
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(" select distinct patient.id from DrugOrder where voided = false and patient.voided = false ");
-		if (drugList != null)
+		if (drugList != null) {
 			sb.append(" and drug.id in (:drugIdList) ");
-		if (drugConceptList != null)
-			sb.append(" and concept.id in (:drugConceptIdList) ");
-		if (startDateFrom != null && startDateTo != null) {
-			sb.append(" and startDate between :startDateFrom and :startDateTo ");
-		} else {
-			if (startDateFrom != null)
-				sb.append(" and startDate >= :startDateFrom ");
-			if (startDateTo != null)
-				sb.append(" and startDate <= :startDateTo ");
 		}
-		if (discontinuedReason != null && discontinuedReason.size() > 0)
-			sb.append(" and discontinuedReason.id in (:discontinuedReasonIdList) ");
+		if (drugConceptList != null) {
+			sb.append(" and concept.id in (:drugConceptIdList) ");
+		}
+		if (startDateFrom != null && startDateTo != null) {
+			sb.append(" and dateActivated between :startDateFrom and :startDateTo ");
+		} else {
+			if (startDateFrom != null) {
+				sb.append(" and dateActivated >= :startDateFrom ");
+			}
+			if (startDateTo != null) {
+				sb.append(" and dateActivated <= :startDateTo ");
+			}
+		}
+		if (orderReason != null && orderReason.size() > 0) {
+			sb.append(" and orderReason.id in (:orderReasonIdList) ");
+		}
 		if (discontinued != null) {
-			sb.append(" and discontinued = :discontinued ");
-			if (discontinued == true) {
+			if (discontinued) {
 				if (stopDateFrom != null && stopDateTo != null) {
-					sb.append(" and discontinuedDate between :stopDateFrom and :stopDateTo ");
+					sb.append(" and dateStopped between :stopDateFrom and :stopDateTo ");
 				} else {
-					if (stopDateFrom != null)
-						sb.append(" and discontinuedDate >= :stopDateFrom ");
-					if (stopDateTo != null)
-						sb.append(" and discontinuedDate <= :stopDateTo ");
+					if (stopDateFrom != null) {
+						sb.append(" and dateStopped >= :stopDateFrom ");
+					}
+					if (stopDateTo != null) {
+						sb.append(" and dateStopped <= :stopDateTo ");
+					}
 				}
 			} else { // discontinued == false
 				if (stopDateFrom != null && stopDateTo != null) {
 					sb.append(" and autoExpireDate between :stopDateFrom and :stopDateTo ");
 				} else {
-					if (stopDateFrom != null)
+					if (stopDateFrom != null) {
 						sb.append(" and autoExpireDate >= :stopDateFrom ");
-					if (stopDateTo != null)
+					}
+					if (stopDateTo != null) {
 						sb.append(" and autoExpireDate <= :stopDateTo ");
+					}
 				}
 			}
 		} else { // discontinued == null, so we need either
 			if (stopDateFrom != null && stopDateTo != null) {
-				sb.append(" and coalesce(discontinuedDate, autoExpireDate) between :stopDateFrom and :stopDateTo ");
+				sb.append(" and coalesce(dateStopped, autoExpireDate) between :stopDateFrom and :stopDateTo ");
 			} else {
-				if (stopDateFrom != null)
-					sb.append(" and coalesce(discontinuedDate, autoExpireDate) >= :stopDateFrom ");
-				if (stopDateTo != null)
-					sb.append(" and coalesce(discontinuedDate, autoExpireDate) <= :stopDateTo ");
+				if (stopDateFrom != null) {
+					sb.append(" and coalesce(dateStopped, autoExpireDate) >= :stopDateFrom ");
+				}
+				if (stopDateTo != null) {
+					sb.append(" and coalesce(dateStopped, autoExpireDate) <= :stopDateTo ");
+				}
 			}
 		}
 		log.debug("sql = " + sb);
@@ -2040,31 +1787,39 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		
 		if (drugList != null) {
 			List<Integer> ids = new ArrayList<Integer>();
-			for (Drug d : drugList)
+			for (Drug d : drugList) {
 				ids.add(d.getDrugId());
+			}
 			query.setParameterList("drugIdList", ids);
 		}
 		if (drugConceptList != null) {
 			List<Integer> ids = new ArrayList<Integer>();
-			for (Concept c : drugConceptList)
+			for (Concept c : drugConceptList) {
 				ids.add(c.getConceptId());
+			}
 			query.setParameterList("drugConceptIdList", ids);
 		}
-		if (startDateFrom != null)
+		if (startDateFrom != null) {
 			query.setDate("startDateFrom", startDateFrom);
-		if (startDateTo != null)
+		}
+		if (startDateTo != null) {
 			query.setDate("startDateTo", startDateTo);
-		if (stopDateFrom != null)
+		}
+		if (stopDateFrom != null) {
 			query.setDate("stopDateFrom", stopDateFrom);
-		if (stopDateTo != null)
+		}
+		if (stopDateTo != null) {
 			query.setDate("stopDateTo", stopDateTo);
-		if (discontinued != null)
+		}
+		if (discontinued != null) {
 			query.setBoolean("discontinued", discontinued);
-		if (discontinuedReason != null && discontinuedReason.size() > 0) {
+		}
+		if (orderReason != null && orderReason.size() > 0) {
 			List<Integer> ids = new ArrayList<Integer>();
-			for (Concept c : discontinuedReason)
+			for (Concept c : orderReason) {
 				ids.add(c.getConceptId());
-			query.setParameterList("discontinuedReasonIdList", ids);
+			}
+			query.setParameterList("orderReasonIdList", ids);
 		}
 		
 		return new Cohort(query.list());
@@ -2072,7 +1827,7 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	
 	/**
 	 * @param patients
-	 * @param types List<PatientIdentifierTypes> of types to get
+	 * @param types List&lt;PatientIdentifierTypes&gt; of types to get
 	 * @return Map of {@link PatientIdentifier}s
 	 */
 	@SuppressWarnings("unchecked")
@@ -2091,15 +1846,17 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		criteria.setCacheMode(CacheMode.IGNORE);
 		
 		// Add patient restriction if necessary
-		if (patients != null)
+		if (patients != null) {
 			criteria.add(Restrictions.in("patient.personId", patients.getMemberIds()));
+		}
 		
 		// all identifiers must be non-voided
 		criteria.add(Restrictions.eq("voided", false));
 		
 		// Add identifier type filter
-		if (types != null && types.size() > 0)
+		if (types != null && types.size() > 0) {
 			criteria.add(Restrictions.in("identifierType", types));
+		}
 		
 		// Order by ID
 		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
@@ -2110,15 +1867,15 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		for (Object[] row : rows) {
 			String identifier = (String) row[0];
 			Integer patientId = (Integer) row[1];
-			if (!patientIdentifiers.containsKey(patientId))
+			if (!patientIdentifiers.containsKey(patientId)) {
 				patientIdentifiers.put(patientId, identifier);
+			}
 		}
 		
 		return patientIdentifiers;
 	}
 	
 	/**
-	 * 
 	 * @see org.openmrs.api.db.PatientSetDAO#getPatientsByRelationship(org.openmrs.RelationshipType,
 	 *      boolean, boolean, org.openmrs.Person)
 	 */
@@ -2131,42 +1888,52 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		if (relType != null) {
 			if (includeAtoB && includeBtoA) {
 				String hql = "select personA.id, personB.id from Relationship where relationshipType = :relType";
-				if (target != null)
+				if (target != null) {
 					hql += " and (personA.id = :targetId or personB.id = :targetId)";
+				}
 				Query q = sessionFactory.getCurrentSession().createQuery(hql);
 				q.setParameter("relType", relType);
-				if (target != null)
+				if (target != null) {
 					q.setInteger("targetId", target.getPersonId());
+				}
 				Cohort ret = new Cohort();
 				for (Object[] o : (List<Object[]>) q.list()) {
 					ret.addMember((Integer) o[0]);
 					ret.addMember((Integer) o[1]);
 				}
-				ret.removeMember(target.getPersonId());
+				if (target != null) {
+					ret.removeMember(target.getPersonId());
+				}
 				return Cohort.intersect(allPatients, ret);
 			} else if (includeAtoB) {
 				String hql = "select personA.id from Relationship where relationshipType = :relType";
-				if (target != null)
+				if (target != null) {
 					hql += " and personB.id = :targetId";
+				}
 				Query q = sessionFactory.getCurrentSession().createQuery(hql);
 				q.setParameter("relType", relType);
-				if (target != null)
+				if (target != null) {
 					q.setInteger("targetId", target.getPersonId());
+				}
 				Cohort ret = new Cohort();
-				for (Integer id : (List<Integer>) q.list())
+				for (Integer id : (List<Integer>) q.list()) {
 					ret.addMember(id);
+				}
 				return Cohort.intersect(allPatients, ret);
 			} else if (includeBtoA) {
 				String hql = "select personB.id from Relationship where relationshipType = :relType";
-				if (target != null)
+				if (target != null) {
 					hql += " and personA.id = :targetId";
+				}
 				Query q = sessionFactory.getCurrentSession().createQuery(hql);
 				q.setParameter("relType", relType);
-				if (target != null)
+				if (target != null) {
 					q.setInteger("targetId", target.getPersonId());
+				}
 				Cohort ret = new Cohort();
-				for (Integer id : (List<Integer>) q.list())
+				for (Integer id : (List<Integer>) q.list()) {
 					ret.addMember(id);
+				}
 				return Cohort.intersect(allPatients, ret);
 			} else {
 				return new Cohort();
@@ -2202,7 +1969,7 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 	@Override
 	public Integer getCountOfPatients() {
 		Query query = sessionFactory.getCurrentSession().createQuery("select count(*) from Patient where voided = '0'");
-		return new Integer(query.uniqueResult().toString());
+		return Integer.valueOf(query.uniqueResult().toString());
 	}
 	
 	@Override
@@ -2210,11 +1977,13 @@ public class HibernatePatientSetDAO implements PatientSetDAO {
 		Query query = sessionFactory.getCurrentSession().createQuery(
 		    "select distinct patientId from Patient p where p.voided = '0'");
 		
-		if (start != null)
+		if (start != null) {
 			query.setFirstResult(start);
+		}
 		
-		if (size != null)
+		if (size != null) {
 			query.setMaxResults(size);
+		}
 		
 		Set<Integer> ids = new HashSet<Integer>();
 		ids.addAll(query.list());

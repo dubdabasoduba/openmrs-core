@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -22,13 +18,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
+import org.openmrs.LocationAttribute;
 import org.openmrs.LocationAttributeType;
 import org.openmrs.LocationTag;
 import org.openmrs.api.context.Context;
@@ -61,7 +60,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Test to make sure that a simple save to a new location gets persisted to the database
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should create location successfully", method = "saveLocation(Location)")
@@ -92,7 +91,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Test a simple update to a location that is already in the database.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should update location successfully", method = "saveLocation(Location)")
@@ -129,7 +128,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	 * You should be able to add child locations to a location (multi-level), save the location, and
 	 * have the child location automatically persisted.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should cascade save to child location from location", method = "saveLocation(Location)")
@@ -187,7 +186,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * You should be able to remove a child location from a location.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should remove child location from location", method = "saveLocation(Location)")
@@ -208,7 +207,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getDefaultLocation()}
+	 * @see LocationService#getDefaultLocation()
 	 */
 	@Test
 	@Verifies(value = "should return default location for the implementation", method = "getDefaultLocation()")
@@ -221,7 +220,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocation(Integer)}
+	 * @see LocationService#getLocation(Integer)
 	 */
 	@Test
 	@Verifies(value = "should return null when no location match given location id", method = "getLocation(Integer)")
@@ -230,7 +229,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocation(String)}
+	 * @see LocationService#getLocation(String)
 	 */
 	@Test
 	@Verifies(value = "should return null when no location match given location name", method = "getLocation(String)")
@@ -239,7 +238,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocations()}
+	 * @see LocationService#getAllLocations()
 	 */
 	@Test
 	@Verifies(value = "should return all locations including retired", method = "getAllLocations()")
@@ -250,7 +249,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getRootLocations(boolean)}
+	 * @see LocationService#getRootLocations(boolean)
 	 */
 	@Test
 	@Verifies(value = "should return all root locations including retired", method = "getRootLocations(boolean)")
@@ -261,7 +260,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getRootLocations(boolean)}
+	 * @see LocationService#getRootLocations(boolean)
 	 */
 	@Test
 	@Verifies(value = "should return only unretired root locations when includeRetires is false", method = "getRootLocations(boolean)")
@@ -272,7 +271,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocations(null)}
+	 * @see LocationService#getAllLocations(null)
 	 */
 	@Test
 	@Verifies(value = "should return all locations when includeRetired is true", method = "getAllLocations(null)")
@@ -283,7 +282,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocations(null)}
+	 * @see LocationService#getAllLocations(null)
 	 */
 	@Test
 	@Verifies(value = "should return only unretired locations when includeRetires is false", method = "getAllLocations(null)")
@@ -294,7 +293,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocations(String)}
+	 * @see LocationService#getLocations(String)
 	 */
 	@Test
 	@Verifies(value = "should return empty list when no location match the name fragment", method = "getLocations(String)")
@@ -303,9 +302,81 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
+	 * @see LocationService#getLocations(String, org.openmrs.Location, java.util.Map, boolean, Integer, Integer)
+	 */
+	@Test
+	@Verifies(value = "should return empty list when no location has matching attribute values", method = "getLocations(String,Location,Map,boolean,Integer,Integer)")
+	public void getLocations_shouldNotFindAnyLocationsIfNoneHaveGivenAttributeValues() {
+		// Save new phone number attribute type
+		LocationAttributeType phoneAttrType = new LocationAttributeType();
+		phoneAttrType.setName("Facility Phone");
+		phoneAttrType.setMinOccurs(0);
+		phoneAttrType.setMaxOccurs(1);
+		phoneAttrType.setDatatypeClassname("org.openmrs.customdatatype.datatype.FreeTextDatatype");
+		Context.getLocationService().saveLocationAttributeType(phoneAttrType);
+		
+		Map<LocationAttributeType, Object> attrValues = new HashMap<LocationAttributeType, Object>();
+		attrValues.put(phoneAttrType, "xxxxxx");
+		Assert.assertEquals(0, Context.getLocationService().getLocations(null, null, attrValues, true, null, null).size());
+	}
+	
+	/**
+	 * @see LocationService#getLocations(String, org.openmrs.Location, java.util.Map, boolean, Integer, Integer)
+	 */
+	@Test
+	@Verifies(value = "should get locations having all matching attribute values", method = "getLocations(String,Location,Map,boolean,Integer,Integer)")
+	public void getLocations_shouldGetLocationsHavingAllMatchingAttributeValues() {
+		// Save new phone number attribute type
+		LocationAttributeType phoneAttrType = new LocationAttributeType();
+		phoneAttrType.setName("Facility Phone");
+		phoneAttrType.setMinOccurs(0);
+		phoneAttrType.setMaxOccurs(1);
+		phoneAttrType.setDatatypeClassname("org.openmrs.customdatatype.datatype.FreeTextDatatype");
+		Context.getLocationService().saveLocationAttributeType(phoneAttrType);
+		
+		// Save new email address attribute type
+		LocationAttributeType emailAttrType = new LocationAttributeType();
+		emailAttrType.setName("Facility Email");
+		emailAttrType.setMinOccurs(0);
+		emailAttrType.setMaxOccurs(1);
+		emailAttrType.setDatatypeClassname("org.openmrs.customdatatype.datatype.FreeTextDatatype");
+		Context.getLocationService().saveLocationAttributeType(emailAttrType);
+		
+		// Assign phone number 0123456789 and email address admin@facility.com to location #1
+		Location location1 = Context.getLocationService().getLocation(1);
+		LocationAttribute la1a = new LocationAttribute();
+		la1a.setAttributeType(phoneAttrType);
+		la1a.setValue("0123456789");
+		location1.addAttribute(la1a);
+		LocationAttribute la1b = new LocationAttribute();
+		la1b.setAttributeType(emailAttrType);
+		la1b.setValue("admin@facility.com");
+		location1.addAttribute(la1b);
+		Context.getLocationService().saveLocation(location1);
+		
+		// Assign same phone number 0123456789 to location #2
+		Location location2 = Context.getLocationService().getLocation(2);
+		LocationAttribute la2 = new LocationAttribute();
+		la2.setAttributeType(phoneAttrType);
+		la2.setValue("0123456789");
+		location2.addAttribute(la2);
+		Context.getLocationService().saveLocation(location2);
+		
+		// Search for location #1 by phone number AND email address
+		Map<LocationAttributeType, Object> attrValues = new HashMap<LocationAttributeType, Object>();
+		attrValues.put(phoneAttrType, "0123456789");
+		attrValues.put(emailAttrType, "admin@facility.com");
+		
+		// Check that only location #1 is returned
+		List<Location> locations = Context.getLocationService().getLocations(null, null, attrValues, false, null, null);
+		Assert.assertEquals(1, locations.size());
+		Assert.assertEquals(location1, locations.get(0));
+	}
+	
+	/**
 	 * Get locations that have a specified tag among its child tags.
 	 * 
-	 * @see {@link LocationService#getLocationsByTag(LocationTag)}
+	 * @see LocationService#getLocationsByTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should get locations by tag", method = "getLocationsByTag(LocationTag)")
@@ -318,7 +389,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationsByTag(LocationTag)}
+	 * @see LocationService#getLocationsByTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should return empty list when no locations has the given tag", method = "getLocationsByTag(LocationTag)")
@@ -327,13 +398,8 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 		Assert.assertEquals(0, ls.getLocationsByTag(ls.getLocationTagByName("Retired")).size());
 	}
 	
-	/**
-	 * Get locations that have a specified set of tags among its child tags.
-	 * 
-	 * @see {@link LocationService#getLocationsHavingAllTags(List<QLocationTag;>)}
-	 */
 	@Test
-	@Verifies(value = "should get locations having all tags", method = "getLocationsHavingAllTags(List<QLocationTag;>)")
+	@Verifies(value = "get locations having all tags", method = "getLocationsHavingAllTags(List<LocationTag>)")
 	public void getLocationsHavingAllTags_shouldGetLocationsHavingAllTags() throws Exception {
 		LocationService ls = Context.getLocationService();
 		
@@ -341,50 +407,23 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 		list1.add(ls.getLocationTag(1));
 		list1.add(ls.getLocationTag(2));
 		
-		List<LocationTag> list2 = new ArrayList<LocationTag>();
-		list2.add(ls.getLocationTag(3));
-		list2.add(ls.getLocationTag(4));
-		
-		List<LocationTag> list3 = new ArrayList<LocationTag>();
-		list3.add(ls.getLocationTag(1));
-		list3.add(ls.getLocationTag(2));
-		list3.add(ls.getLocationTag(3));
-		list3.add(ls.getLocationTag(4));
-		
-		List<LocationTag> list4 = new ArrayList<LocationTag>();
-		list4.add(ls.getLocationTag(4));
-		
 		assertEquals(1, ls.getLocationsHavingAllTags(list1).size());
-		assertEquals(2, ls.getLocationsHavingAllTags(list2).size());
-		assertEquals(0, ls.getLocationsHavingAllTags(list3).size());
-		assertEquals(4, ls.getLocationsHavingAllTags(list4).size());
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationsHavingAllTags(List<QLocationTag;>)}
+	 * @see LocationService#getLocationsHavingAllTags(List<LocationTag;>)
 	 */
 	@Test
-	@Verifies(value = "should return empty list when no location has the given tags", method = "getLocationsHavingAllTags(List<QLocationTag;>)")
-	public void getLocationsHavingAllTags_shouldReturnEmptyListWhenNoLocationHasTheGivenTags() throws Exception {
-		LocationService ls = Context.getLocationService();
-		Assert.assertEquals(0, ls.getLocationsHavingAllTags(Collections.singletonList(ls.getLocationTagByName("Retired")))
-		        .size());
-	}
-	
-	/**
-	 * @see {@link LocationService#getLocationsHavingAllTags(List<QLocationTag;>)}
-	 */
-	@Test
-	@Verifies(value = "return all unretired locations given an empty tag list", method = "getLocationsHavingAllTags(List<QLocationTag;>)")
+	@Verifies(value = "return all unretired locations given an empty tag list", method = "getLocationsHavingAllTags(List<LocationTag>)")
 	public void getLocationsHavingAllTags_shouldReturnAllUnretiredLocationsGivenAnEmptyTagList() throws Exception {
 		LocationService ls = Context.getLocationService();
-		Assert.assertEquals(5, ls.getLocationsHavingAllTags(new ArrayList<LocationTag>()).size());
+		Assert.assertEquals(5, ls.getLocationsHavingAllTags(Collections.EMPTY_LIST).size());
 	}
 	
 	/**
 	 * Get locations that have any of specified set of tags among its child tags.
 	 * 
-	 * @see {@link LocationService#getLocationsHavingAnyTag(List<QLocationTag;>)}
+	 * @see LocationService#getLocationsHavingAnyTag(List<LocationTag;>)
 	 */
 	@Test
 	@Verifies(value = "should get locations having any tag", method = "getLocationsHavingAnyTag(List<QLocationTag;>)")
@@ -410,7 +449,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationsHavingAnyTag(List<QLocationTag;>)}
+	 * @see LocationService#getLocationsHavingAnyTag(List<QLocationTag;>)
 	 */
 	@Test
 	@Verifies(value = "should return empty list when no location has the given tags", method = "getLocationsHavingAnyTag(List<QLocationTag;>)")
@@ -421,7 +460,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationsHavingAnyTag(List<QLocationTag;>)}
+	 * @see LocationService#getLocationsHavingAnyTag(List<QLocationTag;>)
 	 */
 	@Test
 	@Verifies(value = "should return empty list when given an empty tag list", method = "getLocationsHavingAnyTag(List<QLocationTag;>)")
@@ -431,7 +470,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#retireLocation(Location,String)}
+	 * @see LocationService#retireLocation(Location,String)
 	 */
 	@Test
 	@Verifies(value = "should retire location successfully", method = "retireLocation(Location,String)")
@@ -465,7 +504,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#unretireLocation(Location)}
+	 * @see LocationService#unretireLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should unretire retired location", method = "unretireLocation(Location)")
@@ -485,7 +524,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Make sure that purging a location removes the row from the database
 	 * 
-	 * @see {@link LocationService#purgeLocation(Location)}
+	 * @see LocationService#purgeLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should delete location successfully", method = "purgeLocation(Location)")
@@ -507,7 +546,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Test to make sure that a simple save to a new location tag gets persisted to the database
 	 * 
-	 * @see {@link LocationService#saveLocationTag(LocationTag)}
+	 * @see LocationService#saveLocationTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should create location tag successfully", method = "saveLocationTag(LocationTag)")
@@ -528,7 +567,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocationTag(LocationTag)}
+	 * @see LocationService#saveLocationTag(LocationTag)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should throw exception if tag name is null", method = "saveLocationTag(LocationTag)")
@@ -544,7 +583,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Test a simple update to a location tag that is already in the database.
 	 * 
-	 * @see {@link LocationService#saveLocationTag(LocationTag)}
+	 * @see LocationService#saveLocationTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should update location tag successfully", method = "saveLocationTag(LocationTag)")
@@ -580,7 +619,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * You should be able to add a tag to a location.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should add location tag to location", method = "saveLocation(Location)")
@@ -617,7 +656,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * You should be able to add a transient tag with an existing tag name.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should overwrite transient tag if tag with same name exists", method = "saveLocation(Location)")
@@ -646,7 +685,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * You should be able to remove a tag from a location.
 	 * 
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should remove location tag from location", method = "saveLocation(Location)")
@@ -667,7 +706,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationTag(Integer)}
+	 * @see LocationService#getLocationTag(Integer)
 	 */
 	@Test
 	@Verifies(value = "should return null when no location tag match given id", method = "getLocationTag(Integer)")
@@ -678,7 +717,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Should be able to retrieve a single LocationTag by its name.
 	 * 
-	 * @see {@link LocationService#getLocationTagByName(String)}
+	 * @see LocationService#getLocationTagByName(String)
 	 */
 	@Test
 	@Verifies(value = "should get location tag by name", method = "getLocationTagByName(String)")
@@ -693,40 +732,40 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocationTags()}
+	 * @see LocationService#getAllLocationTags()
 	 */
 	@Test
 	@Verifies(value = "should return all location tags including retired", method = "getAllLocationTags()")
 	public void getAllLocationTags_shouldReturnAllLocationTagsIncludingRetired() throws Exception {
 		List<LocationTag> tags = Context.getLocationService().getAllLocationTags();
 		
-		Assert.assertEquals(5, tags.size());
+		Assert.assertEquals(6, tags.size());
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocationTags(null)}
+	 * @see LocationService#getAllLocationTags(null)
 	 */
 	@Test
 	@Verifies(value = "should return all location tags if includeRetired is true", method = "getAllLocationTags(null)")
 	public void getAllLocationTags_shouldReturnAllLocationTagsIfIncludeRetiredIsTrue() throws Exception {
 		List<LocationTag> tags = Context.getLocationService().getAllLocationTags(true);
 		
-		Assert.assertEquals(5, tags.size());
+		Assert.assertEquals(6, tags.size());
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocationTags(null)}
+	 * @see LocationService#getAllLocationTags(null)
 	 */
 	@Test
 	@Verifies(value = "should return only unretired location tags if includeRetired is false", method = "getAllLocationTags(null)")
 	public void getAllLocationTags_shouldReturnOnlyUnretiredLocationTagsIfIncludeRetiredIsFalse() throws Exception {
 		List<LocationTag> tags = Context.getLocationService().getAllLocationTags(false);
 		
-		Assert.assertEquals(4, tags.size());
+		Assert.assertEquals(5, tags.size());
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationTagByName(String)}
+	 * @see LocationService#getLocationTagByName(String)
 	 */
 	@Test
 	@Verifies(value = "should return null when no location tag match given name", method = "getLocationTagByName(String)")
@@ -735,7 +774,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationTags(String)}
+	 * @see LocationService#getLocationTags(String)
 	 */
 	@Test
 	@Verifies(value = "should return empty list when no location tag match given search string", method = "getLocationTags(String)")
@@ -744,7 +783,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#retireLocationTag(LocationTag,String)}
+	 * @see LocationService#retireLocationTag(LocationTag,String)
 	 */
 	@Test
 	@Verifies(value = "should retire location tag successfully", method = "retireLocationTag(LocationTag,String)")
@@ -781,7 +820,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#retireLocationTag(LocationTag,String)}
+	 * @see LocationService#retireLocationTag(LocationTag,String)
 	 */
 	@Test
 	@Verifies(value = "should retire location tag with given reason", method = "retireLocationTag(LocationTag,String)")
@@ -800,7 +839,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#unretireLocationTag(LocationTag)}
+	 * @see LocationService#unretireLocationTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should unretire retired location tag", method = "unretireLocationTag(LocationTag)")
@@ -821,7 +860,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	/**
 	 * Make sure that purging a location tag removes the row from the database
 	 * 
-	 * @see {@link LocationService#purgeLocationTag(LocationTag)}
+	 * @see LocationService#purgeLocationTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should delete location tag", method = "purgeLocationTag(LocationTag)")
@@ -840,7 +879,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test
 	@Verifies(value = "should return saved object", method = "saveLocation(Location)")
@@ -853,7 +892,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should throw APIException if location has no name", method = "saveLocation(Location)")
@@ -863,7 +902,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocation(Location)}
+	 * @see LocationService#saveLocation(Location)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should throw APIException if transient tag is not found", method = "saveLocation(Location)")
@@ -877,7 +916,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocationTag(LocationTag)}
+	 * @see LocationService#saveLocationTag(LocationTag)
 	 */
 	@Test
 	@Verifies(value = "should return saved object", method = "saveLocationTag(LocationTag)")
@@ -888,7 +927,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#saveLocationTag(LocationTag)}
+	 * @see LocationService#saveLocationTag(LocationTag)
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should throw APIException if tag has no name", method = "saveLocationTag(LocationTag)")
@@ -902,7 +941,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationByUuid(String)}
+	 * @see LocationService#getLocationByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getLocationByUuid(String)")
@@ -913,7 +952,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationByUuid(String)}
+	 * @see LocationService#getLocationByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getLocationByUuid(String)")
@@ -922,7 +961,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationTagByUuid(String)}
+	 * @see LocationService#getLocationTagByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getLocationTagByUuid(String)")
@@ -932,7 +971,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getLocationTagByUuid(String)}
+	 * @see LocationService#getLocationTagByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getLocationTagByUuid(String)")
@@ -941,7 +980,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getDefaultLocation()}
+	 * @see LocationService#getDefaultLocation()
 	 */
 	@Test
 	@Verifies(value = "should return Unknown Location if the global property is something else that doesnot exist", method = "getDefaultLocation()")
@@ -955,7 +994,7 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link LocationService#getAllLocations(null)}
+	 * @see LocationService#getAllLocations(null)
 	 */
 	@Test
 	@Verifies(value = "should push retired locations to the end of the list when includeRetired is true", method = "getAllLocations(null)")
@@ -1129,6 +1168,95 @@ public class LocationServiceTest extends BaseContextSensitiveTest {
 		executeDataSet(LOC_ATTRIBUTE_DATA_XML);
 		LocationService service = Context.getLocationService();
 		Assert.assertNull(service.getLocationAttributeByUuid("not-a-uuid"));
+	}
+	
+	/**
+	 * should set audit info if any item in the location is edited
+	 * 
+	 * @see LocationService#saveLocation(Location)
+	 */
+	@Test
+	@Verifies(value = "should set audit info if any item in the location is edited", method = "saveLocation(Location)")
+	public void saveLocation_shouldSetAuditInfoIfAnyItemInTheLocationIsEdited() throws Exception {
+		LocationService ls = Context.getLocationService();
+		
+		Location location = ls.getLocation(1);
+		Assert.assertNotNull(location);
+		Assert.assertNull(location.getDateChanged());
+		Assert.assertNull(location.getChangedBy());
+		
+		location.setName("edited name");
+		ls.saveLocation(location);
+		
+		Location editedLocation = Context.getLocationService().saveLocation(location);
+		Context.flushSession();
+		
+		Assert.assertNotNull(editedLocation.getDateChanged());
+		Assert.assertNotNull(editedLocation.getChangedBy());
+		
+	}
+	
+	/**
+	 * should set audit info if any item in the location tag is edited
+	 * 
+	 * @see LocationService#saveLocationTag(LocationTag)
+	 */
+	@Test
+	@Verifies(value = "should set audit info if any item in the location tag is edited", method = "saveLocationTag(LocationTag)")
+	public void saveLocationTag_shouldSetAuditInfoIfAnyItemInTheLocationTagIsEdited() throws Exception {
+		LocationService ls = Context.getLocationService();
+		LocationTag tag = ls.getLocationTag(1);
+		
+		Assert.assertNull(tag.getDateChanged());
+		Assert.assertNull(tag.getChangedBy());
+		
+		tag.setName("testing");
+		tag.setDescription("desc");
+		
+		LocationTag editedTag = Context.getLocationService().saveLocationTag(tag);
+		Context.flushSession();
+		
+		Assert.assertNotNull(editedTag.getDateChanged());
+		Assert.assertNotNull(editedTag.getChangedBy());
+	}
+	
+	/**
+	 * @see LocationService#getLocationAttributeTypeByName(String)
+	 * @verifies return the location attribute type with the specified name
+	 */
+	@Test
+	public void getLocationAttributeTypeByName_shouldReturnTheLocationAttributeTypeWithTheSpecifiedName() throws Exception {
+		executeDataSet(LOC_ATTRIBUTE_DATA_XML);
+		LocationAttributeType locationAttributeType = Context.getLocationService().getLocationAttributeTypeByName(
+		    "Audit Date");
+		Assert.assertNotNull(locationAttributeType);
+		Assert.assertEquals("Audit Date", locationAttributeType.getName());
+	}
+	
+	/**
+	 * @see LocationService#getLocationAttributeTypeByName(String)
+	 * @verifies return null if no location attribute type exists with the specified name
+	+	 */
+	@Test
+	public void getLocationAttributeTypeByName_shouldReturnNullIfNoLocationAttributeTypeExistsWithTheSpecifiedName()
+	        throws Exception {
+		executeDataSet(LOC_ATTRIBUTE_DATA_XML);
+		Assert.assertNull(Context.getLocationService().getLocationAttributeTypeByName("not-a-name"));
+	}
+	
+	/**
+	 * @see LocationService#retireLocation(Location location, String reason)
+	 */
+	@Test
+	@Verifies(value = "should not retire location tag", method = "retireLocation(Location location, String reason)")
+	public void retireLocation_shouldNotRetireIndependentField() throws Exception {
+		LocationService locationService = Context.getLocationService();
+		Location location = new Location(1);
+		location.setName("location to retire");
+		LocationTag tag = new LocationTag(1);
+		location.addTag(tag);
+		locationService.retireLocation(location, "test retire reason");
+		Assert.assertFalse(tag.isRetired());
 	}
 	
 }

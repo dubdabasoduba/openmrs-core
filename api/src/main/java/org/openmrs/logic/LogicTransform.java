@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.logic;
 
@@ -21,9 +17,9 @@ import org.openmrs.logic.op.TransformOperator;
 import org.openmrs.logic.result.Result;
 
 /**
- * LogicTransform is internal representation of the transformation applied to the LogicCriteria <br />
- * <br />
- * Example: <br />
+ * LogicTransform is internal representation of the transformation applied to the LogicCriteria <br>
+ * <br>
+ * Example: <br>
  * <code>count()</code> will apply the {@link Count} operator and return the total number of
  * {@link Result} instead of the Result itself <code>first(2)</code> will apply the {@link First}
  * operator and return the first two {@link Result} out of the entire Result
@@ -47,7 +43,7 @@ public class LogicTransform {
 	
 	/**
 	 * Get the {@link TransformOperator} in this LogicTransform object
-	 * 
+	 *
 	 * @return the current TransformOperator
 	 */
 	public Operator getTransformOperator() {
@@ -86,7 +82,7 @@ public class LogicTransform {
 	/**
 	 * Set number of {@link Result} object should be returned by the current criteria. <br>
 	 * Only for {@link First} and {@link Last}
-	 * 
+	 *
 	 * @param numResults the total Result expected from this criteria
 	 */
 	public void setNumResults(Integer numResults) {
@@ -121,10 +117,12 @@ public class LogicTransform {
 	}
 	
 	private boolean safeEquals(Object a, Object b) {
-		if (a == null && b == null)
+		if (a == null && b == null) {
 			return true;
-		if (a == null || b == null)
+		}
+		if (a == null || b == null) {
 			return false;
+		}
 		return a.equals(b);
 	}
 	

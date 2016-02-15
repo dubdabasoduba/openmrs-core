@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.module;
 
@@ -24,6 +20,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
@@ -32,7 +29,7 @@ import org.w3c.dom.Document;
 
 /**
  * Generic module class that openmrs manipulates
- * 
+ *
  * @version 1.0
  */
 public final class Module {
@@ -57,8 +54,6 @@ public final class Module {
 	
 	private String downloadURL = null; // will only be populated when the remote file is newer than the current module
 	
-	private Activator activator;
-	
 	private ModuleActivator moduleActivator;
 	
 	private String activatorName;
@@ -70,6 +65,8 @@ public final class Module {
 	private Map<String, String> requiredModulesMap;
 	
 	private Map<String, String> awareOfModulesMap;
+	
+	private Map<String, String> startBeforeModulesMap;
 	
 	private List<AdvicePoint> advicePoints = new Vector<AdvicePoint>();
 	
@@ -91,9 +88,9 @@ public final class Module {
 	
 	private Document sqldiff = null;
 	
-	private Document log4j = null;
-	
 	private boolean mandatory = Boolean.FALSE;
+	
+	private List<ModuleConditionalResource> conditionalResources = new ArrayList<ModuleConditionalResource>();
 	
 	// keep a reference to the file that we got this module from so we can delete
 	// it if necessary
@@ -103,7 +100,7 @@ public final class Module {
 	
 	/**
 	 * Simple constructor
-	 * 
+	 *
 	 * @param name
 	 */
 	public Module(String name) {
@@ -112,7 +109,7 @@ public final class Module {
 	
 	/**
 	 * Main constructor
-	 * 
+	 *
 	 * @param name
 	 * @param moduleId
 	 * @param packageName
@@ -130,6 +127,7 @@ public final class Module {
 		log.debug("Creating module " + name);
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if (obj != null && obj instanceof Module) {
 			Module mod = (Module) obj;
@@ -138,40 +136,9 @@ public final class Module {
 		return false;
 	}
 	
-	/**
-	 * @return the activator
-	 * @deprecated replaced by {@link Module#getModuleActivator()}
-	 */
-	@Deprecated
-	public Activator getActivator() {
-		try {
-			if (activator == null) {
-				ModuleClassLoader classLoader = ModuleFactory.getModuleClassLoader(this);
-				if (classLoader == null)
-					throw new ModuleException("The classloader is null", getModuleId());
-				
-				Class<?> c = classLoader.loadClass(getActivatorName());
-				setActivator((Activator) c.newInstance());
-			}
-		}
-		catch (ClassNotFoundException e) {
-			throw new ModuleException("Unable to load/find activator: '" + getActivatorName() + "'", name, e);
-		}
-		catch (IllegalAccessException e) {
-			throw new ModuleException("Unable to load/access activator: '" + getActivatorName() + "'", name, e);
-		}
-		catch (InstantiationException e) {
-			throw new ModuleException("Unable to load/instantiate activator: '" + getActivatorName() + "'", name, e);
-		}
-		
-		return activator;
-	}
-	
-	/**
-	 * @param activator the activator to set
-	 */
-	public void setActivator(Activator activator) {
-		this.activator = activator;
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(getModuleId()).toHashCode();
 	}
 	
 	/**
@@ -181,13 +148,15 @@ public final class Module {
 		try {
 			if (moduleActivator == null) {
 				ModuleClassLoader classLoader = ModuleFactory.getModuleClassLoader(this);
-				if (classLoader == null)
+				if (classLoader == null) {
 					throw new ModuleException("The classloader is null", getModuleId());
+				}
 				
 				Class<?> c = classLoader.loadClass(getActivatorName());
 				Object o = c.newInstance();
-				if (ModuleActivator.class.isAssignableFrom(o.getClass()))
+				if (ModuleActivator.class.isAssignableFrom(o.getClass())) {
 					setModuleActivator((ModuleActivator) o);
+				}
 			}
 			
 		}
@@ -285,7 +254,7 @@ public final class Module {
 	/**
 	 * This list of strings is just what is included in the config.xml file, the full package names:
 	 * e.g. org.openmrs.module.formentry
-	 * 
+	 *
 	 * @return the list of requiredModules
 	 */
 	public List<String> getRequiredModules() {
@@ -294,7 +263,7 @@ public final class Module {
 	
 	/**
 	 * Convenience method to get the version of this given module that is required
-	 * 
+	 *
 	 * @return the version of the given required module, or null if there are no version constraints
 	 * @since 1.5
 	 * @should return null if no required modules exist
@@ -306,13 +275,14 @@ public final class Module {
 	
 	/**
 	 * This is a convenience method to set all the required modules without any version requirements
-	 * 
+	 *
 	 * @param requiredModules the requiredModules to set for this module
 	 * @should set modules when there is a null required modules map
 	 */
 	public void setRequiredModules(List<String> requiredModules) {
-		if (requiredModulesMap == null)
+		if (requiredModulesMap == null) {
 			requiredModulesMap = new HashMap<String, String>();
+		}
 		
 		for (String module : requiredModules) {
 			requiredModulesMap.put(module, null);
@@ -320,7 +290,18 @@ public final class Module {
 	}
 	
 	/**
-	 * @param requiredModulesMap <code>Map<String,String></code> of the <code>requiredModule</code>s
+	 * @param requiredModule the requiredModule to add for this module
+	 * @param version version requiredModule
+	 * @should add module to required modules map
+	 */
+	public void addRequiredModule(String requiredModule, String version) {
+		if (requiredModulesMap != null) {
+			requiredModulesMap.put(requiredModule, version);
+		}
+	}
+	
+	/**
+	 * @param requiredModulesMap <code>Map&lt;String,String&gt;</code> of the <code>requiredModule</code>s
 	 *            to set
 	 * @since 1.5
 	 */
@@ -332,17 +313,42 @@ public final class Module {
 	 * Get the modules that are required for this module. The keys in this map are the module
 	 * package names. The values in the map are the required version. If no specific version is
 	 * required, it will be null.
-	 * 
+	 *
 	 * @return a map from required module to the version that is required
 	 */
-	public Map<String, String> setRequiredModulesMap() {
+	public Map<String, String> getRequiredModulesMap() {
 		return requiredModulesMap;
 	}
 	
 	/**
+	 * Sets modules that must start after this module
+	 * @param startBeforeModulesMap the startedBefore modules to set
+	 */
+	public void setStartBeforeModulesMap(Map<String, String> startBeforeModulesMap) {
+		this.startBeforeModulesMap = startBeforeModulesMap;
+	}
+	
+	/**
+	 * Gets modules which should start after this
+	 * @return map where key is module name and value is module version
+	 */
+	public Map<String, String> getStartBeforeModulesMap() {
+		return this.startBeforeModulesMap;
+	}
+	
+	/**
+	 * Gets names of modules which should start after this
+	 * @since 1.11
+	 * @return list of module names or null
+	 */
+	public List<String> getStartBeforeModules() {
+		return this.startBeforeModulesMap == null ? null : new ArrayList<String>(this.startBeforeModulesMap.keySet());
+	}
+	
+	/**
 	 * Sets the modules that this module is aware of.
-	 * 
-	 * @param awareOfModulesMap <code>Map<String,String></code> of the
+	 *
+	 * @param awareOfModulesMap <code>Map&lt;String,String&gt;</code> of the
 	 *            <code>awareOfModulesMap</code>s to set
 	 * @since 1.9
 	 */
@@ -353,12 +359,16 @@ public final class Module {
 	/**
 	 * This list of strings is just what is included in the config.xml file, the full package names:
 	 * e.g. org.openmrs.module.formentry, for the modules that this module is aware of.
-	 * 
+	 *
 	 * @since 1.9
 	 * @return the list of awareOfModules
 	 */
 	public List<String> getAwareOfModules() {
 		return awareOfModulesMap == null ? null : new ArrayList<String>(awareOfModulesMap.keySet());
+	}
+	
+	public String getAwareOfModuleVersion(String awareOfModule) {
+		return awareOfModulesMap == null ? null : awareOfModulesMap.get(awareOfModule);
 	}
 	
 	/**
@@ -470,8 +480,9 @@ public final class Module {
 	 * @return the extensions
 	 */
 	public List<Extension> getExtensions() {
-		if (extensions.size() == extensionNames.size())
+		if (extensions.size() == extensionNames.size()) {
 			return extensions;
+		}
 		
 		return expandExtensionNames();
 	}
@@ -485,28 +496,29 @@ public final class Module {
 	
 	/**
 	 * A map of pointid to classname. The classname is expected to be a class that extends the
-	 * {@link Extension} object. <br/>
-	 * <br/>
+	 * {@link Extension} object. <br>
+	 * <br>
 	 * This map will be expanded into full Extension objects the first time {@link #getExtensions()}
 	 * is called
-	 * 
+	 *
 	 * @param map from pointid to classname
 	 * @see ModuleFileParser
 	 */
 	public void setExtensionNames(IdentityHashMap<String, String> map) {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			for (Map.Entry<String, String> entry : extensionNames.entrySet()) {
 				log.debug("Setting extension names: " + entry.getKey() + " : " + entry.getValue());
 			}
+		}
 		this.extensionNames = map;
 	}
 	
 	/**
 	 * Expand the temporary extensionNames map of pointid-classname to full pointid-classobject. <br>
 	 * This has to be done after the fact because when the pointid-classnames are parsed, the
-	 * module's objects aren't fully realized yet and so not all classes can be loaded. <br/>
-	 * <br/>
-	 * 
+	 * module's objects aren't fully realized yet and so not all classes can be loaded. <br>
+	 * <br>
+	 *
 	 * @return a list of full Extension objects
 	 */
 	private List<Extension> expandExtensionNames() {
@@ -570,7 +582,7 @@ public final class Module {
 	/**
 	 * Gets a mapping from locale to properties used by this module. The locales are represented as
 	 * a string containing language and country codes.
-	 * 
+	 *
 	 * @return mapping from locales to properties
 	 */
 	public Map<String, Properties> getMessages() {
@@ -579,7 +591,7 @@ public final class Module {
 	
 	/**
 	 * Sets the map from locale to properties used by this module.
-	 * 
+	 *
 	 * @param messages map of locale to properties for that locale
 	 */
 	public void setMessages(Map<String, Properties> messages) {
@@ -610,14 +622,6 @@ public final class Module {
 		this.config = config;
 	}
 	
-	public Document getLog4j() {
-		return log4j;
-	}
-	
-	public void setLog4j(Document log4j) {
-		this.log4j = log4j;
-	}
-	
 	public Document getSqldiff() {
 		return sqldiff;
 	}
@@ -636,7 +640,6 @@ public final class Module {
 	
 	/**
 	 * Packages to scan for classes with JPA annotated classes.
-	 * 
 	 * @return the set of packages to scan
 	 * @since 1.9.2, 1.10
 	 */
@@ -657,7 +660,7 @@ public final class Module {
 	 * This property is set by the module owner to tell OpenMRS that once it is installed, it must
 	 * always startup. This is intended for modules with system-critical monitoring or security
 	 * checks that should always be in place.
-	 * 
+	 *
 	 * @return true if this module has said that it should always start up
 	 */
 	public boolean isMandatory() {
@@ -671,9 +674,9 @@ public final class Module {
 	/**
 	 * This is a convenience method to know whether this module is core to OpenMRS. A module is
 	 * 'core' when this module is essentially part of the core code and must exist at all times
-	 * 
+	 *
 	 * @return true if this is an OpenMRS core module
-	 * @see {@link ModuleConstants#CORE_MODULES}
+	 * @see ModuleConstants#CORE_MODULES
 	 */
 	public boolean isCoreModule() {
 		return !ModuleUtil.ignoreCoreModules() && ModuleConstants.CORE_MODULES.containsKey(moduleId);
@@ -684,8 +687,9 @@ public final class Module {
 	}
 	
 	public void setStartupErrorMessage(String e) {
-		if (e == null)
+		if (e == null) {
 			throw new ModuleException("Startup error message cannot be null", this.getModuleId());
+		}
 		
 		this.startupErrorMessage = e;
 	}
@@ -693,14 +697,15 @@ public final class Module {
 	/**
 	 * Add the given exceptionMessage and throwable as the startup error for this module. This
 	 * method loops over the stacktrace and adds the detailed message
-	 * 
+	 *
 	 * @param exceptionMessage optional. the default message to show on the first line of the error
 	 *            message
 	 * @param t throwable stacktrace to include in the error message
 	 */
 	public void setStartupErrorMessage(String exceptionMessage, Throwable t) {
-		if (t == null)
+		if (t == null) {
 			throw new ModuleException("Startup error value cannot be null", this.getModuleId());
+		}
 		
 		StringBuffer sb = new StringBuffer();
 		
@@ -712,14 +717,6 @@ public final class Module {
 		
 		sb.append(t.getMessage());
 		sb.append("\n");
-		
-		// loop over and append all stacktrace elements marking the "openmrs" ones 
-		for (StackTraceElement traceElement : t.getStackTrace()) {
-			if (traceElement.getClassName().contains("openmrs"))
-				sb.append(" ** ");
-			sb.append(traceElement);
-			sb.append("\n");
-		}
 		
 		this.startupErrorMessage = sb.toString();
 	}
@@ -736,19 +733,34 @@ public final class Module {
 		this.startupErrorMessage = null;
 	}
 	
+	@Override
 	public String toString() {
-		if (moduleId == null)
+		if (moduleId == null) {
 			return super.toString();
+		}
 		
 		return moduleId;
 	}
 	
 	public void disposeAdvicePointsClassInstance() {
-		if (advicePoints == null)
+		if (advicePoints == null) {
 			return;
+		}
 		
 		for (AdvicePoint advicePoint : advicePoints) {
 			advicePoint.disposeClassInstance();
 		}
+	}
+	
+	public List<ModuleConditionalResource> getConditionalResources() {
+		return conditionalResources;
+	}
+	
+	public void setConditionalResources(List<ModuleConditionalResource> conditionalResources) {
+		this.conditionalResources = conditionalResources;
+	}
+	
+	public boolean isCore() {
+		return ModuleConstants.CORE_MODULES.containsKey(getModuleId());
 	}
 }

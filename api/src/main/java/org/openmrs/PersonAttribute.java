@@ -1,20 +1,17 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
@@ -132,8 +129,9 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 				Object thisValue = method.invoke(this);
 				Object otherValue = method.invoke(otherAttribute);
 				
-				if (otherValue != null)
+				if (otherValue != null) {
 					returnValue &= otherValue.equals(thisValue);
+				}
 				
 			}
 			catch (NoSuchMethodException e) {
@@ -208,10 +206,11 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	@SuppressWarnings("unchecked")
 	public String toString() {
 		Object o = getHydratedObject();
-		if (o instanceof Attributable)
+		if (o instanceof Attributable) {
 			return ((Attributable) o).getDisplayString();
-		else if (o != null)
+		} else if (o != null) {
 			return o.toString();
+		}
 		
 		return this.value;
 	}
@@ -243,8 +242,9 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	@SuppressWarnings("unchecked")
 	public Object getHydratedObject() {
 		
-		if (getValue() == null)
+		if (getValue() == null) {
 			return null;
+		}
 		
 		try {
 			Class c = OpenmrsClassLoader.getInstance().loadClass(getAttributeType().getFormat());
@@ -262,14 +262,14 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 				return o;
 			}
 		}
-		catch (Throwable t) {
+		catch (Exception e) {
 			
 			// No need to warn if the input was blank
 			if (StringUtils.isBlank(getValue())) {
 				return null;
 			}
 			
-			log.warn("Unable to hydrate value: " + getValue() + " for type: " + getAttributeType(), t);
+			log.warn("Unable to hydrate value: " + getValue() + " for type: " + getAttributeType(), e);
 		}
 		
 		log.debug("Returning value: '" + getValue() + "'");
@@ -296,21 +296,12 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	 * @should return negative if this attribute has lower attribute type than argument
 	 * @should return negative if other attribute has lower value
 	 * @should return negative if this attribute has lower attribute id than argument
+	 * @should not throw exception if attribute type is null
+	 * Note: this comparator imposes orderings that are inconsistent with equals
 	 */
 	public int compareTo(PersonAttribute other) {
-		int retValue = 0;
-		retValue = isVoided().compareTo(other.isVoided());
-		if (retValue == 0)
-			retValue = OpenmrsUtil.compareWithNullAsLatest(getDateCreated(), other.getDateCreated());
-		if (retValue == 0)
-			retValue = getAttributeType().getPersonAttributeTypeId().compareTo(
-			    other.getAttributeType().getPersonAttributeTypeId());
-		if (retValue == 0)
-			retValue = OpenmrsUtil.compareWithNullAsGreatest(getValue(), other.getValue());
-		if (retValue == 0)
-			retValue = OpenmrsUtil.compareWithNullAsGreatest(getPersonAttributeId(), other.getPersonAttributeId());
-		
-		return retValue;
+		DefaultComparator paDComparator = new DefaultComparator();
+		return paDComparator.compare(this, other);
 	}
 	
 	/**
@@ -330,4 +321,34 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 		setPersonAttributeId(id);
 		
 	}
+	
+	/**
+	 Provides a default comparator.
+	 @since 1.12
+	 **/
+	public static class DefaultComparator implements Comparator<PersonAttribute> {
+		
+		@Override
+		public int compare(PersonAttribute pa1, PersonAttribute pa2) {
+			int retValue;
+			if ((retValue = OpenmrsUtil.compareWithNullAsGreatest(pa1.getAttributeType(), pa2.getAttributeType())) != 0) {
+				return retValue;
+			}
+			
+			if ((retValue = pa1.isVoided().compareTo(pa2.isVoided())) != 0) {
+				return retValue;
+			}
+			
+			if ((retValue = OpenmrsUtil.compareWithNullAsLatest(pa1.getDateCreated(), pa2.getDateCreated())) != 0) {
+				return retValue;
+			}
+			
+			if ((retValue = OpenmrsUtil.compareWithNullAsGreatest(pa1.getValue(), pa2.getValue())) != 0) {
+				return retValue;
+			}
+			
+			return OpenmrsUtil.compareWithNullAsGreatest(pa1.getPersonAttributeId(), pa2.getPersonAttributeId());
+		}
+	}
+	
 }

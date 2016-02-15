@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.validator;
 
@@ -35,7 +31,7 @@ import org.springframework.validation.Errors;
 public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest {
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the code is a white space character", method = "validate(Object,Errors)")
@@ -50,7 +46,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the code is an empty string", method = "validate(Object,Errors)")
@@ -65,7 +61,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the code is null", method = "validate(Object,Errors)")
@@ -79,7 +75,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the concept reference term code is a duplicate in its concept source", method = "validate(Object,Errors)")
@@ -94,7 +90,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test(expected = IllegalArgumentException.class)
 	@Verifies(value = "should fail if the concept reference term object is null", method = "validate(Object,Errors)")
@@ -104,7 +100,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if the concept source is null", method = "validate(Object,Errors)")
@@ -118,7 +114,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Ignore
@@ -135,7 +131,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Ignore
@@ -151,7 +147,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Ignore
@@ -166,7 +162,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass if all the required fields are set and valid", method = "validate(Object,Errors)")
@@ -181,7 +177,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass if the duplicate code is for a term from another concept source", method = "validate(Object,Errors)")
@@ -197,7 +193,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should pass if the duplicate name is for a term from another concept source", method = "validate(Object,Errors)")
@@ -213,7 +209,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a concept reference term map has no concept map type", method = "validate(Object,Errors)")
@@ -229,7 +225,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if termB of a concept reference term map is not set", method = "validate(Object,Errors)")
@@ -247,7 +243,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a term is mapped to itself", method = "validate(Object,Errors)")
@@ -263,7 +259,7 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 	}
 	
 	/**
-	 * @see {@link ConceptReferenceTermValidator#validate(Object,Errors)}
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
 	 */
 	@Test
 	@Verifies(value = "should fail if a term is mapped multiple times to the same term", method = "validate(Object,Errors)")
@@ -284,5 +280,50 @@ public class ConceptReferenceTermValidatorTest extends BaseContextSensitiveTest 
 		
 		//the term for second mapping should be rejected
 		Assert.assertEquals(true, errors.hasFieldErrors("conceptReferenceTermMaps[1].termB"));
+	}
+	
+	/**
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should pass validation if field lengths are correct", method = "validate(Object,Errors)")
+	public void validate_shouldPassValidationIfFieldLengthsAreCorrect() throws Exception {
+		ConceptReferenceTerm term = new ConceptReferenceTerm();
+		term.setName("name");
+		term.setCode("code");
+		term.setConceptSource(Context.getConceptService().getConceptSource(1));
+		term.setVersion("version");
+		term.setDescription("Description");
+		term.setRetireReason("RetireReason");
+		Errors errors = new BindException(term, "term");
+		new ConceptReferenceTermValidator().validate(term, errors);
+		Assert.assertEquals(false, errors.hasErrors());
+	}
+	
+	/**
+	 * @see ConceptReferenceTermValidator#validate(Object,Errors)
+	 */
+	@Test
+	@Verifies(value = "should fail validation if field lengths are not correct", method = "validate(Object,Errors)")
+	public void validate_shouldFailValidationIfFieldLengthsAreNotCorrect() throws Exception {
+		ConceptReferenceTerm term = new ConceptReferenceTerm();
+		term
+		        .setName("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		term
+		        .setCode("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		term.setConceptSource(Context.getConceptService().getConceptSource(1));
+		term
+		        .setVersion("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		term
+		        .setDescription("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		term
+		        .setRetireReason("too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text too long text");
+		Errors errors = new BindException(term, "term");
+		new ConceptReferenceTermValidator().validate(term, errors);
+		Assert.assertEquals(true, errors.hasFieldErrors("name"));
+		Assert.assertEquals(true, errors.hasFieldErrors("code"));
+		Assert.assertEquals(true, errors.hasFieldErrors("version"));
+		Assert.assertEquals(true, errors.hasFieldErrors("description"));
+		Assert.assertEquals(true, errors.hasFieldErrors("retireReason"));
 	}
 }

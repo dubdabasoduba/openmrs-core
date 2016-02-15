@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+ *
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
+ */
 package org.openmrs.propertyeditor;
 
 import org.junit.Assert;
@@ -24,7 +33,7 @@ public class LocationEditorTest extends BaseContextSensitiveTest {
 	@Test
 	public void setAsText_shouldSetUsingUuid() throws Exception {
 		LocationEditor editor = new LocationEditor();
-		editor.setAsText("dc5c1fcc-0459-4201-bf70-0b90535ba362");
+		editor.setAsText("8d6c993e-c2cc-11de-8d13-0010c6dffd0f");
 		Assert.assertNotNull(editor.getValue());
 	}
 }

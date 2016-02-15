@@ -1,19 +1,14 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.impl;
 
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -33,26 +28,14 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.Concept;
-import org.openmrs.ConceptClass;
-import org.openmrs.ConceptDatatype;
-import org.openmrs.ConceptProposal;
 import org.openmrs.ConceptSource;
-import org.openmrs.EncounterType;
-import org.openmrs.FieldType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.ImplementationId;
-import org.openmrs.Location;
-import org.openmrs.MimeType;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.Privilege;
-import org.openmrs.Role;
-import org.openmrs.Tribe;
 import org.openmrs.User;
-import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.EventListeners;
@@ -63,15 +46,10 @@ import org.openmrs.customdatatype.CustomDatatypeUtil;
 import org.openmrs.module.Module;
 import org.openmrs.module.ModuleFactory;
 import org.openmrs.module.ModuleUtil;
-import org.openmrs.reporting.AbstractReportObject;
-import org.openmrs.reporting.Report;
 import org.openmrs.util.HttpClient;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
-import org.openmrs.util.OpenmrsUtil;
-import org.openmrs.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 
 /**
@@ -113,474 +91,7 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	public void setEventListeners(EventListeners eventListeners) {
 		this.eventListeners = eventListeners;
 	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#createEncounterType(org.openmrs.EncounterType)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createEncounterType(EncounterType encounterType) throws APIException {
-		Context.getEncounterService().saveEncounterType(encounterType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#updateEncounterType(org.openmrs.EncounterType)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updateEncounterType(EncounterType encounterType) throws APIException {
-		Context.getEncounterService().saveEncounterType(encounterType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#deleteEncounterType(org.openmrs.EncounterType)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteEncounterType(EncounterType encounterType) throws APIException {
-		Context.getEncounterService().purgeEncounterType(encounterType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.PatientService#savePatientIdentifierType(PatientIdentifierType)
-	 * @deprecated replaced by
-	 *             {@link org.openmrs.api.PatientService#savePatientIdentifierType(PatientIdentifierType)}
-	 */
-	@Deprecated
-	public void createPatientIdentifierType(PatientIdentifierType patientIdentifierType) throws APIException {
-		Context.getPatientService().savePatientIdentifierType(patientIdentifierType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.PatientService#savePatientIdentifierType(PatientIdentifierType)
-	 * @deprecated replaced by
-	 *             {@link org.openmrs.api.PatientService#savePatientIdentifierType(PatientIdentifierType)}
-	 */
-	@Deprecated
-	public void updatePatientIdentifierType(PatientIdentifierType patientIdentifierType) throws APIException {
-		Context.getPatientService().savePatientIdentifierType(patientIdentifierType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.PatientService#purgePatientIdentifierType(PatientIdentifierType)
-	 * @deprecated replaced by
-	 *             {@link org.openmrs.api.PatientService#purgePatientIdentifierType(PatientIdentifierType)}
-	 */
-	@Deprecated
-	public void deletePatientIdentifierType(PatientIdentifierType patientIdentifierType) throws APIException {
-		Context.getPatientService().purgePatientIdentifierType(patientIdentifierType);
-	}
-	
-	/**
-	 * Create a new Tribe
-	 * 
-	 * @param tribe Tribe to create
-	 * @throws APIException
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createTribe(Tribe tribe) throws APIException {
-		throw new APIException("The Tribe object is no longer supported.  Install the Tribe module");
-	}
-	
-	/**
-	 * Update Tribe
-	 * 
-	 * @param tribe Tribe to update
-	 * @throws APIException
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updateTribe(Tribe tribe) throws APIException {
-		throw new APIException("The Tribe object is no longer supported.  Install the Tribe module");
-	}
-	
-	/**
-	 * Delete Tribe
-	 * 
-	 * @param tribe Tribe to delete
-	 * @throws APIException
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteTribe(Tribe tribe) throws APIException {
-		throw new APIException("The Tribe object is no longer supported.  Install the Tribe module");
-	}
-	
-	/**
-	 * Retire Tribe
-	 * 
-	 * @param tribe Tribe to retire
-	 * @throws APIException
-	 * @deprecated
-	 */
-	@Deprecated
-	public void retireTribe(Tribe tribe) throws APIException {
-		throw new APIException("The Tribe object is no longer supported.  Install the Tribe module");
-	}
-	
-	/**
-	 * Unretire Tribe
-	 * 
-	 * @param tribe Tribe to unretire
-	 * @throws APIException
-	 * @deprecated
-	 */
-	@Deprecated
-	public void unretireTribe(Tribe tribe) throws APIException {
-		throw new APIException("The Tribe object is no longer supported.  Install the Tribe module");
-	}
-	
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createFieldType(FieldType fieldType) throws APIException {
-		Context.getFormService().saveFieldType(fieldType);
-	}
-	
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updateFieldType(FieldType fieldType) throws APIException {
-		Context.getFormService().saveFieldType(fieldType);
-	}
-	
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteFieldType(FieldType fieldType) throws APIException {
-		Context.getFormService().purgeFieldType(fieldType);
-	}
-	
-	/**
-	 * @deprecated use {@link org.openmrs.api.ObsService#saveMimeType(MimeType)}
-	 */
-	@Deprecated
-	public void createMimeType(MimeType mimeType) throws APIException {
-		Context.getObsService().saveMimeType(mimeType);
-	}
-	
-	/**
-	 * @deprecated use {@link org.openmrs.api.ObsService#saveMimeType(MimeType)}
-	 */
-	@Deprecated
-	public void updateMimeType(MimeType mimeType) throws APIException {
-		Context.getObsService().saveMimeType(mimeType);
-	}
-	
-	/**
-	 * @deprecated use {@link org.openmrs.api.ObsService#purgeMimeType(MimeType)}
-	 */
-	@Deprecated
-	public void deleteMimeType(MimeType mimeType) throws APIException {
-		Context.getObsService().purgeMimeType(mimeType);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#createLocation(org.openmrs.Location)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createLocation(Location location) throws APIException {
-		Context.getLocationService().saveLocation(location);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#updateLocation(org.openmrs.Location)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updateLocation(Location location) throws APIException {
-		Context.getLocationService().saveLocation(location);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#deleteLocation(org.openmrs.Location)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteLocation(Location location) throws APIException {
-		Context.getLocationService().purgeLocation(location);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#createRole(org.openmrs.Role)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createRole(Role role) throws APIException {
-		Context.getUserService().saveRole(role);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#updateRole(org.openmrs.Role)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updateRole(Role role) throws APIException {
-		Context.getUserService().saveRole(role);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#deleteRole(org.openmrs.Role)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteRole(Role role) throws APIException {
-		Context.getUserService().purgeRole(role);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#createPrivilege(org.openmrs.Privilege)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void createPrivilege(Privilege privilege) throws APIException {
-		Context.getUserService().savePrivilege(privilege);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#updatePrivilege(org.openmrs.Privilege)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void updatePrivilege(Privilege privilege) throws APIException {
-		Context.getUserService().savePrivilege(privilege);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#deletePrivilege(org.openmrs.Privilege)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deletePrivilege(Privilege privilege) throws APIException {
-		Context.getUserService().purgePrivilege(privilege);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void createConceptClass(ConceptClass cc) throws APIException {
-		Context.getConceptService().saveConceptClass(cc);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void updateConceptClass(ConceptClass cc) throws APIException {
-		Context.getConceptService().saveConceptClass(cc);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void deleteConceptClass(ConceptClass cc) throws APIException {
-		Context.getConceptService().purgeConceptClass(cc);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void createConceptDatatype(ConceptDatatype cd) throws APIException {
-		Context.getConceptService().saveConceptDatatype(cd);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void updateConceptDatatype(ConceptDatatype cd) throws APIException {
-		Context.getConceptService().saveConceptDatatype(cd);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void deleteConceptDatatype(ConceptDatatype cd) throws APIException {
-		Context.getConceptService().purgeConceptDatatype(cd);
-	}
-	
-	/**
-	 * Create a new Report
-	 * 
-	 * @param report Report to create
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void createReport(Report report) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_ADD_REPORTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_ADD_REPORTS);
 		
-		dao.createReport(report);
-	}
-	
-	/**
-	 * Update Report
-	 * 
-	 * @param report Report to update
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void updateReport(Report report) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_EDIT_REPORTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_EDIT_REPORTS);
-		
-		dao.updateReport(report);
-	}
-	
-	/**
-	 * Delete Report
-	 * 
-	 * @param report Report to delete
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void deleteReport(Report report) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_DELETE_REPORTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_DELETE_REPORTS);
-		
-		dao.deleteReport(report);
-	}
-	
-	/**
-	 * Create a new Report Object
-	 * 
-	 * @param reportObject Report Object to create
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void createReportObject(AbstractReportObject reportObject) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_ADD_REPORT_OBJECTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_ADD_REPORT_OBJECTS);
-		
-		dao.createReportObject(reportObject);
-	}
-	
-	/**
-	 * Update Report Object
-	 * 
-	 * @param reportObject Report Object to update
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void updateReportObject(AbstractReportObject reportObject) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_EDIT_REPORT_OBJECTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_EDIT_REPORT_OBJECTS);
-		
-		dao.updateReportObject(reportObject);
-	}
-	
-	/**
-	 * Delete Report Object
-	 * 
-	 * @param reportObjectId Internal Integer identifier of Report Object to delete
-	 * @deprecated see reportingcompatibility module
-	 * @throws APIException
-	 */
-	@Deprecated
-	public void deleteReportObject(Integer reportObjectId) throws APIException {
-		if (!Context.hasPrivilege(OpenmrsConstants.PRIV_DELETE_REPORT_OBJECTS))
-			throw new APIAuthenticationException("Privilege required: " + OpenmrsConstants.PRIV_DELETE_REPORT_OBJECTS);
-		
-		dao.deleteReportObject(reportObjectId);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptServiceImpl
-	 */
-	@Deprecated
-	public void updateConceptWord(Concept concept) throws APIException {
-		Context.getConceptService().updateConceptWord(concept);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptServiceImpl
-	 */
-	@Deprecated
-	public void updateConceptWords() throws APIException {
-		Context.getConceptService().updateConceptWords();
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void updateConceptWords(Integer conceptIdStart, Integer conceptIdEnd) throws APIException {
-		Context.getConceptService().updateConceptWords(conceptIdStart, conceptIdEnd);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void createConceptProposal(ConceptProposal cp) throws APIException {
-		Context.getConceptService().saveConceptProposal(cp);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void updateConceptProposal(ConceptProposal cp) throws APIException {
-		Context.getConceptService().saveConceptProposal(cp);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 */
-	@Deprecated
-	public void mapConceptProposalToConcept(ConceptProposal cp, Concept mappedConcept) throws APIException {
-		Context.getConceptService().mapConceptProposalToConcept(cp, mappedConcept);
-	}
-	
-	/**
-	 * @deprecated moved to ConceptService
-	 * @see org.openmrs.api.AdministrationService#rejectConceptProposal(org.openmrs.ConceptProposal)
-	 */
-	@Deprecated
-	public void rejectConceptProposal(ConceptProposal cp) {
-		Context.getConceptService().rejectConceptProposal(cp);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#mrnGeneratorLog(java.lang.String,
-	 *      java.lang.Integer, java.lang.Integer)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void mrnGeneratorLog(String site, Integer start, Integer count) throws APIException {
-		if (!Context.hasPrivilege(PrivilegeConstants.EDIT_PATIENTS))
-			throw new APIAuthenticationException("Privilege required: " + PrivilegeConstants.EDIT_PATIENTS);
-		
-		dao.mrnGeneratorLog(site, start, count);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#getMRNGeneratorLog()
-	 * @deprecated
-	 */
-	@Deprecated
-	@Transactional(readOnly = true)
-	public Collection<?> getMRNGeneratorLog() throws APIException {
-		if (!Context.hasPrivilege(PrivilegeConstants.EDIT_PATIENTS))
-			throw new APIAuthenticationException("Privilege required: " + PrivilegeConstants.EDIT_PATIENTS);
-		
-		return dao.getMRNGeneratorLog();
-	}
-	
 	/**
 	 * Static-ish variable used to cache the system variables. This is not static so that every time
 	 * a module is loaded or removed the variable is destroyed (along with the administration
@@ -592,7 +103,7 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 * Set of locales which can be used to present messages in the user interface. Created lazily as
 	 * needed by {@link #getAllowedLocales()}.
 	 */
-	private HashSet<Locale> presentationLocales;
+	private Set<Locale> presentationLocales;
 	
 	/**
 	 * @see org.openmrs.api.AdministrationService#getSystemVariables()
@@ -631,8 +142,9 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	@Transactional(readOnly = true)
 	public String getGlobalProperty(String propertyName) throws APIException {
 		// This method should not have any authorization check
-		if (propertyName == null)
+		if (propertyName == null) {
 			return null;
+		}
 		
 		return dao.getGlobalProperty(propertyName);
 	}
@@ -643,9 +155,10 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 */
 	@Transactional(readOnly = true)
 	public String getGlobalProperty(String propertyName, String defaultValue) throws APIException {
-		String s = getGlobalProperty(propertyName);
-		if (s == null)
+		String s = Context.getAdministrationService().getGlobalProperty(propertyName);
+		if (s == null) {
 			return defaultValue;
+		}
 		return s;
 	}
 	
@@ -658,45 +171,17 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	}
 	
 	/**
-	 * @see org.openmrs.api.AdministrationService#getGlobalProperties()
-	 * @deprecated
-	 */
-	@Deprecated
-	@Transactional(readOnly = true)
-	public List<GlobalProperty> getGlobalProperties() throws APIException {
-		return getAllGlobalProperties();
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#setGlobalProperties(java.util.List)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void setGlobalProperties(List<GlobalProperty> props) throws APIException {
-		Context.getAdministrationService().saveGlobalProperties(props);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#deleteGlobalProperty(java.lang.String)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void deleteGlobalProperty(String propertyName) throws APIException {
-		purgeGlobalProperty(new GlobalProperty(propertyName));
-	}
-	
-	/**
 	 * @see org.openmrs.api.AdministrationService#setGlobalProperty(java.lang.String,
 	 *      java.lang.String)
 	 */
 	public void setGlobalProperty(String propertyName, String propertyValue) throws APIException {
-		GlobalProperty gp = getGlobalPropertyObject(propertyName);
+		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(propertyName);
 		if (gp == null) {
 			gp = new GlobalProperty();
 			gp.setProperty(propertyName);
 		}
 		gp.setPropertyValue(propertyValue);
-		dao.saveGlobalProperty(gp);
+		Context.getAdministrationService().saveGlobalProperty(gp);
 	}
 	
 	/**
@@ -704,41 +189,12 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 *      java.lang.String)
 	 */
 	public void updateGlobalProperty(String propertyName, String propertyValue) throws IllegalStateException {
-		GlobalProperty gp = getGlobalPropertyObject(propertyName);
+		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(propertyName);
 		if (gp == null) {
 			throw new IllegalStateException("Global property with the given propertyName does not exist" + propertyName);
 		}
 		gp.setPropertyValue(propertyValue);
 		dao.saveGlobalProperty(gp);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#setGlobalProperty(org.openmrs.GlobalProperty)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void setGlobalProperty(GlobalProperty gp) throws APIException {
-		Context.getAdministrationService().saveGlobalProperty(gp);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#addGlobalProperty(org.openmrs.GlobalProperty)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void addGlobalProperty(GlobalProperty gp) {
-		setGlobalProperty(gp);
-	}
-	
-	/**
-	 * @see org.openmrs.api.AdministrationService#addGlobalProperty(java.lang.String,
-	 *      java.lang.String)
-	 * @deprecated
-	 */
-	@Deprecated
-	public void addGlobalProperty(String propertyName, String propertyValue) throws APIException {
-		//dao.addGlobalProperty(propertyName, propertyValue);
-		Context.getAdministrationService().saveGlobalProperty(new GlobalProperty(propertyName, propertyValue));
 	}
 	
 	/**
@@ -795,6 +251,33 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	public GlobalProperty saveGlobalProperty(GlobalProperty gp) throws APIException {
 		// only try to save it if the global property has a key
 		if (gp.getProperty() != null && gp.getProperty().length() > 0) {
+			if (gp.getProperty().equals(OpenmrsConstants.GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST)) {
+				if (gp.getPropertyValue() != null) {
+					List<Locale> localeList = new ArrayList<Locale>();
+					
+					for (String localeString : gp.getPropertyValue().split(",")) {
+						localeList.add(LocaleUtility.fromSpecification(localeString.trim()));
+					}
+					if (!localeList.contains(LocaleUtility.getDefaultLocale())) {
+						gp.setPropertyValue(StringUtils.join(getAllowedLocales(), ", "));
+						throw new APIException(Context.getMessageSourceService().getMessage(
+						    "general.locale.localeListNotIncludingDefaultLocale",
+						    new Object[] { LocaleUtility.getDefaultLocale() }, null));
+					}
+				}
+			} else if (gp.getProperty().equals(OpenmrsConstants.GLOBAL_PROPERTY_DEFAULT_LOCALE)) {
+				if (gp.getPropertyValue() != null) {
+					List<Locale> localeList = getAllowedLocales();
+					
+					if (!localeList.contains(LocaleUtility.fromSpecification(gp.getPropertyValue().trim()))) {
+						String value = gp.getPropertyValue();
+						gp.setPropertyValue(LocaleUtility.getDefaultLocale().toString());
+						throw new APIException((Context.getMessageSourceService().getMessage(
+						    "general.locale.defaultNotInAllowedLocalesList", new Object[] { value }, null)));
+					}
+				}
+			}
+			
 			CustomDatatypeUtil.saveIfDirty(gp);
 			dao.saveGlobalProperty(gp);
 			notifyGlobalPropertyChange(gp);
@@ -808,8 +291,9 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 * @see org.openmrs.api.AdministrationService#executeSQL(java.lang.String, boolean)
 	 */
 	public List<List<Object>> executeSQL(String sql, boolean selectOnly) throws APIException {
-		if (sql == null || sql.trim().equals(""))
+		if (sql == null || "".equals(sql.trim())) {
 			return null;
+		}
 		
 		return dao.executeSQL(sql, selectOnly);
 	}
@@ -834,9 +318,11 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 * @param gp
 	 */
 	private void notifyGlobalPropertyChange(GlobalProperty gp) {
-		for (GlobalPropertyListener listener : eventListeners.getGlobalPropertyListeners())
-			if (listener.supportsPropertyName(gp.getProperty()))
+		for (GlobalPropertyListener listener : eventListeners.getGlobalPropertyListeners()) {
+			if (listener.supportsPropertyName(gp.getProperty())) {
 				listener.globalPropertyChanged(gp);
+			}
+		}
 	}
 	
 	/**
@@ -845,9 +331,11 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 * @param propertyName
 	 */
 	private void notifyGlobalPropertyDelete(String propertyName) {
-		for (GlobalPropertyListener listener : eventListeners.getGlobalPropertyListeners())
-			if (listener.supportsPropertyName(propertyName))
+		for (GlobalPropertyListener listener : eventListeners.getGlobalPropertyListeners()) {
+			if (listener.supportsPropertyName(propertyName)) {
 				listener.globalPropertyDeleted(propertyName);
+			}
+		}
 	}
 	
 	/**
@@ -855,19 +343,20 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 */
 	@Transactional(readOnly = true)
 	public ImplementationId getImplementationId() throws APIException {
-		String property = getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_IMPLEMENTATION_ID);
+		String property = Context.getAdministrationService().getGlobalProperty(
+		    OpenmrsConstants.GLOBAL_PROPERTY_IMPLEMENTATION_ID);
 		
 		// fail early if no gp has been defined yet
-		if (property == null)
+		if (property == null) {
 			return null;
+		}
 		
 		try {
-			ImplementationId implId = OpenmrsUtil.getSerializer().read(ImplementationId.class, property);
-			
+			ImplementationId implId = Context.getSerializationService().getDefaultSerializer().deserialize(property, ImplementationId.class);
 			return implId;
 		}
-		catch (Throwable t) {
-			log.debug("Error while getting implementation id", t);
+		catch (Exception e) {
+			log.debug("Error while getting implementation id", e);
 		}
 		
 		return null;
@@ -878,8 +367,9 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 */
 	public void setImplementationId(ImplementationId implementationId) throws APIException {
 		
-		if (implementationId == null)
+		if (implementationId == null) {
 			return;
+		}
 		
 		// check the validity of this implementation id with the server
 		String description = implementationId.getDescription();
@@ -893,7 +383,7 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 			
 			boolean foundMatchingSource = false;
 			// loop over the concept sources to make sure one exists for this hl7Code/implementationId
-			List<ConceptSource> sources = Context.getConceptService().getAllConceptSources();
+			List<ConceptSource> sources = Context.getConceptService().getAllConceptSources(false);
 			if (sources != null) {
 				for (ConceptSource source : sources) {
 					if (implementationId.getImplementationId().equals(source.getHl7Code())) {
@@ -909,16 +399,17 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 				newConceptSource.setName(implementationId.getName());
 				newConceptSource.setDescription(implementationId.getDescription());
 				newConceptSource.setHl7Code(implementationId.getImplementationId());
-				if (Context.getAuthenticatedUser() == null) // (hackish)
+				if (Context.getAuthenticatedUser() == null) {
+					// (hackish)
 					newConceptSource.setCreator(new User(1)); // fake the user because no one is logged in
+				}
 				Context.getConceptService().saveConceptSource(newConceptSource);
 			}
 			
 			// serialize and save the ImplementationId to the global properties table
-			StringWriter stringWriter = new StringWriter();
-			OpenmrsUtil.getSerializer().write(implementationId, stringWriter);
+			String value = Context.getSerializationService().getDefaultSerializer().serialize(implementationId);
 			Context.getAdministrationService().saveGlobalProperty(
-			    new GlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_IMPLEMENTATION_ID, stringWriter.toString()));
+			    new GlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_IMPLEMENTATION_ID, value));
 		}
 		catch (APIException e) {
 			throw e;
@@ -948,12 +439,15 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	private String checkImplementationIdValidity(String implementationId, String description, String passphrase)
 	        throws APIException {
 		
-		if (!StringUtils.hasLength(implementationId))
-			throw new APIException("The implementationid cannot be empty");
-		if (!StringUtils.hasLength(description))
-			throw new APIException("The description cannot be empty");
-		if (!StringUtils.hasLength(passphrase))
-			throw new APIException("The passphrase cannot be empty");
+		if (StringUtils.isEmpty(implementationId)) {
+			throw new APIException("cannot.be.empty", new Object[] { "implementationid" });
+		}
+		if (StringUtils.isEmpty(description)) {
+			throw new APIException("cannot.be.empty", new Object[] { "description" });
+		}
+		if (StringUtils.isEmpty(passphrase)) {
+			throw new APIException("cannot.be.empty", new Object[] { "passphrase" });
+		}
 		
 		// set up the data map to post to the openmrs server
 		Map<String, String> data = new HashMap<String, String>();
@@ -970,8 +464,9 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 			throw new APIException(ms);
 		}
 		
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Response: " + response);
+		}
 		
 		if (response.startsWith("Success")) {
 			response = response.replace("Success", "");
@@ -991,7 +486,7 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 		// lazy-load the global locale list and initialize with current global property value
 		if (globalLocaleList == null) {
 			globalLocaleList = new GlobalLocaleList();
-			addGlobalPropertyListener(globalLocaleList);
+			Context.getAdministrationService().addGlobalPropertyListener(globalLocaleList);
 		}
 		
 		Set<Locale> allowedLocales = globalLocaleList.getAllowedLocales();
@@ -999,8 +494,8 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 		// update the GlobalLocaleList.allowedLocales by faking a global property change
 		if (allowedLocales == null) {
 			// use a default language of "english" if they have cleared this GP for some reason
-			String currentPropertyValue = getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST,
-			    LocaleUtility.getDefaultLocale().toString());
+			String currentPropertyValue = Context.getAdministrationService().getGlobalProperty(
+			    OpenmrsConstants.GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST, LocaleUtility.getDefaultLocale().toString());
 			GlobalProperty allowedLocalesProperty = new GlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_LOCALE_ALLOWED_LIST,
 			        currentPropertyValue);
 			globalLocaleList.globalPropertyChanged(allowedLocalesProperty);
@@ -1030,16 +525,40 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 			presentationLocales = new HashSet<Locale>();
 			Collection<Locale> messageLocales = Context.getMessageSourceService().getLocales();
 			List<Locale> allowedLocales = getAllowedLocales();
-			for (Locale possibleLocale : messageLocales) {
-				if (allowedLocales.contains(possibleLocale)) {
-					presentationLocales.add(possibleLocale);
+			
+			for (Locale locale : allowedLocales) {
+				// if no country is specified all countries with this language will be added
+				if (StringUtils.isEmpty(locale.getCountry())) {
+					List<Locale> localsWithSameLanguage = new ArrayList<Locale>();
+					for (Locale possibleLocale : messageLocales) {
+						if (locale.getLanguage().equals(possibleLocale.getLanguage())
+						        && !StringUtils.isEmpty(possibleLocale.getCountry())) {
+							localsWithSameLanguage.add(possibleLocale);
+						}
+					}
+					
+					// if there are country locales we add those only
+					if (!localsWithSameLanguage.isEmpty()) {
+						presentationLocales.addAll(localsWithSameLanguage);
+					} else {
+						// if there are no country locales we add possibleLocale which has country as ""
+						// e.g: if 'es' locale has no country based entries es_CL etc. we show default 'es'
+						if (messageLocales.contains(locale)) {
+							presentationLocales.add(locale);
+						}
+					}
 				} else {
-					// to be sure, check for language-only matches
-					for (Locale allowedLocale : allowedLocales) {
-						if (("".equals(allowedLocale.getCountry()) || "".equals(possibleLocale.getCountry()))
-						        && (allowedLocale.getLanguage().equals(possibleLocale.getLanguage()))) {
-							presentationLocales.add(possibleLocale);
-							break;
+					// if locales list contains exact <language,country> pair add it
+					if (messageLocales.contains(locale)) {
+						presentationLocales.add(locale);
+					} else {
+						// if no such entry add possibleLocale with country ""
+						// e.g: we specify es_CL but it is not in list so we add es locale here
+						for (Locale possibleLocale : messageLocales) {
+							if (locale.getLanguage().equals(possibleLocale.getLanguage())
+							        && StringUtils.isEmpty(possibleLocale.getCountry())) {
+								presentationLocales.add(possibleLocale);
+							}
 						}
 					}
 				}
@@ -1087,22 +606,24 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getGlobalPropertyValue(String propertyName, T defaultValue) throws APIException {
-		if (defaultValue == null)
+		if (defaultValue == null) {
 			throw new IllegalArgumentException("The defaultValue argument cannot be null");
+		}
 		
-		String propVal = getGlobalProperty(propertyName);
-		if (!StringUtils.hasLength(propVal))
+		String propVal = Context.getAdministrationService().getGlobalProperty(propertyName);
+		if (StringUtils.isEmpty(propVal)) {
 			return defaultValue;
+		}
 		
 		try {
 			return (T) defaultValue.getClass().getDeclaredConstructor(String.class).newInstance(propVal);
 		}
 		catch (InstantiationException e) {
-			throw new APIException(defaultValue.getClass().getName() + " is not able to be instantiated with value: "
-			        + propVal, e);
+			throw new APIException("is.not.able.instantiated", new Object[] { defaultValue.getClass().getName(), propVal },
+			        e);
 		}
 		catch (NoSuchMethodException e) {
-			throw new APIException(defaultValue.getClass().getName() + " does not have a string constructor", e);
+			throw new APIException("does.not.have.string.constructor", new Object[] { defaultValue.getClass().getName() }, e);
 		}
 		catch (Exception e) {
 			log.error("Unable to turn value '" + propVal + "' into type " + defaultValue.getClass().getName(), e);
@@ -1243,14 +764,15 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 	@Override
 	@Transactional(readOnly = true)
 	public void validate(Object object, Errors errors) throws APIException {
-		if (object == null)
-			throw new APIException(Context.getMessageSourceService().getMessage("error.null"));
-		
+		if (object == null) {
+			throw new APIException("error.null", (Object[]) null);
+		}
+
 		dao.validate(object, errors);
 	}
 	
 	/**
-	 * @see org.openmrs.api.AdministrationService#getSearchLocales(org.openmrs.User)
+	 * @see AdministrationService#getSearchLocales()
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -1274,7 +796,7 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 		}
 		
 		//limit locales to only allowed locales
-		List<Locale> allowedLocales = getAllowedLocales();
+		List<Locale> allowedLocales = Context.getAdministrationService().getAllowedLocales();
 		if (allowedLocales != null) {
 			Set<Locale> retainLocales = new HashSet<Locale>();
 			
@@ -1294,4 +816,11 @@ public class AdministrationServiceImpl extends BaseOpenmrsService implements Adm
 		this.implementationIdHttpClient = implementationIdHttpClient;
 	}
 	
+	/**
+	 * @see org.openmrs.api.AdministrationService#isDatabaseStringComparisonCaseSensitive()
+	 */
+	@Override
+	public boolean isDatabaseStringComparisonCaseSensitive() {
+		return dao.isDatabaseStringComparisonCaseSensitive();
+	}
 }

@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db;
 
@@ -54,6 +50,8 @@ public interface PersonDAO {
 	 * @see org.openmrs.api.PersonService#getPeople(String, Boolean)
 	 */
 	public List<Person> getPeople(String searchPhrase, Boolean dead) throws DAOException;
+	
+	public List<Person> getPeople(String searchPhrase, Boolean dead, Boolean voided) throws DAOException;
 	
 	/**
 	 * @see org.openmrs.api.PersonService#savePersonAttributeType(org.openmrs.PersonAttributeType)
@@ -158,10 +156,8 @@ public interface PersonDAO {
 	public void deleteRelationshipType(RelationshipType relationshipType) throws DAOException;
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return person or null
 	 */
 	public Person getPersonByUuid(String uuid);
 	
@@ -174,26 +170,20 @@ public interface PersonDAO {
 	public PersonName getPersonNameByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return relationship or null
 	 */
 	public Relationship getRelationshipByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return relationship type or null
 	 */
 	public RelationshipType getRelationshipTypeByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return person attribute type or null
 	 */
 	public PersonAttributeType getPersonAttributeTypeByUuid(String uuid);
 	
@@ -202,7 +192,7 @@ public interface PersonDAO {
 	 * bypassing any caches. This is used prior to saving an personAttributeType, so that we can
 	 * change the vlaue of any global property which is in
 	 * {@link OpenmrsConstants#GLOBAL_PROPERTIES_OF_PERSON_ATTRIBUTES} and reference the given
-	 * personAttributeType. <br/>
+	 * personAttributeType. <br>
 	 * 
 	 * @param personAttributeType the personAttributeType get the the name of
 	 * @return the name currently in the database for this personAttributeType
@@ -211,7 +201,7 @@ public interface PersonDAO {
 	public String getSavedPersonAttributeTypeName(PersonAttributeType personAttributeType);
 	
 	/**
-	 * @see org.openmrs.api.PersonService#getAllRelationshipTypes(java.lang.Boolean)
+	 * @see org.openmrs.api.PersonService#getAllRelationshipTypes(boolean)
 	 */
 	public List<RelationshipType> getAllRelationshipTypes(boolean includeRetired);
 	

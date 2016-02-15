@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api;
 
@@ -25,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -41,11 +38,13 @@ import org.openmrs.FieldType;
 import org.openmrs.Form;
 import org.openmrs.FormField;
 import org.openmrs.FormResource;
+import org.openmrs.GlobalProperty;
 import org.openmrs.Obs;
 import org.openmrs.api.context.Context;
 import org.openmrs.obs.SerializableComplexObsHandler;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
+import org.openmrs.util.OpenmrsConstants;
 
 /**
  * TODO clean up and finish this test for all methods in FormService
@@ -57,6 +56,8 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	protected static final String INITIAL_FIELDS_XML = "org/openmrs/api/include/FormServiceTest-initialFieldTypes.xml";
 	
 	protected static final String FORM_FIELDS_XML = "org/openmrs/api/include/FormServiceTest-formFields.xml";
+	
+	protected static final String MULTIPLE_FORMS_FORM_FIELDS_XML = "org/openmrs/api/include/FormServiceTest-multipleForms-formFields.xml";
 	
 	protected static final String FORM_SAMPLE_RESOURCE = "org/openmrs/api/include/FormServiceTest-sampleResource.xslt";
 	
@@ -203,7 +204,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormField(Form,Concept,Collection<QFormField;>,null)}
+	 * @see FormService#getFormField(Form,Concept,Collection<QFormField;>,null)
 	 */
 	@Test
 	@Verifies(value = "should ignore formFields passed to ignoreFormFields", method = "getFormField(Form,Concept,Collection<QFormField;>,null)")
@@ -212,7 +213,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 		executeDataSet(INITIAL_FIELDS_XML);
 		executeDataSet("org/openmrs/api/include/FormServiceTest-formFields.xml");
 		
-		FormField ff = Context.getFormService().getFormField(new Form(1), new Concept(1));
+		FormField ff = Context.getFormService().getFormField(new Form(1), new Concept(1), null, false);
 		assertNotNull(ff); // sanity check
 		
 		// test that the first formfield is ignored when a second fetch
@@ -226,7 +227,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormField(Form,Concept,Collection<QFormField;>,null)}
+	 * @see FormService#getFormField(Form,Concept,Collection<QFormField;>,null)
 	 */
 	@Test
 	@Verifies(value = "should not fail with null ignoreFormFields argument", method = "getFormField(Form,Concept,Collection<QFormField;>,null)")
@@ -289,7 +290,74 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFieldType(FieldType)}
+	 * ensure that FormFields in containingAnyFormField parameter are considered when filtering the results
+	 * 
+	 * @see {@link FormService#getForms(String, Boolean, java.util.Collection, Boolean, java.util.Collection, java.util.Collection, java.util.Collection)
+
+	 */
+	@Test
+	@Verifies(value = "return forms that have any matching formFields in containingAnyFormField", method = "getForms(String,Boolean,Collection,Boolean,Collection,Collection,Collection)")
+	public void getForms_shouldReturnFormsThatHaveAnyMatchingFormFieldsInContainingAnyFormField() throws Exception {
+		
+		Integer numberOfExpectedForms = new Integer(2);
+		
+		executeDataSet(INITIAL_FIELDS_XML);
+		executeDataSet(MULTIPLE_FORMS_FORM_FIELDS_XML);
+		
+		FormService formService = Context.getFormService();
+		Collection<FormField> containingAnyFormField = makeFormFieldCollectionSample(formService);
+		
+		List<Form> formsReturned = formService.getForms(null, null, null, null, containingAnyFormField, null, null);
+		
+		Integer currentNumberOfForms = new Integer(formsReturned.size());
+		
+		assertEquals(numberOfExpectedForms, currentNumberOfForms);
+		assertTrue(wasFormsSuccessfullyFilteredByMatchingFormFieldsInContainingAnyFormField(containingAnyFormField,
+		    formsReturned));
+		
+	}
+	
+	private Collection<FormField> makeFormFieldCollectionSample(FormService formService) {
+		int formFieldAIdentifier = 2;
+		int formFieldBIdentifier = 9;
+		
+		Collection<FormField> containingAnyFormField = new ArrayList<FormField>();
+		FormField formFieldA = formService.getFormField(formFieldAIdentifier);
+		FormField formFieldB = formService.getFormField(formFieldBIdentifier);
+		containingAnyFormField.add(formFieldA);
+		containingAnyFormField.add(formFieldB);
+		return containingAnyFormField;
+	}
+	
+	private boolean wasFormsSuccessfullyFilteredByMatchingFormFieldsInContainingAnyFormField(
+	        Collection<FormField> containingAnyFormField, List<Form> formsReturned) {
+		
+		for (Form form : formsReturned) {
+			if (!doesFormContainAnyFormField(form, containingAnyFormField)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean doesFormContainAnyFormField(Form form, Collection<FormField> containingAnyFormField) {
+		
+		Collection<FormField> formFieldsWithinForm = form.getFormFields();
+		
+		for (FormField formField : containingAnyFormField) {
+			
+			if (formFieldsWithinForm.contains(formField)) {
+				return true;
+			}
+			
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @see FormService#saveFieldType(FieldType)
 	 */
 	@Test
 	@Verifies(value = "should create new field type", method = "saveFieldType(FieldType)")
@@ -308,7 +376,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFieldType(FieldType)}
+	 * @see FormService#saveFieldType(FieldType)
 	 */
 	@Test
 	@Verifies(value = "should update existing field type", method = "saveFieldType(FieldType)")
@@ -327,7 +395,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#duplicateForm(Form)}
+	 * @see FormService#duplicateForm(Form)
 	 */
 	@Test
 	@Verifies(value = "should clear changed details and update creation details", method = "duplicateForm(Form)")
@@ -346,27 +414,27 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormField(Form,Concept,Collection<QFormField;>,null)}
+	 * @see FormService#getFormField(Form,Concept,Collection<QFormField;>,null)
 	 */
 	@Test
 	@Verifies(value = "should simply return null for nonexistent concepts", method = "getFormField(Form,Concept,Collection<QFormField;>,null)")
 	public void getFormField_shouldSimplyReturnNullForNonexistentConcepts() throws Exception {
 		// test a non existent concept
-		assertNull(Context.getFormService().getFormField(new Form(1), new Concept(293934)));
+		assertNull(Context.getFormService().getFormField(new Form(1), new Concept(293934), null, false));
 	}
 	
 	/**
-	 * @see {@link FormService#getFormField(Form,Concept,Collection<QFormField;>,null)}
+	 * @see FormService#getFormField(Form,Concept,Collection<QFormField;>,null)
 	 */
 	@Test
 	@Verifies(value = "should simply return null for nonexistent forms", method = "getFormField(Form,Concept,Collection<QFormField;>,null)")
 	public void getFormField_shouldSimplyReturnNullForNonexistentForms() throws Exception {
 		// test a non existent form
-		assertNull(Context.getFormService().getFormField(new Form(12343), new Concept(293934)));
+		assertNull(Context.getFormService().getFormField(new Form(12343), new Concept(293934), null, false));
 	}
 	
 	/**
-	 * @see {@link FormService#duplicateForm(Form)}
+	 * @see FormService#duplicateForm(Form)
 	 */
 	@Test
 	@Verifies(value = "should give a new uuid to the duplicated form", method = "duplicateForm(Form)")
@@ -381,7 +449,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFieldAnswerByUuid(String)}
+	 * @see FormService#getFieldAnswerByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getFieldAnswerByUuid(String)")
@@ -390,7 +458,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFieldByUuid(String)}
+	 * @see FormService#getFieldByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getFieldByUuid(String)")
@@ -401,7 +469,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFieldByUuid(String)}
+	 * @see FormService#getFieldByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getFieldByUuid(String)")
@@ -410,7 +478,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFieldTypeByUuid(String)}
+	 * @see FormService#getFieldTypeByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getFieldTypeByUuid(String)")
@@ -421,7 +489,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFieldTypeByUuid(String)}
+	 * @see FormService#getFieldTypeByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getFieldTypeByUuid(String)")
@@ -430,7 +498,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormByUuid(String)}
+	 * @see FormService#getFormByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getFormByUuid(String)")
@@ -441,7 +509,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormByUuid(String)}
+	 * @see FormService#getFormByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getFormByUuid(String)")
@@ -450,7 +518,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormFieldByUuid(String)}
+	 * @see FormService#getFormFieldByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should find object given valid uuid", method = "getFormFieldByUuid(String)")
@@ -461,7 +529,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormFieldByUuid(String)}
+	 * @see FormService#getFormFieldByUuid(String)
 	 */
 	@Test
 	@Verifies(value = "should return null if no object found with given uuid", method = "getFormFieldByUuid(String)")
@@ -470,7 +538,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFormField(FormField)}
+	 * @see FormService#saveFormField(FormField)
 	 */
 	@Test
 	@Verifies(value = "should propagate save to the Field property on the given FormField", method = "saveFormField(FormField)")
@@ -493,7 +561,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormsContainingConcept(Concept)}
+	 * @see FormService#getFormsContainingConcept(Concept)
 	 */
 	@Test
 	@Verifies(value = "should get all forms for concept", method = "getFormsContainingConcept(Concept)")
@@ -504,7 +572,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#getFormsContainingConcept(Concept)}
+	 * @see FormService#getFormsContainingConcept(Concept)
 	 */
 	@Test
 	@Verifies(value = "should merge fields with similar attributes", method = "mergeDuplicateFields()")
@@ -547,7 +615,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#duplicateForm(Form)}
+	 * @see FormService#duplicateForm(Form)
 	 */
 	@Test
 	@Verifies(value = "should copy resources for old form to new form", method = "duplicateForm(Form)")
@@ -577,7 +645,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#purgeFormResource(Form,String,String)}
+	 * @see FormService#purgeFormResource(Form,String,String)
 	 */
 	@Test
 	@Verifies(value = "should delete a form resource", method = "purgeFormResource(Form,String,String)")
@@ -611,7 +679,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFormResource(FormResource)}
+	 * @see FormService#saveFormResource(FormResource)
 	 */
 	@Test
 	@Verifies(value = "should overwrite an existing resource with same name", method = "saveFormResource(FormResource)")
@@ -650,7 +718,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#purgeForm(Form)}
+	 * @see FormService#purgeForm(Form)
 	 */
 	@Test
 	@Verifies(value = "should delete form resources for deleted form", method = "purgeForm(Form)")
@@ -688,7 +756,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFormResource(FormResource)}
+	 * @see FormService#saveFormResource(FormResource)
 	 */
 	@Test
 	@Verifies(value = "should be able to save an XSLT", method = "saveFormResource(FormResource)")
@@ -739,7 +807,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link FormService#saveFormField(FormField)}
+	 * @see FormService#saveFormField(FormField)
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
@@ -809,6 +877,152 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 		public String serializeFormData(String data) {
 			return null;
 		}
+		
+		public String[] getSupportedViews() {
+			return new String[0];
+		}
+		
+		public boolean supportsView(String view) {
+			return false;
+		}
 	}
 	
+	/**
+	 * Creates a new Global Property to lock forms by setting its value
+	 * @param propertyValue value for forms locked GP
+	 */
+	public void createFormsLockedGPAndSetValue(String propertyValue) {
+		GlobalProperty gp = new GlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_FORMS_LOCKED);
+		gp.setPropertyValue(propertyValue);
+		Context.getAdministrationService().saveGlobalProperty(gp);
+	}
+	
+	/**
+	 * @see FormService#saveForm(Form)
+	 */
+	@Test
+	@Verifies(method = "saveForm(Form)", value = "should save given form successfully")
+	public void saveForm_shouldSaveGivenFormSuccessfully() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("false");
+		
+		Form form = new Form();
+		form.setName("new form");
+		form.setVersion("1.0");
+		form.setDescription("testing TRUNK-4030");
+		
+		Form formSave = fs.saveForm(form);
+		
+		assertTrue(form.equals(formSave));
+	}
+	
+	/**
+	 * @see FormService#saveForm(Form)
+	 */
+	@Test
+	@Verifies(method = "saveForm(Form)", value = "should update an existing form")
+	public void saveForm_shouldUpdateAnExistingForm() {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("false");
+		
+		Form form = fs.getForm(1);
+		form.setName("modified basic form");
+		fs.saveForm(form);
+		
+		Form formUpdate = fs.getForm(1);
+		
+		assertTrue(form.equals(formUpdate));
+	}
+	
+	/**
+	 * @see FormService#saveForm(Form)
+	 * @throws FormsLockedException
+	 */
+	@Test(expected = FormsLockedException.class)
+	@Verifies(method = "saveForm(Form)", value = "should throw an error when trying to save an existing form while forms are locked")
+	public void saveForm_shouldThrowAnErrorWhenTryingToSaveAnExistingFormWhileFormsAreLocked() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("true");
+		
+		Form form = fs.getForm(1);
+		form.setName("modified basic form");
+		
+		fs.saveForm(form);
+	}
+	
+	/**
+	 * @see FormService#saveForm(Form)
+	 * @throws FormsLockedException
+	 */
+	@Test(expected = FormsLockedException.class)
+	@Verifies(method = "saveForm(Form)", value = "should throw an error when trying to save a new form while forms are locked")
+	public void saveForm_shouldThrowAnErrorWhenTryingToSaveANewFormWhileFormsAreLocked() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("true");
+		
+		Form form = new Form();
+		form.setName("new form");
+		form.setVersion("1.0");
+		form.setDescription("testing TRUNK-4030");
+		
+		fs.saveForm(form);
+	}
+	
+	/**
+	 * @see FormService#purgeForm(Form)
+	 * @throws FormsLockedException
+	 */
+	@Test(expected = FormsLockedException.class)
+	@Verifies(method = "purgeForm(Form)", value = "should throw an error when trying to delete a form while forms are locked")
+	public void purgeForm_shouldThrowAnErrorWhenTryingToDeleteFormWhileFormsAreLocked() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("true");
+		
+		Form form = fs.getForm(1);
+		
+		fs.purgeForm(form);
+	}
+	
+	/**
+	 * @see FormService#purgeForm(Form)
+	 */
+	@Test
+	@Verifies(method = "purgeForm(Form)", value = "should delete given form successfully")
+	public void purgeForm_shouldDeleteGivenFormSuccessfully() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("false");
+		
+		Form form = fs.getForm(1);
+		fs.purgeForm(form);
+		
+		assertNull(fs.getForm(1));
+	}
+	
+	/**
+	 * @see FormService#duplicateForm(Form)}
+	 * @throws FormsLockedException
+	 */
+	@Test(expected = FormsLockedException.class)
+	@Verifies(method = "duplicateForm(Form)", value = "should throw an error when trying to duplicate a form while forms are locked")
+	public void duplicateForm_shouldThrowAnErrorWhenTryingToDuplicateFormWhileFormsAreLocked() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("true");
+		
+		Form form = fs.getForm(1);
+		fs.duplicateForm(form);
+	}
+	
+	/**
+	 * @see FormService#duplicateForm(Form)
+	 */
+	@Test
+	@Verifies(method = "duplicateForm(Form)", value = "should duplicate given form successfully")
+	public void duplicateForm_shouldDuplicateGivenFormSuccessfully() throws Exception {
+		FormService fs = Context.getFormService();
+		createFormsLockedGPAndSetValue("false");
+		
+		Form form = fs.getForm(1);
+		Form duplicateForm = fs.duplicateForm(form);
+		assertEquals(form, duplicateForm);
+	}
 }

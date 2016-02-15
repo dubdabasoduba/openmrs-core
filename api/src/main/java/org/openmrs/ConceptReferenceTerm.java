@@ -1,37 +1,39 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+
 /**
  * A concept reference term is typically name for a concept by which it is referred in another
  * institution like ICD9, ICD10, SNOMED that keeps a concept dictionary or any other OpenMRS
  * implementation
- * 
+ *
  * @since 1.9
  */
 public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io.Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
+	@DocumentId
 	private Integer conceptReferenceTermId;
 	
 	private ConceptSource conceptSource;
 	
 	//The unique code used to identify the reference term in it's reference terminology
+	@Field(analyze = Analyze.NO)
 	private String code;
 	
 	private String version;
@@ -49,7 +51,7 @@ public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io
 	
 	/**
 	 * Convenience constructor with the required fields filled in
-	 * 
+	 *
 	 * @param source the ConceptSource belongs in
 	 * @param code the code within that concept
 	 * @param name the user readable name of this term
@@ -121,8 +123,9 @@ public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io
 	 * @return the conceptReferenceTermMaps
 	 */
 	public Set<ConceptReferenceTermMap> getConceptReferenceTermMaps() {
-		if (conceptReferenceTermMaps == null)
+		if (conceptReferenceTermMaps == null) {
 			conceptReferenceTermMaps = new LinkedHashSet<ConceptReferenceTermMap>();
+		}
 		return conceptReferenceTermMaps;
 	}
 	
@@ -153,21 +156,22 @@ public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io
 	 * Add the given {@link ConceptReferenceTermMap} object to this concept reference term's list of
 	 * concept reference term maps. If there is already a corresponding ConceptReferenceTermMap
 	 * object for this concept reference term already, this one will not be added.
-	 * 
+	 *
 	 * @param conceptReferenceTermMap
 	 * @should not add a map where termB is itself
 	 * @should set termA as the term to which a mapping is being added
 	 * @should not add duplicate concept reference term maps
 	 */
 	public void addConceptReferenceTermMap(ConceptReferenceTermMap conceptReferenceTermMap) {
-		if (conceptReferenceTermMap != null) {
+		if (conceptReferenceTermMap != null && conceptReferenceTermMap.getTermB() != null
+		        && !this.equals(conceptReferenceTermMap.getTermB())) {
 			//can't map a term to itself
-			if (conceptReferenceTermMap.getTermB() != null && !this.equals(conceptReferenceTermMap.getTermB())) {
-				conceptReferenceTermMap.setTermA(this);
-				if (conceptReferenceTermMaps == null)
-					conceptReferenceTermMaps = new LinkedHashSet<ConceptReferenceTermMap>();
-				if (conceptReferenceTermMap != null && !conceptReferenceTermMaps.contains(conceptReferenceTermMap))
-					conceptReferenceTermMaps.add(conceptReferenceTermMap);
+			conceptReferenceTermMap.setTermA(this);
+			if (conceptReferenceTermMaps == null) {
+				conceptReferenceTermMaps = new LinkedHashSet<ConceptReferenceTermMap>();
+			}
+			if (!conceptReferenceTermMaps.contains(conceptReferenceTermMap)) {
+				conceptReferenceTermMaps.add(conceptReferenceTermMap);
 			}
 		}
 	}
@@ -175,13 +179,14 @@ public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io
 	/**
 	 * Remove the given ConceptReferenceTermMap from the list of conceptReferenceTermMaps for this
 	 * {@link ConceptReferenceTerm}
-	 * 
-	 * @param conceptReferenceMap
+	 *
+	 * @param conceptReferenceTermMap
 	 * @return true if the entity was removed, false otherwise
 	 */
 	public boolean removeConceptReferenceTermMap(ConceptReferenceTermMap conceptReferenceTermMap) {
-		if (conceptReferenceTermMaps != null)
+		if (conceptReferenceTermMaps != null) {
 			return conceptReferenceTermMaps.remove(conceptReferenceTermMap);
+		}
 		
 		return false;
 	}
@@ -191,12 +196,13 @@ public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io
 	 */
 	@Override
 	public String toString() {
-		if (getCode() != null && getName() != null)
+		if (getCode() != null && getName() != null) {
 			return getName() + "(" + getCode() + ")";
-		else if (getCode() == null)
+		} else if (getCode() == null) {
 			return getName();
-		else if (getName() == null)
+		} else if (getName() == null) {
 			return getCode();
+		}
 		
 		return "";
 	}

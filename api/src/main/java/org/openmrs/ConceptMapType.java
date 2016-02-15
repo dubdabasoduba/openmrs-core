@@ -1,22 +1,18 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs;
 
 /**
  * ConceptMapType are used to define relationships between concepts and concept reference terms e.g
  * IS_A or SAME_AS, BROADER_THAN
- * 
+ *
  * @since 1.9
  */
 public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Serializable {
@@ -26,6 +22,8 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	private Integer conceptMapTypeId;
 	
 	private Boolean isHidden = Boolean.FALSE;
+	
+	public static final String SAME_AS_MAP_TYPE_UUID = "35543629-7d8c-11e1-909d-c80aa9edcf4e";
 	
 	/** default constructor */
 	public ConceptMapType() {
@@ -82,16 +80,17 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		if (getName() == null)
+		if (getName() == null) {
 			return "";
+		}
 		
 		return getName();
 	}
 	
 	/**
 	 * Returns true if this concept map type is hidden otherwise false
-	 * 
-	 * @return
+	 *
+	 * @return true if this concept map type is hidden otherwise false
 	 */
 	public boolean isHidden() {
 		return isHidden;

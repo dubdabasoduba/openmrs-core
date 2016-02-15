@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.api.db;
 
@@ -60,7 +56,7 @@ public interface ProgramWorkflowDAO {
 	 * Returns all programs
 	 * 
 	 * @param includeRetired whether or not to include retired programs
-	 * @return List<Program> all existing programs, including retired based on the input parameter
+	 * @return List&lt;Program&gt; all existing programs, including retired based on the input parameter
 	 * @throws DAOException
 	 */
 	public List<Program> getAllPrograms(boolean includeRetired) throws DAOException;
@@ -70,7 +66,7 @@ public interface ProgramWorkflowDAO {
 	 * list will be returned if there are no programs matching this <code>nameFragment</code>
 	 * 
 	 * @param nameFragment is the string used to search for programs
-	 * @return List<Program> - list of Programs whose name matches the input parameter
+	 * @return List&lt;Program&gt; - list of Programs whose name matches the input parameter
 	 * @throws DAOException
 	 */
 	public List<Program> findPrograms(String nameFragment) throws DAOException;
@@ -128,7 +124,7 @@ public interface ProgramWorkflowDAO {
 	 *            before this Date
 	 * @param includeVoided - boolean, if true will return voided PatientPrograms as well. If false,
 	 *            will not return voided PatientPrograms
-	 * @return List<PatientProgram> of PatientPrograms that match the passed input parameters
+	 * @return List&lt;PatientProgram&gt; of PatientPrograms that match the passed input parameters
 	 * @throws DAOException
 	 */
 	public List<PatientProgram> getPatientPrograms(Patient patient, Program program, Date minEnrollmentDate,
@@ -160,7 +156,7 @@ public interface ProgramWorkflowDAO {
 	/**
 	 * Returns all conceptStateConversions
 	 * 
-	 * @return List<ConceptStateConversion> of all ConceptStateConversions that exist
+	 * @return List&lt;ConceptStateConversion&gt; of all ConceptStateConversions that exist
 	 * @throws DAOException
 	 */
 	public List<ConceptStateConversion> getAllConceptStateConversions() throws DAOException;
@@ -199,26 +195,20 @@ public interface ProgramWorkflowDAO {
 	public ConceptStateConversion getConceptStateConversion(ProgramWorkflow workflow, Concept trigger);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return concept state conversion or null
 	 */
 	public ConceptStateConversion getConceptStateConversionByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return patient program or null
 	 */
 	public PatientProgram getPatientProgramByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return program or null
 	 */
 	public Program getProgramByUuid(String uuid);
 	
@@ -233,20 +223,16 @@ public interface ProgramWorkflowDAO {
 	public List<Program> getProgramsByName(String name, boolean includeRetired);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return program workflow state or null
 	 */
 	public ProgramWorkflowState getStateByUuid(String uuid);
 	
 	public PatientState getPatientStateByUuid(String uuid);
 	
 	/**
-	 * Auto generated method comment
-	 * 
 	 * @param uuid
-	 * @return
+	 * @return program workflow or null
 	 */
 	public ProgramWorkflow getWorkflowByUuid(String uuid);
 	

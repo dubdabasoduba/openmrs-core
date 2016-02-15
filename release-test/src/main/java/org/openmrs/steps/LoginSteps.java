@@ -1,15 +1,11 @@
 /**
- * The contents of this file are subject to the OpenMRS Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://license.openmrs.org
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
  *
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
- * under the License.
- *
- * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
  */
 package org.openmrs.steps;
 
@@ -35,7 +31,7 @@ public class LoginSteps extends Steps {
 	public LoginSteps(WebDriver driver) {
 		super(driver);
 	}
-	
+
 	private boolean userAlreadyLoggedIn() {
 		Finder<WebElement, WebDriver> f = finderByXpath("//span[@id='userLoggedInAs']").with(text(containsString("Currently logged in")));
 		return f.findFrom(getWebDriver()).size() > 0;
@@ -43,28 +39,29 @@ public class LoginSteps extends Steps {
 
 	@Given("I am on the login page of OpenMRS")
 	public void onLoginPage() {
-        String port = System.getProperty("jetty.port","8080");
-        String url = "http://localhost:"+port+"/openmrs/initialsetup";
+		String port = System.getProperty("jetty.port", "8080");
+		String url = "http://localhost:" + port + "/openmrs/initialsetup";
 		goTo(url);
-		
+
 		// the login button will only be there if the user hasn't logged in yet.
 		// this check is just in case a scenario has two dependencies and both of them 
 		// depend on the login_to_website story
-		if (!userAlreadyLoggedIn())
+		if (! userAlreadyLoggedIn()) {
 			waitAndAssertFor(button().with(attribute("value", equalTo("Log In"))));
+		}
 	}
 
 	//@When("I enter $username as the username and $password as the password and click the 'Log In' button")
 	@When("I enter username and password as stored in system properties as $usernameProp and $passwordProp and click the 'Log In' button")
 	public void logIn(String usernameProp, String passwordProp) {
-		
+
 		String username = System.getProperty(usernameProp, "admin");
 		String password = System.getProperty(passwordProp, "Admin123");
-		
+
 		// (same as above resoning)
 		// this check is just in case a scenario has two dependencies and both of them 
 		// depend on the login_to_website story
-		if (!userAlreadyLoggedIn()) {
+		if (! userAlreadyLoggedIn()) {
 			type(username, into(textbox()
 					.with(attribute("id", equalTo("username")))));
 			type(password,
