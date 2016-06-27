@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
@@ -441,7 +442,7 @@ public class User extends BaseOpenmrsMetadata implements java.io.Serializable, A
 	
 	@Override
 	public String toString() {
-		return username;
+		return StringUtils.isNotBlank(username) ? username : systemId;
 	}
 	
 	/**
