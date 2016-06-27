@@ -136,6 +136,10 @@
 		 <artifactId>mysql-connector-mxj</artifactId>
 		 <scope>provided</scope>
 	  </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-webmvc</artifactId>
+      </dependency>
    </dependencies>
 
    <build>

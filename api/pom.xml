@@ -229,6 +229,10 @@
 			<version>1.7.6</version>
 			<type>jar</type>
 		</dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-search</artifactId>
+      </dependency>
    </dependencies>
    <build>
      <resources>
