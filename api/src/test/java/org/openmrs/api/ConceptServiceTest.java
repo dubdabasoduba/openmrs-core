@@ -9,6 +9,33 @@
  */
 package org.openmrs.api;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.openmrs.test.OpenmrsMatchers.hasConcept;
+import static org.openmrs.test.OpenmrsMatchers.hasId;
+import static org.openmrs.test.TestUtil.containsId;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.dbunit.dataset.IDataSet;
 import org.junit.After;
@@ -36,6 +63,7 @@ import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
 import org.openmrs.ConceptStopWord;
 import org.openmrs.Drug;
+import org.openmrs.DrugIngredient;
 import org.openmrs.Encounter;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
@@ -51,33 +79,6 @@ import org.openmrs.util.ConceptMapTypeComparator;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
 import org.springframework.validation.Errors;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.openmrs.test.OpenmrsMatchers.hasConcept;
-import static org.openmrs.test.OpenmrsMatchers.hasId;
-import static org.openmrs.test.TestUtil.containsId;
 
 /**
  * This test class (should) contain tests for all of the ConcepService methods TODO clean up and
@@ -184,6 +185,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		c2.addName(cn);
 		
 		c2.setDatatype(new ConceptDatatype(3));
+		c2.setConceptClass(new ConceptClass(1));
 		conceptService.saveConcept(c2);
 		
 		Concept secondConcept = conceptService.getConcept(2);
@@ -207,6 +209,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		// this tests saving a never before in the database conceptnumeric
 		ConceptNumeric cn3 = new ConceptNumeric();
 		cn3.setDatatype(new ConceptDatatype(1));
+		cn3.setConceptClass(new ConceptClass(1));
 		
 		ConceptName cn = new ConceptName("a brand new conceptnumeric", Locale.US);
 		cn3.addName(cn);
@@ -233,6 +236,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		// with a concept id of #1
 		ConceptNumeric cn = new ConceptNumeric(1);
 		cn.setDatatype(new ConceptDatatype(1));
+		cn.setConceptClass(new ConceptClass(1));
 		cn.addName(new ConceptName("a new conceptnumeric", Locale.US));
 		cn.setHiAbsolute(20.0);
 		conceptService.saveConcept(cn);
@@ -860,6 +864,26 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		Assert.assertNull(Context.getConceptService().getDrugByUuid("some invalid uuid"));
 	}
 	
+	/**
+	 * @see {@link ConceptService#getDrugIngredientByUuid(String)}
+	 */
+	@Test
+	@Verifies(value = "should find object given valid uuid", method = "getDrugIngredientByUuid(String)")
+	public void getDrugIngredientByUuid_shouldFindObjectGivenValidUuid() throws Exception {
+		String uuid = "6519d653-393d-4118-9c83-a3715b82d4dc";
+		DrugIngredient ingredient = Context.getConceptService().getDrugIngredientByUuid(uuid);
+		Assert.assertEquals(88, (int) ingredient.getIngredient().getConceptId());
+	}
+	
+	/**
+	 * @see {@link ConceptService#getDrugIngredientByUuid(String)}
+	 */
+	@Test
+	@Verifies(value = "should return null if no object found with given uuid", method = "getDrugIngredientByUuid(String)")
+	public void getDrugIngredientByUuid_shouldReturnNullIfNoObjectFoundWithGivenUuid() throws Exception {
+		Assert.assertNull(Context.getConceptService().getDrugIngredientByUuid("some invalid uuid"));
+	}
+	
 	@Test
 	@Verifies(value = "should return drugs that are not retired", method = "getDrugs(String)")
 	public void getDrugs_shouldReturnDrugsThatAreNotRetired() throws Exception {
@@ -999,6 +1023,8 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		Concept conceptToAdd = new Concept();
 		ConceptName cn = new ConceptName("new name", Context.getLocale());
 		conceptToAdd.addName(cn);
+		conceptToAdd.setDatatype(new ConceptDatatype(1));
+		conceptToAdd.setConceptClass(new ConceptClass(1));
 		assertFalse(conceptService.getAllConcepts().contains(conceptToAdd));
 		conceptService.saveConcept(conceptToAdd);
 		assertTrue(conceptService.getAllConcepts().contains(conceptToAdd));
@@ -1651,6 +1677,8 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		concept.addName(new ConceptName("name4", Locale.FRENCH));
 		concept.addName(new ConceptName("name5", Locale.JAPANESE));
 		concept.addName(new ConceptName("name6", Locale.JAPANESE));
+		concept.setDatatype(new ConceptDatatype(1));
+		concept.setConceptClass(new ConceptClass(1));
 		
 		concept = Context.getConceptService().saveConcept(concept);
 		Assert.assertNotNull(concept.getPreferredName(Locale.ENGLISH));
@@ -2208,14 +2236,20 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		String name = "Concept";
 		Concept concept1 = new Concept();
 		concept1.addName(new ConceptName(name, new Locale("en", "US")));
+		concept1.setDatatype(new ConceptDatatype(1));
+		concept1.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept1);
 		
 		Concept concept2 = new Concept();
 		concept2.addName(new ConceptName(name, new Locale("en", "GB")));
+		concept2.setDatatype(new ConceptDatatype(1));
+		concept2.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept2);
 		
 		Concept concept3 = new Concept();
 		concept3.addName(new ConceptName(name, new Locale("en")));
+		concept3.setDatatype(new ConceptDatatype(1));
+		concept3.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept3);
 		
 		updateSearchIndex();
@@ -2240,14 +2274,20 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		String name = "Concept";
 		Concept concept1 = new Concept();
 		concept1.addName(new ConceptName(name, new Locale("en", "US")));
+		concept1.setDatatype(new ConceptDatatype(1));
+		concept1.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept1);
 		
 		Concept concept2 = new Concept();
 		concept2.addName(new ConceptName(name, new Locale("en", "GB")));
+		concept2.setDatatype(new ConceptDatatype(1));
+		concept2.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept2);
 		
 		Concept concept3 = new Concept();
 		concept3.addName(new ConceptName(name, new Locale("en")));
+		concept3.setDatatype(new ConceptDatatype(1));
+		concept3.setConceptClass(new ConceptClass(1));
 		Context.getConceptService().saveConcept(concept3);
 		
 		updateSearchIndex();
@@ -2271,6 +2311,8 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		
 		Concept concept = new Concept();
 		concept.addName(new ConceptName("test name", Context.getLocale()));
+		concept.setDatatype(new ConceptDatatype(1));
+		concept.setConceptClass(new ConceptClass(1));
 		ConceptMap map = new ConceptMap();
 		map.setSourceCode("unique code");
 		map.setSource(conceptService.getConceptSource(1));
@@ -3260,5 +3302,35 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		//then
 		assertThat(concepts1, contains(hasConcept(is(concept))));
 		assertThat(concepts2, contains(hasConcept(is(concept))));
+	}
+	
+	/**
+	 * @see ConceptService#getConcepts(String, List, boolean, List, List, List, List, Concept, Integer, Integer)
+	 */
+	@Test
+	@Verifies(value = "should return a search result whose concept name contains all word tokens as first", method = "getConcepts(String,List<QLocale;>,null,List<QConceptClass;>,List<QConceptClass;>,List<QConceptDatatype;>,List<QConceptDatatype;>,Concept,Integer,Integer)")
+	public void getConcepts_shouldPassWithAndOrNotWords() throws Exception {
+		executeDataSet("org/openmrs/api/include/ConceptServiceTest-names.xml");
+		
+		//search phrase with AND
+		List<ConceptSearchResult> searchResults = conceptService.getConcepts("AND SALBUTAMOL INHALER", Collections
+		        .singletonList(new Locale("en", "US")), false, null, null, null, null, null, null, null);
+		
+		Assert.assertEquals(1, searchResults.size());
+		assertThat(searchResults.get(0).getWord(), is("AND SALBUTAMOL INHALER"));
+		
+		//search phrase with OR
+		searchResults = conceptService.getConcepts("SALBUTAMOL OR INHALER", Collections
+		        .singletonList(new Locale("en", "US")), false, null, null, null, null, null, null, null);
+		
+		Assert.assertEquals(1, searchResults.size());
+		assertThat(searchResults.get(0).getWord(), is("SALBUTAMOL OR INHALER"));
+		
+		//search phrase with NOT
+		searchResults = conceptService.getConcepts("SALBUTAMOL INHALER NOT", Collections
+		        .singletonList(new Locale("en", "US")), false, null, null, null, null, null, null, null);
+		
+		Assert.assertEquals(1, searchResults.size());
+		assertThat(searchResults.get(0).getWord(), is("SALBUTAMOL INHALER NOT"));
 	}
 }
