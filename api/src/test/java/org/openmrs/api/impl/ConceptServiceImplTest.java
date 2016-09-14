@@ -205,7 +205,7 @@ public class ConceptServiceImplTest extends BaseContextSensitiveTest {
 		c.setNames(allNames);
 		c.setDatatype(new ConceptDatatype(1));
 		c.setConceptClass(new ConceptClass(1));
-
+		
 		assertNull("check test assumption - the API hasn't promoted a name to a fully specified name", c
 		        .getFullySpecifiedName(loc));
 		
@@ -243,8 +243,8 @@ public class ConceptServiceImplTest extends BaseContextSensitiveTest {
 		Concept concept = new Concept();
 		concept.addName(new ConceptName("Concept", new Locale("en", "US")));
 		Concept conceptSetMember = new Concept();
-        conceptSetMember.setDatatype(new ConceptDatatype(1));
-        conceptSetMember.setConceptClass(new ConceptClass(1));
+		conceptSetMember.setDatatype(new ConceptDatatype(1));
+		conceptSetMember.setConceptClass(new ConceptClass(1));
 		conceptSetMember.addName(new ConceptName("Set Member", new Locale("en", "US")));
 		concept.setDatatype(new ConceptDatatype(1));
 		concept.setConceptClass(new ConceptClass(1));

@@ -183,7 +183,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		Concept c2 = new Concept(2);
 		ConceptName cn = new ConceptName("not a numeric anymore", Locale.US);
 		c2.addName(cn);
-
+		
 		c2.setDatatype(new ConceptDatatype(3));
 		c2.setConceptClass(new ConceptClass(1));
 		conceptService.saveConcept(c2);
@@ -210,7 +210,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		ConceptNumeric cn3 = new ConceptNumeric();
 		cn3.setDatatype(new ConceptDatatype(1));
 		cn3.setConceptClass(new ConceptClass(1));
-
+		
 		ConceptName cn = new ConceptName("a brand new conceptnumeric", Locale.US);
 		cn3.addName(cn);
 		cn3.setHiAbsolute(50.0);
@@ -1679,7 +1679,7 @@ public class ConceptServiceTest extends BaseContextSensitiveTest {
 		concept.addName(new ConceptName("name6", Locale.JAPANESE));
 		concept.setDatatype(new ConceptDatatype(1));
 		concept.setConceptClass(new ConceptClass(1));
-
+		
 		concept = Context.getConceptService().saveConcept(concept);
 		Assert.assertNotNull(concept.getPreferredName(Locale.ENGLISH));
 		Assert.assertNotNull(concept.getPreferredName(Locale.FRENCH));

@@ -96,11 +96,11 @@ public class ConceptValidator implements Validator {
 			errors.reject("Concept.name.atLeastOneRequired");
 			return;
 		}
-
+		
 		ValidationUtils.rejectIfEmpty(errors, "datatype", "Concept.datatype.empty");
 		ValidationUtils.rejectIfEmpty(errors, "conceptClass", "Concept.conceptClass.empty");
-
-        boolean hasFullySpecifiedName = false;
+		
+		boolean hasFullySpecifiedName = false;
 		for (Locale conceptNameLocale : conceptToValidate.getAllConceptNameLocales()) {
 			boolean fullySpecifiedNameForLocaleFound = false;
 			boolean preferredNameForLocaleFound = false;
