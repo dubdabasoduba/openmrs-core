@@ -144,8 +144,7 @@ public class AbstractHandler {
 		File file = getComplexDataFile(obs);
 		if (!file.exists()) {
 			return true;
-		}
-		else if (file.delete()) {
+		} else if (file.delete()) {
 			obs.setComplexData(null);
 			// obs.setValueComplex(null);
 			return true;
