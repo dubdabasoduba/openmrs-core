@@ -115,13 +115,17 @@ public class ModuleClassLoader extends URLClassLoader {
 		
 		File devDir = ModuleUtil.getDevelopmentDirectory(module.getModuleId());
 		if (devDir != null) {
-			File dir = new File(devDir, "api" + File.separator + "target" + File.separator + "classes" + File.separator);
-			Collection<File> files = FileUtils.listFiles(dir, new String[] { "class" }, true);
-			addClassFilePackages(files, dir.getAbsolutePath().length() + 1);
-			
-			dir = new File(devDir, "omod" + File.separator + "target" + File.separator + "classes" + File.separator);
-			files = FileUtils.listFiles(dir, new String[] { "class" }, true);
-			addClassFilePackages(files, dir.getAbsolutePath().length() + 1);
+			File[] fileList = devDir.listFiles();
+			for (File file : fileList) {
+				if (!file.isDirectory()) {
+					continue;
+				}
+				File dir = new File(devDir, file.getName() + File.separator + "target" + File.separator + "classes" + File.separator);
+				if (dir.exists()) {
+					Collection<File> files = FileUtils.listFiles(dir, new String[] { "class" }, true);
+					addClassFilePackages(files, dir.getAbsolutePath().length() + 1);
+				}
+			}
 		} else {
 			for (URL url : urls) {
 				providedPackages.addAll(ModuleUtil.getPackagesFromFile(OpenmrsUtil.url2file(url)));
@@ -135,7 +139,7 @@ public class ModuleClassLoader extends URLClassLoader {
 			Integer indexOfLastSlash = name.lastIndexOf(File.separator);
 			if (indexOfLastSlash > 0) {
 				String packageName = name.substring(0, indexOfLastSlash);
-				packageName = packageName.replaceAll(File.separator, ".");
+				packageName = packageName.replace(File.separator, ".");
 				providedPackages.add(packageName);
 			}
 		}
@@ -202,14 +206,21 @@ public class ModuleClassLoader extends URLClassLoader {
 		List<URL> result = new LinkedList<URL>();
 		
 		//if in dev mode, add development folder to the classpath
+		List<String> devFolderNames = new ArrayList<String>();
 		File devDir = ModuleUtil.getDevelopmentDirectory(module.getModuleId());
 		try {
 			if (devDir != null) {
-				File dir = new File(devDir, "omod" + File.separator + "target" + File.separator + "classes" + File.separator);
-				result.add(dir.toURI().toURL());
-				
-				dir = new File(devDir, "api" + File.separator + "target" + File.separator + "classes" + File.separator);
-				result.add(dir.toURI().toURL());
+				File[] fileList = devDir.listFiles();
+				for (File file : fileList) {
+					if (!file.isDirectory()) {
+						continue;
+					}
+					File dir = new File(devDir, file.getName() + File.separator + "target" + File.separator + "classes" + File.separator);
+					if (dir.exists()) {
+						result.add(dir.toURI().toURL());
+						devFolderNames.add(file.getName());
+					}
+				}
 			}
 		}
 		catch (MalformedURLException ex) {
@@ -286,10 +297,20 @@ public class ModuleClassLoader extends URLClassLoader {
 				Collection<File> files = (Collection<File>) FileUtils.listFiles(libdir, new String[] { "jar" }, true);
 				for (File file : files) {
 					
-					//if in dev mode, do not put the api jar file in the class path
+					//if in dev mode, do not put the module source jar files in the class path
 					if (devDir != null) {
-						if (file.getName().equals(module.getModuleId() + "-api-" + module.getVersion() + ".jar")) {
-							continue; //e.g uiframework-api-3.3-SNAPSHOT.jar
+						boolean jarForDevFolder = false;
+						for (String folderName : devFolderNames) {
+							if (file.getName().startsWith(module.getModuleId() + "-" + folderName + "-")) {
+								//e.g uiframework-api-3.3-SNAPSHOT.jar, webservices.rest-omod-common-2.14-SNAPSHOT.jar
+								//webservices.rest-omod-1.11-2.14-SNAPSHOT.jar, webservices.rest-omod-1.10-2.14-SNAPSHOT.jar, etc
+								jarForDevFolder = true;
+								break;
+							}
+						}
+						
+						if (jarForDevFolder) {
+							continue;
 						}
 					}
 					
@@ -477,7 +498,7 @@ public class ModuleClassLoader extends URLClassLoader {
 		}
 		
 		if (log.isDebugEnabled()) {
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			buf.append("New code URL's populated for module " + getModule() + ":\r\n");
 			for (URL u : newUrls) {
 				buf.append("\t");

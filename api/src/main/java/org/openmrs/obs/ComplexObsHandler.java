@@ -11,7 +11,6 @@ package org.openmrs.obs;
 
 import org.openmrs.Obs;
 import org.openmrs.api.APIException;
-import org.openmrs.util.OpenmrsConstants;
 
 /**
  * Interface for handling complex obs. Implementing classes are responsible for the storage and
@@ -47,7 +46,7 @@ public interface ComplexObsHandler {
 	
 	/**
 	 * Save a complex obs. This extracts the ComplexData from an Obs, stores it to a location
-	 * determined by the hander, and returns the Obs with the ComplexData nullified.
+	 * determined by the handler, and returns the Obs with the ComplexData nullified.
 	 * 
 	 * @param obs
 	 * @return the Obs with the ComplexData nullified

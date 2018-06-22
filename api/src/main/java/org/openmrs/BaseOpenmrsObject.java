@@ -9,27 +9,74 @@
  */
 package org.openmrs;
 
+import java.io.Serializable;
 import java.util.UUID;
+
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Column;
+import org.apache.lucene.analysis.core.KeywordTokenizerFactory;
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.core.WhitespaceTokenizerFactory;
+import org.apache.lucene.analysis.ngram.EdgeNGramFilterFactory;
+import org.apache.lucene.analysis.ngram.NGramFilterFactory;
+import org.apache.lucene.analysis.standard.ClassicFilterFactory;
+import org.hibernate.Hibernate;
+import org.hibernate.search.annotations.AnalyzerDef;
+import org.hibernate.search.annotations.AnalyzerDefs;
+import org.hibernate.search.annotations.Parameter;
+import org.hibernate.search.annotations.TokenFilterDef;
+import org.hibernate.search.annotations.TokenizerDef;
+import org.openmrs.api.db.hibernate.search.LuceneAnalyzers;
 
 /**
  * This is the base implementation of the {@link OpenmrsObject} interface.<br>
  * It implements the uuid variable that all objects are expected to have.
  */
+@AnalyzerDefs({
+		@AnalyzerDef(name = LuceneAnalyzers.PHRASE_ANALYZER,
+				tokenizer = @TokenizerDef(factory = KeywordTokenizerFactory.class),
+				filters = {
+						@TokenFilterDef(factory = ClassicFilterFactory.class),
+						@TokenFilterDef(factory = LowerCaseFilterFactory.class)
+				}),
+		@AnalyzerDef(name = LuceneAnalyzers.EXACT_ANALYZER,
+				tokenizer = @TokenizerDef(factory = WhitespaceTokenizerFactory.class),
+				filters = {
+						@TokenFilterDef(factory = ClassicFilterFactory.class),
+						@TokenFilterDef(factory = LowerCaseFilterFactory.class)
+				}),
+		@AnalyzerDef(name = LuceneAnalyzers.START_ANALYZER,
+				tokenizer = @TokenizerDef(factory = WhitespaceTokenizerFactory.class),
+				filters = {
+						@TokenFilterDef(factory = ClassicFilterFactory.class),
+						@TokenFilterDef(factory = LowerCaseFilterFactory.class),
+						@TokenFilterDef(factory = EdgeNGramFilterFactory.class, params = {
+								@Parameter(name = "minGramSize", value = "2"),
+								@Parameter(name = "maxGramSize", value = "20") })
+				}),
+		@AnalyzerDef(name = LuceneAnalyzers.ANYWHERE_ANALYZER,
+				tokenizer = @TokenizerDef(factory = WhitespaceTokenizerFactory.class),
+				filters = {
+						@TokenFilterDef(factory = ClassicFilterFactory.class),
+						@TokenFilterDef(factory = LowerCaseFilterFactory.class),
+						@TokenFilterDef(factory = NGramFilterFactory.class, params = {
+								@Parameter(name = "minGramSize", value = "2"),
+								@Parameter(name = "maxGramSize", value = "20") })
+				})
+})
 @MappedSuperclass
-public abstract class BaseOpenmrsObject implements OpenmrsObject {
+public abstract class BaseOpenmrsObject implements Serializable, OpenmrsObject {
 	
-	@Column(name = "uuid", unique = true, nullable = false, length = 38)
+	@Column(name = "uuid", unique = true, nullable = false, length = 38, updatable = false)
 	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * @see org.openmrs.OpenmrsObject#getUuid()
 	 */
+	@Override
 	public String getUuid() {
 		return uuid;
 	}
@@ -37,6 +84,7 @@ public abstract class BaseOpenmrsObject implements OpenmrsObject {
 	/**
 	 * @see org.openmrs.OpenmrsObject#setUuid(java.lang.String)
 	 */
+	@Override
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
@@ -84,6 +132,12 @@ public abstract class BaseOpenmrsObject implements OpenmrsObject {
 		// Need to call getUuid to make sure the hibernate proxy objects return the correct uuid.
 		// The private member may not be set for a hibernate proxy.
 		if (getUuid() == null) {
+			return false;
+		}
+		//In case of hibernate proxy objects we need to get real classes
+		Class<?> thisClass = Hibernate.getClass(this);
+		Class<?> objClass = Hibernate.getClass(obj);
+		if (!(thisClass.isAssignableFrom(objClass) || objClass.isAssignableFrom(thisClass))){
 			return false;
 		}
 		return getUuid().equals(other.getUuid());

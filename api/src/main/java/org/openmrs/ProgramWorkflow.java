@@ -22,7 +22,7 @@ import org.openmrs.util.NaturalStrings;
 /**
  * ProgramWorkflow
  */
-public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class ProgramWorkflow extends BaseOpenmrsMetadata {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -164,7 +164,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	public Set<ProgramWorkflowState> getStates(boolean includeRetired) {
 		Set<ProgramWorkflowState> ret = new HashSet<ProgramWorkflowState>();
 		for (ProgramWorkflowState s : getStates()) {
-			if (includeRetired || !s.isRetired()) {
+			if (includeRetired || !s.getRetired()) {
 				ret.add(s);
 			}
 		}
@@ -183,6 +183,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 		
 		Comparator<ProgramWorkflowState> stateComparator = new Comparator<ProgramWorkflowState>() {
 			
+			@Override
 			public int compare(ProgramWorkflowState o1, ProgramWorkflowState o2) {
 				return naturalComparator.compare(o1.getConcept().getName().getName(), o2.getConcept().getName().getName());
 			}
@@ -285,6 +286,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getProgramWorkflowId();
@@ -294,6 +296,7 @@ public class ProgramWorkflow extends BaseOpenmrsMetadata implements java.io.Seri
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setProgramWorkflowId(id);
 		

@@ -19,7 +19,7 @@ import java.util.Set;
  *
  * @version 1.0
  */
-public class Form extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class Form extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 845634L;
 	
@@ -214,6 +214,7 @@ public class Form extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getFormId();
@@ -223,6 +224,7 @@ public class Form extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setFormId(id);
 		

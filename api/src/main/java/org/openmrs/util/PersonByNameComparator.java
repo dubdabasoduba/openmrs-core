@@ -9,10 +9,10 @@
  */
 package org.openmrs.util;
 
+import java.util.Comparator;
+
 import org.openmrs.Person;
 import org.openmrs.PersonName;
-
-import java.util.Comparator;
 
 /**
  * A simple person comparator for sorting persons by name. Sorts names based on the following
@@ -25,6 +25,7 @@ public class PersonByNameComparator implements Comparator<Person> {
 	/**
 	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 	 */
+	@Override
 	public int compare(Person person1, Person person2) {
 		
 		return comparePersonsByName(person1, person2);

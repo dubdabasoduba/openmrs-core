@@ -50,6 +50,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.scheduler.SchedulerUtil;
 import org.openmrs.util.OpenmrsClassLoader;
+import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.context.support.AbstractRefreshableApplicationContext;
 
@@ -130,7 +131,7 @@ public class ModuleUtil {
 		// some debugging info
 		if (log.isDebugEnabled()) {
 			Collection<Module> modules = ModuleFactory.getStartedModules();
-			if (modules == null || modules.size() == 0) {
+			if (modules == null || modules.isEmpty()) {
 				log.debug("No modules loaded");
 			} else {
 				log.debug("Found and loaded " + modules.size() + " module(s)");
@@ -211,6 +212,35 @@ public class ModuleUtil {
 		
 		return file;
 	}
+
+	/**
+	 * Checks if the current OpenMRS version is in an array of versions.
+	 * <p>
+	 * This method calls {@link ModuleUtil#matchRequiredVersions(String, String)} internally.
+	 * </p>
+	 *
+	 * @param versions the openmrs versions to be checked against the current openmrs version
+	 * @return true if the current openmrs version is in versions otherwise false
+	 * @should return false when versions is null
+	 * @should return false when versions is empty
+	 * @should return true if current openmrs version matches one element in versions
+	 * @should return false if current openmrs version does not match any element in versions
+	 */
+	public static boolean isOpenmrsVersionInVersions(String ...versions) {
+
+		if (versions == null || versions.length == 0) {
+			return false;
+		}
+
+		boolean result = false;
+		for (String version : versions) {
+			if (matchRequiredVersions(OpenmrsConstants.OPENMRS_VERSION_SHORT, version)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
 	
 	/**
 	 * This method is an enhancement of {@link #compareVersion(String, String)} and adds support for
@@ -225,6 +255,15 @@ public class ModuleUtil {
 	 * <li>1.2.2 - 1.2.3</li>
 	 * <li>1.2.* - 1.3.*</li>
 	 * </ul>
+	 * <p>
+	 * Again the possible require version number formats with their interpretation:
+	 * <ul>
+	 * <li>1.2.3 means 1.2.3 and above</li>
+	 * <li>1.2.* means any version of the 1.2.x branch. That is 1.2.0, 1.2.1, 1.2.2,... but not 1.3.0, 1.4.0</li>
+	 * <li>1.2.2 - 1.2.3 means 1.2.2 and 1.2.3 (inclusive)</li>
+	 * <li>1.2.* - 1.3.* means any version of the 1.2.x and 1.3.x branch</li>
+	 * </ul>
+	 * </p>
 	 *
 	 * @param version openmrs version number to be compared
 	 * @param versionRange value in the config file for required openmrs version
@@ -333,7 +372,15 @@ public class ModuleUtil {
 	 * <li>1.2.2 - 1.2.3</li>
 	 * <li>1.2.* - 1.3.*</li>
 	 * </ul>
-	 * <br>
+	 * <p>
+	 * Again the possible require version number formats with their interpretation:
+	 * <ul>
+	 * <li>1.2.3 means 1.2.3 and above</li>
+	 * <li>1.2.* means any version of the 1.2.x branch. That is 1.2.0, 1.2.1, 1.2.2,... but not 1.3.0, 1.4.0</li>
+	 * <li>1.2.2 - 1.2.3 means 1.2.2 and 1.2.3 (inclusive)</li>
+	 * <li>1.2.* - 1.3.* means any version of the 1.2.x and 1.3.x branch</li>
+	 * </ul>
+	 * </p>
 	 *
 	 * @param version openmrs version number to be compared
 	 * @param versionRange value in the config file for required openmrs version
@@ -507,6 +554,11 @@ public class ModuleUtil {
 	 * @param keepFullPath if true, will recreate entire directory structure in tmpModuleDir
 	 *            relating to <code>name</code>. if false will start directory structure at
 	 *            <code>name</code>
+	 * @should expand entire jar if name is null
+	 * @should expand entire jar if name is empty string
+	 * @should expand directory with parent tree if name is directory and keepFullPath is true
+	 * @should expand directory without parent tree if name is directory and keepFullPath is false
+	 * @should expand file with parent tree if name is file and keepFullPath is true
 	 */
 	public static void expandJar(File fileToExpand, File tmpModuleDir, String name, boolean keepFullPath) throws IOException {
 		JarFile jarFile = null;
@@ -659,7 +711,7 @@ public class ModuleUtil {
 					}
 					http.disconnect();
 					// Redirection should be allowed only for HTTP and HTTPS
-					// and should be limited to 5 redirections at most.
+					// and should be limited to 5 redirects at most.
 					if (target == null || !("http".equals(target.getProtocol()) || "https".equals(target.getProtocol()))
 					        || redirects >= 5) {
 						throw new SecurityException("illegal URL redirect");
@@ -748,7 +800,7 @@ public class ModuleUtil {
 					log.debug("Update for mod: " + mod.getModuleId() + " compareVersion result: "
 					        + compareVersion(mod.getVersion(), parser.getCurrentVersion()));
 					
-					// check the udpate.rdf version against the installed version
+					// check the update.rdf version against the installed version
 					if (compareVersion(mod.getVersion(), parser.getCurrentVersion()) < 0) {
 						if (mod.getModuleId().equals(parser.getModuleId())) {
 							mod.setDownloadURL(parser.getDownloadURL());
@@ -919,7 +971,7 @@ public class ModuleUtil {
 		mandatoryModuleIds.removeAll(startedModuleIds);
 		
 		// any module ids left in the list are not started
-		if (mandatoryModuleIds.size() > 0) {
+		if (!mandatoryModuleIds.isEmpty()) {
 			throw new MandatoryModuleException(mandatoryModuleIds);
 		}
 	}

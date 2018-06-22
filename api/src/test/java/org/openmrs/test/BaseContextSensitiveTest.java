@@ -74,6 +74,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openmrs.ConceptName;
 import org.openmrs.Drug;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PersonAttribute;
+import org.openmrs.PersonName;
 import org.openmrs.User;
 import org.openmrs.annotation.OpenmrsProfileExcludeFilter;
 import org.openmrs.api.context.Context;
@@ -547,7 +550,6 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	 * 
 	 * @return Connection jdbc connection to the database
 	 */
-	@SuppressWarnings("deprecation")
 	public Connection getConnection() {
 		SessionFactory sessionFactory = (SessionFactory) applicationContext.getBean("sessionFactory");
 		
@@ -874,7 +876,7 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 				
 				//Commit so that it is not rolled back after a test.
 				getConnection().commit();
-				
+
 				updateSearchIndex();
 				
 				isBaseSetup = true;
@@ -891,7 +893,8 @@ public abstract class BaseContextSensitiveTest extends AbstractJUnit4SpringConte
 	}
 	
 	public Class<?>[] getIndexedTypes() {
-		return new Class<?>[] { ConceptName.class, Drug.class };
+		return new Class<?>[] { ConceptName.class, Drug.class, PersonName.class, PersonAttribute.class,
+				PatientIdentifier.class};
 	}
 	
 	/**

@@ -16,14 +16,12 @@ import java.io.InputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.springframework.util.Assert;
-
 import org.openmrs.Obs;
 import org.openmrs.api.APIException;
 import org.openmrs.obs.ComplexData;
 import org.openmrs.obs.ComplexObsHandler;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.util.Assert;
 
 /**
  * Handler for storing files for complex obs to the file system. Files are stored in the location
@@ -52,6 +50,7 @@ public class BinaryDataHandler extends AbstractHandler implements ComplexObsHand
 	 * 
 	 * @see org.openmrs.obs.ComplexObsHandler#getObs(org.openmrs.Obs, java.lang.String)
 	 */
+	@Override
 	public Obs getObs(Obs obs, String view) {
 		File file = getComplexDataFile(obs);
 		log.debug("value complex: " + obs.getValueComplex());
@@ -100,6 +99,7 @@ public class BinaryDataHandler extends AbstractHandler implements ComplexObsHand
 	 * 
 	 * @see org.openmrs.obs.ComplexObsHandler#saveObs(org.openmrs.Obs)
 	 */
+	@Override
 	public Obs saveObs(Obs obs) throws APIException {
 		// Get the buffered file  from the ComplexData.
 		ComplexData complexData = obs.getComplexData();

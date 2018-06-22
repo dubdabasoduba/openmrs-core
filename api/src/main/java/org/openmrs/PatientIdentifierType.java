@@ -9,14 +9,13 @@
  */
 package org.openmrs;
 
-import java.io.Serializable;
-
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.search.annotations.Field;
 
 /**
  * PatientIdentifierType
  */
-public class PatientIdentifierType extends BaseOpenmrsMetadata implements Serializable {
+public class PatientIdentifierType extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 211231L;
 	
@@ -61,7 +60,8 @@ public class PatientIdentifierType extends BaseOpenmrsMetadata implements Serial
 	private Integer patientIdentifierTypeId;
 	
 	private String format;
-	
+
+	@Field
 	private Boolean required = Boolean.FALSE;
 	
 	private String formatDescription;
@@ -186,12 +186,10 @@ public class PatientIdentifierType extends BaseOpenmrsMetadata implements Serial
 		return StringUtils.isNotEmpty(validator);
 	}
 	
-	/**
-	 * TODO: make this return a more debug-worth string instead of just the name. Check the webapp
-	 * to make sure it is not depending on this
-	 * 
+	/** 
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName();
 	}
@@ -200,6 +198,7 @@ public class PatientIdentifierType extends BaseOpenmrsMetadata implements Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getPatientIdentifierTypeId();
 	}
@@ -208,6 +207,7 @@ public class PatientIdentifierType extends BaseOpenmrsMetadata implements Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setPatientIdentifierTypeId(id);
 		

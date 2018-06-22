@@ -9,6 +9,10 @@
  */
 package org.openmrs.aop;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.Log;
@@ -17,10 +21,6 @@ import org.openmrs.User;
 import org.openmrs.annotation.Logging;
 import org.openmrs.api.context.Context;
 import org.openmrs.util.OpenmrsUtil;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class provides the log4j aop around advice for our service layer. This advice is placed on
@@ -49,12 +49,13 @@ public class LoggingAdvice implements MethodInterceptor {
 	 *
 	 * @see org.aopalliance.intercept.MethodInterceptor#invoke(org.aopalliance.intercept.MethodInvocation)
 	 */
+	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		
 		Method method = invocation.getMethod();
 		String name = method.getName();
 		
-		// decide what type of logging we're doing with the current method and loglevel
+		// decide what type of logging we're doing with the current method and the loglevel
 		boolean isSetterTypeOfMethod = OpenmrsUtil.stringStartsWith(name, SETTER_METHOD_PREFIXES);
 		boolean logGetter = !isSetterTypeOfMethod && log.isDebugEnabled();
 		boolean logSetter = isSetterTypeOfMethod && log.isInfoEnabled();
@@ -133,7 +134,7 @@ public class LoggingAdvice implements MethodInterceptor {
 					}
 				}
 				log.debug(String.format(
-				    "An error occurred while executing this method.\nCurrent user: %s\nError message: %s", username, e
+				    "An error occurred while executing this method.%nCurrent user: %s%nError message: %s", username, e
 				            .getMessage()), e);
 			}
 			throw e;

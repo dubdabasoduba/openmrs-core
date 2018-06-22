@@ -38,8 +38,8 @@ public class OrderValidator implements Validator {
 	 * 
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return Order.class.isAssignableFrom(c);
 	}
 	
@@ -69,6 +69,7 @@ public class OrderValidator implements Validator {
 	 * @should pass validation if field lengths are correct
 	 * @should fail validation if field lengths are not correct
 	 */
+	@Override
 	public void validate(Object obj, Errors errors) {
 		Order order = (Order) obj;
 		if (order == null) {
@@ -93,6 +94,8 @@ public class OrderValidator implements Validator {
 			ValidateUtil.validateFieldLengths(errors, obj.getClass(), "orderReasonNonCoded", "accessionNumber",
 			    "commentToFulfiller", "voidReason");
 			
+			validateOrderGroupEncounter(order, errors);
+			validateOrderGroupPatient(order, errors);
 		}
 	}
 	
@@ -123,7 +126,7 @@ public class OrderValidator implements Validator {
 			Encounter encounter = order.getEncounter();
 			if (encounter != null && encounter.getEncounterDatetime() != null
 			        && encounter.getEncounterDatetime().after(dateActivated)) {
-				errors.rejectValue("dateActivated", "Order.error.dateActivatedAfterEncounterDatetime");
+				errors.rejectValue("dateActivated", "Order.error.encounterDatetimeAfterDateActivated");
 			}
 		}
 	}
@@ -144,6 +147,18 @@ public class OrderValidator implements Validator {
 		}
 		if (isUrgencyOnScheduledDate && order.getScheduledDate() == null) {
 			errors.rejectValue("scheduledDate", "Order.error.scheduledDateNullForOnScheduledDateUrgency");
+		}
+	}
+	
+	private void validateOrderGroupEncounter(Order order, Errors errors) {
+		if (order.getOrderGroup() != null && !(order.getEncounter().equals(order.getOrderGroup().getEncounter()))) {
+			errors.rejectValue("encounter", "Order.error.orderEncounterAndOrderGroupEncounterMismatch");
+		}
+	}
+	
+	private void validateOrderGroupPatient(Order order, Errors errors) {
+		if (order.getOrderGroup() != null && !(order.getPatient().equals(order.getOrderGroup().getPatient()))) {
+			errors.rejectValue("patient", "Order.error.orderPatientAndOrderGroupPatientMismatch");
 		}
 	}
 }

@@ -15,7 +15,7 @@ import org.openmrs.customdatatype.SerializingCustomDatatype;
 /**
  * This is a superclass for custom datatypes for OpenmrsObjects
  * 
- * @since 1.12
+ * @since 2.0.0
  */
 public abstract class BaseOpenmrsDatatype<T extends OpenmrsObject> extends SerializingCustomDatatype<T> {
 	
@@ -23,6 +23,7 @@ public abstract class BaseOpenmrsDatatype<T extends OpenmrsObject> extends Seria
 	 * @see org.openmrs.customdatatype.SerializingCustomDatatype#serialize(java.lang.Object)
 	 * @should return the uuid of the object
 	 */
+	@Override
 	public String serialize(T typedValue) {
 		if (typedValue == null) {
 			return null;

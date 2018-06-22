@@ -17,6 +17,7 @@ import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.Obs;
 import org.openmrs.annotation.Handler;
+import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -29,18 +30,20 @@ import org.springframework.validation.Validator;
  * <li>checks for no recursion in the obs grouping.
  * <li>Makes sure the obs has at least one value (if not an obs grouping)</li>
  * </ul>
+ * 
  * @see org.openmrs.Obs
  */
 @Handler(supports = { Obs.class }, order = 50)
 public class ObsValidator implements Validator {
 	
-	public final static int VALUE_TEXT_MAX_LENGTH = 1000;
+	public final static int VALUE_TEXT_MAX_LENGTH = 65535;
 	
 	/**
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
+	 * @should support Obs class
 	 */
-	@SuppressWarnings("unchecked")
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return Obs.class.isAssignableFrom(c);
 	}
 	
@@ -62,11 +65,19 @@ public class ObsValidator implements Validator {
 	 * @should pass if answer concept and concept of value drug match
 	 * @should pass validation if field lengths are correct
 	 * @should fail validation if field lengths are not correct
+	 * @should not validate if obs is voided
+	 * @should not validate a voided child obs
+	 * @should fail for a null object
 	 */
+	@Override
 	public void validate(Object obj, Errors errors) {
 		Obs obs = (Obs) obj;
-		List<Obs> ancestors = new ArrayList<Obs>();
-		//ancestors.add(obs);
+		if (obs == null) {
+			throw new APIException("Obs can't be null");
+		} else if (obs.getVoided()) {
+			return;
+		}
+		List<Obs> ancestors = new ArrayList<>();
 		validateHelper(obs, errors, ancestors, true);
 		ValidateUtil.validateFieldLengths(errors, obj.getClass(), "accessionNumber", "valueModifier", "valueComplex",
 		    "comment", "voidReason");
@@ -169,9 +180,9 @@ public class ObsValidator implements Validator {
 				} else if (dt.isNumeric()) {
 					ConceptNumeric cn = Context.getConceptService().getConceptNumeric(c.getConceptId());
 					// If the concept numeric is not precise, the value cannot be a float, so raise an error 
-					if (!cn.isAllowDecimal() && Math.ceil(obs.getValueNumeric()) != obs.getValueNumeric()) {
+					if (!cn.getAllowDecimal() && Math.ceil(obs.getValueNumeric()) != obs.getValueNumeric()) {
 						if (atRootNode) {
-							errors.rejectValue("valueNumeric", "error.precision");
+							errors.rejectValue("valueNumeric", "Obs.error.precision");
 						} else {
 							errors.rejectValue("groupMembers", "Obs.error.inGroupMember");
 						}

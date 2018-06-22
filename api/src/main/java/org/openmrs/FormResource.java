@@ -9,6 +9,9 @@
  */
 package org.openmrs;
 
+import java.util.Date;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.openmrs.customdatatype.CustomDatatypeUtil;
 import org.openmrs.customdatatype.CustomValueDescriptor;
 import org.openmrs.customdatatype.InvalidCustomValueException;
@@ -48,6 +51,10 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	private transient boolean dirty = false;
 	
 	private transient Object typedValue;
+	
+	private User changedBy;
+	
+	private Date dateChanged;
 	
 	public FormResource() {
 		// generic constructor
@@ -248,10 +255,45 @@ public class FormResource extends BaseOpenmrsObject implements CustomValueDescri
 	
 	/**
 	 * @see org.openmrs.customdatatype.SingleCustomValue#isDirty()
+	 *
+	 * @deprecated as of 2.0, use {@link #getDirty()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	@Override
 	public boolean isDirty() {
+		return getDirty();
+	}
+	
+	public boolean getDirty() {
 		return dirty;
 	}
 	
+	/**
+	 * @return Returns the changedBy.
+	 */
+	public User getChangedBy() {
+		return changedBy;
+	}
+	
+	/**
+	 * @param changedBy The user that changed this object
+	 */
+	public void setChangedBy(User changedBy) {
+		this.changedBy = changedBy;
+	}
+	
+	/**
+	 * @return Returns the date this object was changed
+	 */
+	public Date getDateChanged() {
+		return dateChanged;
+	}
+	
+	/**
+	 * @param dateChanged The date this object was changed
+	 */
+	public void setDateChanged(Date dateChanged) {
+		this.dateChanged = dateChanged;
+	}
 }

@@ -9,11 +9,11 @@
  */
 package org.openmrs.api.db.hibernate;
 
+import java.util.List;
+
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.openmrs.PersonAttribute;
-
-import java.util.List;
 
 public class PersonAttributeHelper {
 	
@@ -44,7 +44,7 @@ public class PersonAttributeHelper {
 		PersonAttribute personAttribute = getPersonAttribute(getPersonAttributeList(QUERY_ALL_VOIDED_PERSON_ATTRIBUTES),
 		    value);
 		if (personAttribute != null) {
-			return personAttribute.isVoided();
+			return personAttribute.getVoided();
 		}
 		return false;
 	}

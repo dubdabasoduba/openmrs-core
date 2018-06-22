@@ -11,8 +11,6 @@ package org.openmrs;
 
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
 import org.openmrs.api.db.hibernate.HibernateUtil;
 import org.openmrs.order.OrderUtil;
@@ -32,7 +30,8 @@ import org.openmrs.util.OpenmrsUtil;
  * 
  * @version 1.0
  */
-public class Order extends BaseOpenmrsData implements java.io.Serializable {
+public class Order extends BaseOpenmrsData {
+	
 	
 	public static final long serialVersionUID = 4334343L;
 	
@@ -54,8 +53,6 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		DISCONTINUE,
 		RENEW
 	}
-	
-	private static final Log log = LogFactory.getLog(Order.class);
 	
 	private Integer orderId;
 	
@@ -94,6 +91,13 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	private Date scheduledDate;
 	
 	/**
+	 * Allows the orders if ordered as an orderGroup, to maintain a sequence of how members are
+	 * added in the group ex - for two orders of isoniazid and ampicillin, the sequence of 1 and 2
+	 * needed to be maintained
+	 */
+	private Double sortWeight;
+	
+	/**
 	 * Allows orders to be linked to a previous order - e.g., an order discontinue ampicillin linked
 	 * to the original ampicillin order (the D/C gets its own order number)
 	 */
@@ -105,6 +109,11 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @see org.openmrs.Order.Action
 	 */
 	private Action action = Action.NEW;
+	
+	/**
+	 * {@link org.openmrs.OrderGroup}
+	 */
+	private OrderGroup orderGroup;
 	
 	// Constructors
 	
@@ -149,7 +158,7 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		target.setOrderReason(getOrderReason());
 		target.setOrderReasonNonCoded(getOrderReasonNonCoded());
 		target.setAccessionNumber(getAccessionNumber());
-		target.setVoided(isVoided());
+		target.setVoided(getVoided());
 		target.setVoidedBy(getVoidedBy());
 		target.setDateVoided(getDateVoided());
 		target.setVoidReason(getVoidReason());
@@ -162,6 +171,8 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		target.setChangedBy(getChangedBy());
 		target.setDateChanged(getDateChanged());
 		target.setScheduledDate(getScheduledDate());
+		target.setOrderGroup(getOrderGroup());
+		target.setSortWeight(getSortWeight());
 		return target;
 	}
 	
@@ -348,6 +359,38 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
+	 * Convenience method to determine if the order is activated as of the current date
+	 * 
+	 * @return boolean indicating whether the order was activated before or on the current date
+	 * @since 2.0
+	 * @see #isActivated(java.util.Date)
+	 */
+	public boolean isActivated() {
+		return isActivated(new Date());
+	}
+	
+	/**
+	 * Convenience method to determine if the order is activated as of the specified date
+	 * 
+	 * @param checkDate - the date on which to check order. if null, will use current date
+	 * @return boolean indicating whether the order was activated before or on the check date
+	 * @since 2.0
+	 * @should return true if an order was activated on the check date
+	 * @should return true if an order was activated before the check date
+	 * @should return false if dateActivated is null
+	 * @should return false for an order activated after the check date
+	 */
+	public boolean isActivated(Date checkDate) {
+		if (dateActivated == null) {
+			return false;
+		}
+		if (checkDate == null) {
+			checkDate = new Date();
+		}
+		return OpenmrsUtil.compare(dateActivated, checkDate) <= 0;
+	}
+	
+	/**
 	 * Convenience method to determine if the order was active as of the current date
 	 * 
 	 * @since 1.10.1
@@ -366,21 +409,19 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should return true if an order expired on the check date
 	 * @should return true if an order was discontinued on the check date
 	 * @should return true if an order was activated on the check date
+	 * @should return true if an order was activated on the check date but scheduled for the future
 	 * @should return false for a voided order
 	 * @should return false for a discontinued order
 	 * @should return false for an expired order
 	 * @should return false for an order activated after the check date
 	 * @should return false for a discontinuation order
 	 */
-	public boolean isActive(Date checkDate) {
-		if (isVoided() || action == Action.DISCONTINUE) {
+	public boolean isActive(Date aCheckDate) {
+		if (getVoided() || action == Action.DISCONTINUE) {
 			return false;
 		}
-		if (checkDate == null) {
-			checkDate = new Date();
-		}
-		
-		return isStarted(checkDate) && !isDiscontinued(checkDate) && !isExpired(checkDate);
+		Date checkDate = aCheckDate == null ? new Date() : aCheckDate;
+		return isActivated(checkDate) && !isDiscontinued(checkDate) && !isExpired(checkDate);
 	}
 	
 	/**
@@ -410,16 +451,14 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should return true if the order was scheduled to start before the check date
 	 * @should return true if the order is started and not scheduled
 	 */
-	public boolean isStarted(Date checkDate) {
-		if (isVoided()) {
+	public boolean isStarted(Date aCheckDate) {
+		if (getVoided()) {
 			return false;
-		}
-		if (checkDate == null) {
-			checkDate = new Date();
 		}
 		if (getEffectiveStartDate() == null) {
 			return false;
 		}
+		Date checkDate = aCheckDate == null ? new Date() : aCheckDate;
 		return !checkDate.before(getEffectiveStartDate());
 	}
 	
@@ -437,18 +476,18 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should fail if date stopped is after auto expire date
 	 * @should return true if check date is after date stopped but before auto expire date
 	 * @should return true if check date is after both date stopped auto expire date
+	 * @should return true if the order is scheduled for the future and activated on check date but
+	 *         the check date is after date stopped
 	 */
-	public boolean isDiscontinued(Date checkDate) {
+	public boolean isDiscontinued(Date aCheckDate) {
 		if (dateStopped != null && autoExpireDate != null && dateStopped.after(autoExpireDate)) {
 			throw new APIException("Order.error.invalidDateStoppedAndAutoExpireDate", (Object[]) null);
 		}
-		if (isVoided()) {
+		if (getVoided()) {
 			return false;
 		}
-		if (checkDate == null) {
-			checkDate = new Date();
-		}
-		if (dateActivated == null || !isStarted(checkDate) || dateStopped == null) {
+		Date checkDate = aCheckDate == null ? new Date() : aCheckDate;
+		if (!isActivated(checkDate) || dateStopped == null) {
 			return false;
 		}
 		return checkDate.after(dateStopped);
@@ -480,23 +519,21 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should return true if date stopped is null and auto expire date is before check date
 	 * @since 1.10.1
 	 */
-	public boolean isExpired(Date checkDate) {
+	public boolean isExpired(Date aCheckDate) {
 		if (dateStopped != null && autoExpireDate != null && dateStopped.after(autoExpireDate)) {
 			throw new APIException("Order.error.invalidDateStoppedAndAutoExpireDate", (Object[]) null);
 		}
-		if (isVoided()) {
+		if (getVoided()) {
 			return false;
 		}
-		if (checkDate == null) {
-			checkDate = new Date();
-		}
-		if (dateActivated == null || !isStarted(checkDate)) {
+		Date checkDate = aCheckDate == null ? new Date() : aCheckDate;
+		if (!isActivated(checkDate)) {
 			return false;
 		}
 		if (isDiscontinued(checkDate) || autoExpireDate == null) {
 			return false;
 		}
-		
+
 		return checkDate.after(autoExpireDate);
 	}
 	
@@ -518,6 +555,7 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		this.patient = patient;
 	}
 	
+	@Override
 	public Integer getId() {
 		return getOrderId();
 	}
@@ -525,6 +563,7 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		String prefix = Action.DISCONTINUE == getAction() ? "DC " : "";
 		return prefix + "Order. orderId: " + orderId + " patient: " + patient + " concept: " + concept + " care setting: "
@@ -535,6 +574,7 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setOrderId(id);
 	}
@@ -701,6 +741,8 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		target.setCommentToFulfiller(getCommentToFulfiller());
 		target.setOrderReason(getOrderReason());
 		target.setOrderReasonNonCoded(getOrderReasonNonCoded());
+		target.setOrderGroup(getOrderGroup());
+		target.setSortWeight(getSortWeight());
 		
 		return target;
 	}
@@ -758,4 +800,47 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		return this.getDateStopped() != null ? this.getDateStopped() : this.getAutoExpireDate();
 	}
 	
+	/**
+	 * @since 1.12 {@link org.openmrs.OrderGroup}
+	 * @returns the OrderGroup
+	 */
+	public OrderGroup getOrderGroup() {
+		return orderGroup;
+	}
+	
+	/**
+	 * Sets the OrderGroup for that order. If the order is ordered independently, it does not set an
+	 * orderGroup for it. If the order is ordered as an orderGroup, then sets a link to the
+	 * OrderGroup for that particular order.
+	 * 
+	 * @since 1.12
+	 * @param orderGroup
+	 */
+	public void setOrderGroup(OrderGroup orderGroup) {
+		this.orderGroup = orderGroup;
+	}
+	
+	/**
+	 * Gets the sortWeight for an order if it is ordered as an OrderGroup.
+	 * 
+	 * @since 1.12
+	 * @return the sortWeight
+	 */
+	public Double getSortWeight() {
+		return sortWeight;
+	}
+	
+	/**
+	 * Sets the sortWeight for an order if it is ordered as an OrderGroup. <tt>sortWeight</tt> is
+	 * used internally by the API to manage the sequencing of orders when grouped. This value may be
+	 * changed by the API as needed for that purpose. Instead of setting this internal value
+	 * directly please use {@link OrderGroup#addOrder(Order, Integer)}.
+	 * 
+	 * @see OrderGroup#addOrder(Order, Integer)
+	 * @since 1.12
+	 * @param sortWeight
+	 */
+	public void setSortWeight(Double sortWeight) {
+		this.sortWeight = sortWeight;
+	}
 }

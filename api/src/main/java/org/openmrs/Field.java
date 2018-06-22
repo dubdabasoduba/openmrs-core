@@ -12,12 +12,14 @@ package org.openmrs;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
  * Field
  *
  * @version 1.0
  */
-public class Field extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class Field extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 4454L;
 	
@@ -137,15 +139,20 @@ public class Field extends BaseOpenmrsMetadata implements java.io.Serializable {
 		this.defaultValue = defaultValue;
 	}
 	
+	/**
+	 * @deprecated as of 2.0, use {@link #getSelectMultiple()}
+	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isSelectMultiple() {
-		return selectMultiple;
+		return getSelectMultiple();
 	}
 	
 	/**
 	 * @return Returns the selectMultiple.
 	 */
 	public Boolean getSelectMultiple() {
-		return isSelectMultiple();
+		return selectMultiple;
 	}
 	
 	/**
@@ -198,6 +205,7 @@ public class Field extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getFieldId();
@@ -207,6 +215,7 @@ public class Field extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setFieldId(id);
 		

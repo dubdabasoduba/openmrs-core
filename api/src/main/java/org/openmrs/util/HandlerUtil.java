@@ -145,6 +145,7 @@ public class HandlerUtil implements ApplicationListener<ContextRefreshedEvent> {
 		// Return the list of handlers based on the order specified in the Handler annotation
 		Collections.sort(handlers, new Comparator<H>() {
 			
+			@Override
 			public int compare(H o1, H o2) {
 				return getOrderOfHandler(o1.getClass()).compareTo(getOrderOfHandler(o2.getClass()));
 			}
@@ -165,10 +166,12 @@ public class HandlerUtil implements ApplicationListener<ContextRefreshedEvent> {
 	 * 
 	 * @param handlerType the class that is an annotated {@link Handler} to retrieve
 	 * @param type the class that the annotated {@link Handler} must support
-	 * @return the class of the passed hanlerType with the lowest configured order
+	 * @return the class of the passed handlerType with the lowest configured order
 	 * @should return the preferred handler for the passed handlerType and type
 	 * @should throw a APIException if no handler is found
 	 * @should throw a APIException if multiple preferred handlers are found
+	 * @should should return patient validator for patient
+	 * @should should return person validator for person
 	 */
 	public static <H, T> H getPreferredHandler(Class<H> handlerType, Class<T> type) {
 		

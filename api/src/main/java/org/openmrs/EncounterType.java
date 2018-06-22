@@ -14,7 +14,7 @@ package org.openmrs;
  * 
  * @see Encounter
  */
-public class EncounterType extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class EncounterType extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 789L;
 	
@@ -71,6 +71,7 @@ public class EncounterType extends BaseOpenmrsMetadata implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getEncounterTypeId();
 	}
@@ -79,6 +80,7 @@ public class EncounterType extends BaseOpenmrsMetadata implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setEncounterTypeId(id);
 		

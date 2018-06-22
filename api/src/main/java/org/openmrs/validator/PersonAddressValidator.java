@@ -17,9 +17,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.PersonAddress;
-import org.openmrs.api.context.Context;
 import org.openmrs.annotation.Handler;
-import org.openmrs.layout.address.*;
+import org.openmrs.api.context.Context;
+import org.openmrs.layout.address.AddressTemplate;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -37,7 +37,8 @@ public class PersonAddressValidator implements Validator {
 	/**
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
 	 */
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return PersonAddress.class.isAssignableFrom(c);
 	}
 	
@@ -55,6 +56,7 @@ public class PersonAddressValidator implements Validator {
 	 * @should pass validation if field lengths are correct
 	 * @should fail validation if field lengths are not correct
 	 */
+	@Override
 	public void validate(Object object, Errors errors) {
 		//TODO Validate other aspects of the personAddress object
 		if (log.isDebugEnabled()) {
@@ -126,6 +128,7 @@ public class PersonAddressValidator implements Validator {
 		
 		ValidateUtil.validateFieldLengths(errors, object.getClass(), "address1", "address2", "cityVillage", "stateProvince",
 		    "postalCode", "country", "latitude", "longitude", "voidReason", "countyDistrict", "address3", "address4",
-		    "address5", "address6");
+		    "address5", "address6", "address7", "address8", "address9", "address10", "address11", "address12", "address13", 
+		    "address14", "address15");
 	}
 }

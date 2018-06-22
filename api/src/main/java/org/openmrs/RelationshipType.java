@@ -9,6 +9,8 @@
  */
 package org.openmrs;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
  * Defines a type of relationship between two people in the database. <br>
  * <br>
@@ -30,7 +32,7 @@ package org.openmrs;
  * In English, we run into a tricky RelationshipType with aunts and uncles. We have chosen to define
  * them as aunt/uncle-niece/nephew.
  */
-public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class RelationshipType extends BaseOpenmrsMetadata{
 	
 	public static final long serialVersionUID = 4223L;
 	
@@ -117,8 +119,16 @@ public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Ser
 	 * adding/editing a person's relationships
 	 * 
 	 * @return the preferred status
+	 * 
+	 * @deprecated as of 2.0, use {@link #getPrefered()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isPreferred() {
+		return getPreferred();
+	}
+	
+	public Boolean getPreferred() {
 		return preferred;
 	}
 	
@@ -142,6 +152,7 @@ public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Ser
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getaIsToB() + "/" + getbIsToA();
 	}
@@ -150,6 +161,7 @@ public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Ser
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getRelationshipTypeId();
 	}
@@ -158,6 +170,7 @@ public class RelationshipType extends BaseOpenmrsMetadata implements java.io.Ser
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setRelationshipTypeId(id);
 		

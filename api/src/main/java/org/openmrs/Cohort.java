@@ -9,41 +9,35 @@
  */
 package org.openmrs;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * This class represents a list of patientIds.
  */
-@Root(strict = false)
-public class Cohort extends BaseOpenmrsData implements Serializable {
+public class Cohort extends BaseOpenmrsData  {
 	
 	public static final long serialVersionUID = 0L;
-	
-	private static final Log log = LogFactory.getLog(Cohort.class);
 	
 	private Integer cohortId;
 	
 	private String name;
 	
 	private String description;
-	
+
 	private Set<Integer> memberIds;
-	
+
+	private Collection<CohortMembership> members;
+
 	public Cohort() {
-		memberIds = new TreeSet<Integer>();
+		members = new TreeSet<CohortMembership>();
 	}
 	
 	/**
@@ -70,7 +64,7 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 		this.name = name;
 		this.description = description;
 		if (ids != null) {
-			memberIds.addAll(Arrays.asList(ids));
+			Arrays.stream(ids).forEach(id -> addMember(id));
 		}
 	}
 	
@@ -85,9 +79,7 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	public Cohort(String name, String description, Patient[] patients) {
 		this(name, description, (Integer[]) null);
 		if (patients != null) {
-			for (Patient p : patients) {
-				memberIds.add(p.getPatientId());
-			}
+			Arrays.stream(patients).forEach(p -> addMembership(new CohortMembership(p)));
 		}
 	}
 	
@@ -98,8 +90,7 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	 * @param patientsOrIds optional collection which may contain Patients, or patientIds which may
 	 *            be Integers, Strings, or anything whose toString() can be parsed to an Integer.
 	 */
-	@SuppressWarnings("unchecked")
-	public Cohort(Collection patientsOrIds) {
+	public Cohort(Collection<?> patientsOrIds) {
 		this(null, null, patientsOrIds);
 	}
 	
@@ -112,79 +103,108 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	 * @param patientsOrIds optional collection which may contain Patients, or patientIds which may
 	 *            be Integers, Strings, or anything whose toString() can be parsed to an Integer.
 	 */
-	@SuppressWarnings("unchecked")
-	public Cohort(String name, String description, Collection patientsOrIds) {
+	public Cohort(String name, String description, Collection<?> patientsOrIds) {
 		this(name, description, (Integer[]) null);
 		if (patientsOrIds != null) {
 			for (Object o : patientsOrIds) {
 				if (o instanceof Patient) {
-					memberIds.add(((Patient) o).getPatientId());
+					addMembership(new CohortMembership((Patient) o));
 				} else if (o instanceof Integer) {
-					memberIds.add((Integer) o);
-				} else {
-					memberIds.add(Integer.valueOf(o.toString()));
+					addMembership(new CohortMembership(new Patient((Integer) o)));
 				}
 			}
 		}
 	}
 	
 	/**
-	 * Convenience contructor taking in a string that is a list of comma separated patient ids This
+	 * Convenience constructor taking in a string that is a list of comma separated patient ids This
 	 * constructor does not check whether the database contains patients with the given ids, but
 	 * {@link org.openmrs.api.CohortService#saveCohort(Cohort)} will.
 	 * @param commaSeparatedIds
 	 */
 	public Cohort(String commaSeparatedIds) {
 		this();
-		for (StringTokenizer st = new StringTokenizer(commaSeparatedIds, ","); st.hasMoreTokens();) {
-			String id = st.nextToken();
-			memberIds.add(Integer.valueOf(id.trim()));
-		}
+		String[] ids = StringUtils.split(commaSeparatedIds, ',');
+		Arrays.stream(ids).forEach(id -> addMembership(Integer.valueOf(id.trim())));
 	}
 	
 	/**
 	 * @return Returns a comma-separated list of patient ids in the cohort.
 	 */
 	public String getCommaSeparatedPatientIds() {
-		StringBuilder sb = new StringBuilder();
-		for (Iterator<Integer> i = getMemberIds().iterator(); i.hasNext();) {
-			sb.append(i.next());
-			if (i.hasNext()) {
-				sb.append(",");
-			}
-		}
-		return sb.toString();
+		return StringUtils.join(getMemberIds(), ',');
+	}
+
+	public boolean contains(Integer patientId) {
+		return getMembers() != null && getMembers().stream()
+				.anyMatch(m -> m.getPatient().getPatientId().equals(patientId) && m.isMemberActive());
 	}
 	
 	public boolean contains(Patient patient) {
-		return getMemberIds() != null && getMemberIds().contains(patient.getPatientId());
+		return contains(patient.getPatientId());
 	}
-	
-	public boolean contains(Integer patientId) {
-		return getMemberIds() != null && getMemberIds().contains(patientId);
-	}
-	
+
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("Cohort id=" + getCohortId());
 		if (getName() != null) {
-			sb.append(" name=" + getName());
+			sb.append(" name=").append(getName());
 		}
-		if (getMemberIds() != null) {
-			sb.append(" size=" + getMemberIds().size());
+		if (getMembers() != null) {
+			sb.append(" size=").append(getMembers().size());
 		}
 		return sb.toString();
 	}
-	
+
 	public void addMember(Integer memberId) {
-		getMemberIds().add(memberId);
+		this.addMembership(new CohortMembership(new Patient(memberId)));
 	}
-	
+
 	public void removeMember(Integer memberId) {
-		getMemberIds().remove(memberId);
+		removeMember(new Patient(memberId));
 	}
 	
+	public void removeMember(Patient patient) {
+		List<CohortMembership> memberToRemoveList = getMembers().stream()
+				.filter(m -> m.getPatient().getPatientId().equals(patient.getPatientId())).collect(Collectors.toList());
+		memberToRemoveList.forEach(m -> m.setEndDate(new Date()));
+	}
+
+	public void addMembership(CohortMembership cohortMembership) {
+		if (!this.contains(cohortMembership.getPatient().getPatientId())) {
+			cohortMembership.setCohort(this);
+			getMembers().add(cohortMembership);
+		}
+	}
+	
+	public void addMembership(Integer patientId) {
+		addMembership(new CohortMembership(new Patient(patientId)));
+	}
+
+	public void removeMembership(CohortMembership cohortMembership) {
+		List<CohortMembership> memberToRemoveList = getMembers().stream()
+				.filter(m -> m.equals(cohortMembership) ||
+						m.getPatient().getPatientId().equals(cohortMembership.getPatient().getPatientId()))
+				.collect(Collectors.toList());
+		memberToRemoveList.forEach(m -> m.setEndDate(new Date()));
+	}
+
+	public List<CohortMembership> getMemberships(Date asOf) {
+		return getMembers().stream()
+				.filter(m -> !m.getStartDate().before(asOf)).collect(Collectors.toList());
+	}
+
+	public void purgeMemberships(List<CohortMembership> cohortMembershipList) {
+		List<CohortMembership> membersToPurge = getMembers().stream()
+				.filter(m -> cohortMembershipList.stream()
+						.anyMatch(c -> m.getPatient().getPatientId().equals(c.getPatient().getPatientId())))
+				.collect(Collectors.toList());
+		membersToPurge.forEach(m -> getMembers().remove(m));
+	}
+
+
 	public int size() {
-		return getMemberIds() == null ? 0 : getMemberIds().size();
+		return getMembers().size();
 	}
 	
 	public int getSize() {
@@ -207,10 +227,10 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	public static Cohort union(Cohort a, Cohort b) {
 		Cohort ret = new Cohort();
 		if (a != null) {
-			ret.getMemberIds().addAll(a.getMemberIds());
+			ret.getMembers().addAll(a.getMembers());
 		}
 		if (b != null) {
-			ret.getMemberIds().addAll(b.getMemberIds());
+			ret.getMembers().addAll(b.getMembers());
 		}
 		if (a != null && b != null) {
 			ret.setName("(" + a.getName() + " + " + b.getName() + ")");
@@ -229,8 +249,8 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 		Cohort ret = new Cohort();
 		ret.setName("(" + (a == null ? "NULL" : a.getName()) + " * " + (b == null ? "NULL" : b.getName()) + ")");
 		if (a != null && b != null) {
-			ret.getMemberIds().addAll(a.getMemberIds());
-			ret.getMemberIds().retainAll(b.getMemberIds());
+			ret.getMembers().addAll(a.getMembers());
+			ret.getMembers().retainAll(b.getMembers());
 		}
 		return ret;
 	}
@@ -245,61 +265,73 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	public static Cohort subtract(Cohort a, Cohort b) {
 		Cohort ret = new Cohort();
 		if (a != null) {
-			ret.getMemberIds().addAll(a.getMemberIds());
+			ret.getMembers().addAll(a.getMembers());
 			if (b != null) {
-				ret.getMemberIds().removeAll(b.getMemberIds());
+				ret.getMembers().removeAll(b.getMembers());
 				ret.setName("(" + a.getName() + " - " + b.getName() + ")");
 			}
 		}
 		return ret;
 	}
-	
+
+
 	// getters and setters
 	
-	@Attribute(required = false)
 	public Integer getCohortId() {
 		return cohortId;
 	}
 	
-	@Attribute(required = false)
 	public void setCohortId(Integer cohortId) {
 		this.cohortId = cohortId;
 	}
 	
-	@Element(required = false)
 	public String getDescription() {
 		return description;
 	}
 	
-	@Element(required = false)
 	public void setDescription(String description) {
 		this.description = description;
 	}
 	
-	@Element(required = false)
 	public String getName() {
 		return name;
 	}
 	
-	@Element(required = false)
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	@ElementList(required = true)
+
 	public Set<Integer> getMemberIds() {
+		memberIds = new TreeSet<Integer>();
+		for (CohortMembership member : getMembers()) {
+			memberIds.add(member.getPatient().getPatientId());
+		}
 		return memberIds;
 	}
-	
-	@ElementList(required = true)
+
 	public void setMemberIds(Set<Integer> memberIds) {
-		this.memberIds = memberIds;
+		this.memberIds = new TreeSet<Integer>(memberIds);
+		for (Integer id : memberIds) {
+			addMembership(new CohortMembership(new Patient(id)));
+		}
 	}
-	
+
+	public Collection<CohortMembership> getMembers() {
+		if (members == null) {
+			members = new TreeSet<CohortMembership>();
+		}
+		return members;
+	}
+
+	public void setMembers(Collection<CohortMembership> members) {
+		this.members = members;
+	}
+
 	/**
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getCohortId();
@@ -309,8 +341,9 @@ public class Cohort extends BaseOpenmrsData implements Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setCohortId(id);
-		
+
 	}
 }

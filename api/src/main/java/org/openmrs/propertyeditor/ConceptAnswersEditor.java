@@ -54,6 +54,7 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 	 * @param text list of conceptIds (not conceptAnswerIds)
 	 * @should set the sort weights with the least possible changes
 	 */
+	@Override
 	public void setAsText(String text) throws IllegalArgumentException {
 		if (StringUtils.hasText(text)) {
 			ConceptService cs = Context.getConceptService();
@@ -62,7 +63,7 @@ public class ConceptAnswersEditor extends PropertyEditorSupport {
 			//set up parameter answer Set for easier add/delete functions and removal of duplicates
 			for (String id : conceptIds) {
 				id = id.trim();
-				if (!id.equals("") && !requestConceptIds.contains(id)) { //remove whitespace, blank lines, and duplicates
+				if (!("".equals(id)) && !requestConceptIds.contains(id)) { //remove whitespace, blank lines, and duplicates
 					requestConceptIds.add(id);
 				}
 			}

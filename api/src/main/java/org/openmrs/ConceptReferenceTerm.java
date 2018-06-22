@@ -23,7 +23,7 @@ import org.hibernate.search.annotations.Field;
  *
  * @since 1.9
  */
-public class ConceptReferenceTerm extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class ConceptReferenceTerm extends BaseOpenmrsMetadata {
 	
 	private static final long serialVersionUID = 1L;
 	

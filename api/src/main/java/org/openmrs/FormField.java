@@ -11,6 +11,8 @@ package org.openmrs;
 
 import java.util.Comparator;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
  * The FormField object relates/orders the <code>fields</code> on a <code>form</code> A form can
  * have many 0 to n fields associated with it in a hierarchical manor. This FormField object governs
@@ -19,7 +21,7 @@ import java.util.Comparator;
  * @see org.openmrs.Form
  * @see org.openmrs.Field
  */
-public class FormField extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class FormField extends BaseOpenmrsMetadata implements java.io.Serializable, Comparable<FormField> {
 	
 	public static final long serialVersionUID = 3456L;
 	
@@ -188,16 +190,20 @@ public class FormField extends BaseOpenmrsMetadata implements java.io.Serializab
 	
 	/**
 	 * @return Returns the required status.
+	 * 
+	 * @deprecated as of 2.0, use {@link #getRequired()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isRequired() {
-		return required == null ? false : required;
+		return getRequired();
 	}
 	
 	/**
 	 * @return same as isRequired()
 	 */
 	public Boolean getRequired() {
-		return isRequired();
+		return required == null ? false : required;
 	}
 	
 	/**
@@ -224,6 +230,7 @@ public class FormField extends BaseOpenmrsMetadata implements java.io.Serializab
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		if (formFieldId == null) {
 			return "null";
@@ -236,6 +243,7 @@ public class FormField extends BaseOpenmrsMetadata implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getFormFieldId();
 	}
@@ -244,9 +252,16 @@ public class FormField extends BaseOpenmrsMetadata implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setFormFieldId(id);
 		
+	}
+	
+	@Override
+	public int compareTo(FormField other) {
+		DefaultComparator pnDefaultComparator = new DefaultComparator();
+		return pnDefaultComparator.compare(this, other);
 	}
 	
 	/**

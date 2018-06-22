@@ -9,6 +9,9 @@
  */
 package org.openmrs;
 
+import java.util.Date;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.openmrs.customdatatype.CustomDatatype;
 import org.openmrs.customdatatype.CustomDatatypeUtil;
 import org.openmrs.customdatatype.CustomValueDescriptor;
@@ -39,6 +42,10 @@ public class GlobalProperty extends BaseOpenmrsObject implements CustomValueDesc
 	private String preferredHandlerClassname;
 	
 	private String handlerConfig;
+	
+	private User changedBy;
+	
+	private Date dateChanged;
 	
 	/**
 	 * Default empty constructor
@@ -142,6 +149,7 @@ public class GlobalProperty extends BaseOpenmrsObject implements CustomValueDesc
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		throw new UnsupportedOperationException();
 	}
@@ -150,6 +158,7 @@ public class GlobalProperty extends BaseOpenmrsObject implements CustomValueDesc
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		throw new UnsupportedOperationException();
 	}
@@ -225,6 +234,7 @@ public class GlobalProperty extends BaseOpenmrsObject implements CustomValueDesc
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return "property: " + getProperty() + " value: " + getPropertyValue();
 	}
@@ -285,10 +295,45 @@ public class GlobalProperty extends BaseOpenmrsObject implements CustomValueDesc
 	
 	/**
 	 * @see org.openmrs.customdatatype.SingleCustomValue#isDirty()
+	 *
+	 * @deprecated as of 2.0, use {@link #getDirty()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	@Override
 	public boolean isDirty() {
+		return getDirty();
+	}
+	
+	public boolean getDirty() {
 		return dirty;
 	}
 	
+	/**
+	 * @return Returns the changedBy.
+	 */
+	public User getChangedBy() {
+		return changedBy;
+	}
+	
+	/**
+	 * @param changedBy The user that changed this object
+	 */
+	public void setChangedBy(User changedBy) {
+		this.changedBy = changedBy;
+	}
+	
+	/**
+	 * @return Returns the date this object was changed
+	 */
+	public Date getDateChanged() {
+		return dateChanged;
+	}
+	
+	/**
+	 * @param dateChanged The date this object was changed
+	 */
+	public void setDateChanged(Date dateChanged) {
+		this.dateChanged = dateChanged;
+	}
 }

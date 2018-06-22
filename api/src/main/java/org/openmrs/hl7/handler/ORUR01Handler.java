@@ -178,7 +178,6 @@ public class ORUR01Handler implements Application {
 	 * @throws HL7Exception
 	 * @should process multiple NK1 segments
 	 */
-	@SuppressWarnings("deprecation")
 	private Message processORU_R01(ORU_R01 oru) throws HL7Exception {
 		
 		// TODO: ideally, we would branch or alter our behavior based on the
@@ -673,7 +672,7 @@ public class ORUR01Handler implements Application {
 				concept = concept.hydrate(concept.getConceptId().toString());
 				obs.setConcept(concept);
 				if (concept.getDatatype().isBoolean()) {
-					obs.setValueBoolean(value.equals("1"));
+					obs.setValueBoolean("1".equals(value));
 				} else if (concept.getDatatype().isNumeric()) {
 					try {
 						obs.setValueNumeric(Double.valueOf(value));
@@ -688,7 +687,7 @@ public class ORUR01Handler implements Application {
 					        .getConceptService().getFalseConcept();
 					boolean isValidAnswer = false;
 					Collection<ConceptAnswer> conceptAnswers = concept.getAnswers();
-					if (conceptAnswers != null && conceptAnswers.size() > 0) {
+					if (conceptAnswers != null && !conceptAnswers.isEmpty()) {
 						for (ConceptAnswer conceptAnswer : conceptAnswers) {
 							if (conceptAnswer.getAnswerConcept().getId().equals(answer.getId())) {
 								obs.setValueCoded(answer);
@@ -1125,12 +1124,14 @@ public class ORUR01Handler implements Application {
 	 *
 	 * @param msh
 	 * @return
+	 * @should pass if return value is null when uuid and id is null
+	 * @should pass if return value is not null when uuid or id is not null
 	 * @throws HL7Exception
 	 */
-	private Form getForm(MSH msh) throws HL7Exception {
+	public Form getForm(MSH msh) throws HL7Exception {
 		String uuid = null;
 		String id = null;
-		
+
 		for (EI identifier : msh.getMessageProfileIdentifier()) {
 			if (identifier != null && identifier.getNamespaceID() != null) {
 				String identifierType = identifier.getNamespaceID().getValue();
@@ -1143,28 +1144,34 @@ public class ORUR01Handler implements Application {
 				}
 			}
 		}
-		
+
 		Form form = null;
-		
+
+		if (uuid == null && id == null) {
+			return form;
+		}
+
 		// prefer uuid over id
 		if (uuid != null) {
 			form = Context.getFormService().getFormByUuid(uuid);
 		}
-		
+
 		// if uuid did not work ...
-		if (form == null) {
+		if (id != null) {
+
 			try {
 				Integer formId = Integer.parseInt(id);
 				form = Context.getFormService().getForm(formId);
-			}
-			catch (NumberFormatException e) {
+			} catch (NumberFormatException e) {
 				throw new HL7Exception(Context.getMessageSourceService().getMessage("ORUR01.error.parseFormId"), e);
 			}
+
 		}
-		
+
 		return form;
+
 	}
-	
+
 	private EncounterType getEncounterType(MSH msh, Form form) {
 		if (form != null) {
 			return form.getEncounterType();

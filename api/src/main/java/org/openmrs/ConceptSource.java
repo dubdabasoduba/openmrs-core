@@ -11,16 +11,11 @@ package org.openmrs;
 
 import java.util.Date;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
-
 /**
  * A concept source is defined as any institution that keeps a concept dictionary. Examples are
  * ICD9, ICD10, SNOMED, or any other OpenMRS implementation
  */
-@Root
-public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class ConceptSource extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 375L;
 	
@@ -29,6 +24,8 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	private Integer conceptSourceId;
 	
 	private String hl7Code;
+	
+	private String uniqueId;
 	
 	// Constructors
 	
@@ -44,7 +41,6 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @return Returns the conceptSourceId.
 	 */
-	@Attribute
 	public Integer getConceptSourceId() {
 		return conceptSourceId;
 	}
@@ -52,17 +48,16 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @param conceptSourceId The conceptSourceId to set.
 	 */
-	@Attribute
 	public void setConceptSourceId(Integer conceptSourceId) {
 		this.conceptSourceId = conceptSourceId;
 	}
 	
-	@Element
+	@Override
 	public User getCreator() {
 		return super.getCreator();
 	}
 	
-	@Element
+	@Override
 	public void setCreator(User creator) {
 		super.setCreator(creator);
 	}
@@ -70,7 +65,7 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @return Returns the dateCreated.
 	 */
-	@Element
+	@Override
 	public Date getDateCreated() {
 		return super.getDateCreated();
 	}
@@ -78,17 +73,17 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @param dateCreated The dateCreated to set.
 	 */
-	@Element
+	@Override
 	public void setDateCreated(Date dateCreated) {
 		super.setDateCreated(dateCreated);
 	}
 	
-	@Element(data = true)
+	@Override
 	public String getDescription() {
 		return super.getDescription();
 	}
 	
-	@Element(data = true)
+	@Override
 	public void setDescription(String description) {
 		super.setDescription(description);
 	}
@@ -96,7 +91,6 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @return Returns the hl7Code.
 	 */
-	@Attribute
 	public String getHl7Code() {
 		return hl7Code;
 	}
@@ -104,17 +98,30 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	/**
 	 * @param hl7Code The hl7Code to set.
 	 */
-	@Attribute
 	public void setHl7Code(String hl7Code) {
 		this.hl7Code = hl7Code;
 	}
 	
-	@Element(data = true)
+	/**
+	 * @return the unique id
+	 */
+	public String getUniqueId() {
+		return uniqueId;
+	}
+	
+	/**
+	 * @param uniqueId the unique id to set
+	 */
+	public void setUniqueId(String uniqueId) {
+		this.uniqueId = uniqueId;
+	}
+	
+	@Override
 	public String getName() {
 		return super.getName();
 	}
 	
-	@Element(data = true)
+	@Override
 	public void setName(String name) {
 		super.setName(name);
 	}
@@ -123,6 +130,7 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getConceptSourceId();
 	}
@@ -131,6 +139,7 @@ public class ConceptSource extends BaseOpenmrsMetadata implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setConceptSourceId(id);
 	}

@@ -14,7 +14,11 @@ import org.openmrs.Patient;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
-import com.thoughtworks.xstream.io.xml.DomDriver;
+import com.thoughtworks.xstream.converters.MarshallingContext;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.converters.extended.DynamicProxyConverter;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 /**
  * This serializer uses the xstream library to serialize and deserialize objects.
@@ -58,11 +62,12 @@ public class SimpleXStreamSerializer implements OpenmrsSerializer {
 	public SimpleXStreamSerializer(XStream customXstream) throws SerializationException {
 		if (customXstream == null) {
 			
-			xstream = new XStream(new DomDriver());
+			xstream = new XStream();
 			
 		} else {
 			this.xstream = customXstream;
 		}
+		xstream.registerConverter(new OpenmrsDynamicProxyConverter(), XStream.PRIORITY_VERY_HIGH);
 		
 		//this is added to read the prior simpleframework-serialized values.
 		// TODO find a better way to do this.
@@ -73,7 +78,7 @@ public class SimpleXStreamSerializer implements OpenmrsSerializer {
 	/**
 	 * Expose the xstream object, so that module can config with xstream as need
 	 *
-	 * @return xstream can be configed by module
+	 * @return xstream can be configured by module
 	 */
 	public XStream getXstream() {
 		return xstream;
@@ -81,7 +86,9 @@ public class SimpleXStreamSerializer implements OpenmrsSerializer {
 	
 	/**
 	 * @see OpenmrsSerializer#serialize(java.lang.Object)
+	 * @should not serialize proxies
 	 */
+	@Override
 	public String serialize(Object o) throws SerializationException {
 		
 		return xstream.toXML(o);
@@ -89,7 +96,10 @@ public class SimpleXStreamSerializer implements OpenmrsSerializer {
 	
 	/**
 	 * @see OpenmrsSerializer#deserialize(String, Class)
+	 * @should not deserialize proxies
+	 * @should ignore entities
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends Object> T deserialize(String serializedObject, Class<? extends T> clazz) throws SerializationException {
 		
@@ -99,5 +109,30 @@ public class SimpleXStreamSerializer implements OpenmrsSerializer {
 		catch (XStreamException e) {
 			throw new SerializationException("Unable to deserialize class: " + clazz.getName(), e);
 		}
+	}
+	
+	/**
+	 * An instance of this converter needs to be registered with a higher priority than the rest so
+	 * that it's called early in the converter chain. This way, we can make sure we never get to
+	 * xstream's DynamicProxyConverter that can deserialize proxies.
+	 *
+	 * @see <a href="http://tinyurl.com/ord2rry">this blog</a>
+	 */
+	private class OpenmrsDynamicProxyConverter extends DynamicProxyConverter {
+		
+		OpenmrsDynamicProxyConverter() {
+			super(null);
+		}
+		
+		@Override
+		public void marshal(Object value, HierarchicalStreamWriter writer, MarshallingContext context) {
+			throw new XStreamException("Can't serialize proxies");
+		}
+		
+		@Override
+		public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
+			throw new XStreamException("Can't deserialize proxies");
+		}
+		
 	}
 }

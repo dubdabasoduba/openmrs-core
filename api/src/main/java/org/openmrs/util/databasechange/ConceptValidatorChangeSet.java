@@ -25,15 +25,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import liquibase.change.custom.CustomTaskChange;
-import liquibase.database.Database;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.CustomChangeException;
-import liquibase.exception.DatabaseException;
-import liquibase.exception.SetupException;
-import liquibase.exception.ValidationErrors;
-import liquibase.resource.ResourceAccessor;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.set.ListOrderedSet;
@@ -46,6 +37,15 @@ import org.openmrs.api.db.hibernate.HibernateUtil;
 import org.openmrs.util.DatabaseUpdater;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
+
+import liquibase.change.custom.CustomTaskChange;
+import liquibase.database.Database;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.CustomChangeException;
+import liquibase.exception.DatabaseException;
+import liquibase.exception.SetupException;
+import liquibase.exception.ValidationErrors;
+import liquibase.resource.ResourceAccessor;
 
 /**
  * This change set is run just after the conversion of core concept name tags to concept name types'
@@ -315,7 +315,7 @@ public class ConceptValidatorChangeSet implements CustomTaskChange {
 						        + conceptName.getName() + ") in locale '" + defaultLocale.getDisplayName()
 						        + "' has been set as the fully specified name for concept with id : " + conceptId);
 					}
-					//convert to a synonym and should not be preferred, this will avoid inconsistencies, incase
+					//convert to a synonym and should not be preferred, this will avoid inconsistencies, in case
 					//already short, fully specified and preferred names exist
 					else {
 						conceptName.setLocalePreferred(false);
@@ -686,11 +686,11 @@ public class ConceptValidatorChangeSet implements CustomTaskChange {
 				pStmt.setString(2, (conceptName.getConceptNameType() != null) ? conceptName.getConceptNameType().toString()
 				        : null);
 				pStmt.setBoolean(3, conceptName.isLocalePreferred());
-				pStmt.setBoolean(4, conceptName.isVoided());
-				pStmt.setDate(5, conceptName.isVoided() ? new Date(System.currentTimeMillis()) : null);
+				pStmt.setBoolean(4, conceptName.getVoided());
+				pStmt.setDate(5, conceptName.getVoided() ? new Date(System.currentTimeMillis()) : null);
 				pStmt.setString(6, conceptName.getVoidReason());
 				// "Not all databases allow for a non-typed Null to be sent to the backend", so we can't use setInt
-				pStmt.setObject(7, (conceptName.isVoided() && userId != null) ? userId : null, Types.INTEGER);
+				pStmt.setObject(7, (conceptName.getVoided() && userId != null) ? userId : null, Types.INTEGER);
 				pStmt.setInt(8, conceptName.getConceptNameId());
 				
 				pStmt.addBatch();

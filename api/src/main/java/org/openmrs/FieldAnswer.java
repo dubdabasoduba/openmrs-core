@@ -11,12 +11,14 @@ package org.openmrs;
 
 import java.util.Date;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
  * FieldAnswer
  * 
  * @version 1.0
  */
-public class FieldAnswer extends BaseOpenmrsObject implements java.io.Serializable {
+public class FieldAnswer extends BaseOpenmrsObject {
 	
 	public static final long serialVersionUID = 5656L;
 	
@@ -40,8 +42,19 @@ public class FieldAnswer extends BaseOpenmrsObject implements java.io.Serializab
 	
 	/**
 	 * @return boolean whether or not this fieldAnswer has been modified
+	 *
+	 * @deprecated as of 2.0, use {@link #getDirty()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public boolean isDirty() {
+		return getDirty();
+	}
+	
+	/**
+	 * @return boolean whether or not this fieldAnswer has been modified
+	 */
+	public boolean getDirty() {
 		return dirty;
 	}
 	
@@ -115,6 +128,7 @@ public class FieldAnswer extends BaseOpenmrsObject implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		throw new UnsupportedOperationException();
 	}
@@ -123,6 +137,7 @@ public class FieldAnswer extends BaseOpenmrsObject implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		throw new UnsupportedOperationException();
 	}

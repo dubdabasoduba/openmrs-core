@@ -9,8 +9,6 @@
  */
 package org.openmrs;
 
-import java.io.Serializable;
-
 /**
  * The frequency at which an Order's action should be repeated, e.g. TWICE DAILY or EVERY 6 HOURS.
  * This class is backed by a Concept for i18n, synonyms, mappings, etc, but it contains additional
@@ -18,7 +16,7 @@ import java.io.Serializable;
  * 
  * @since 1.10
  */
-public class OrderFrequency extends BaseOpenmrsMetadata implements Serializable {
+public class OrderFrequency extends BaseOpenmrsMetadata {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -60,10 +58,12 @@ public class OrderFrequency extends BaseOpenmrsMetadata implements Serializable 
 	/**
 	 * Get the uuid
 	 */
+	@Override
 	public String getUuid() {
 		return uuid;
 	}
 	
+	@Override
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
@@ -71,6 +71,7 @@ public class OrderFrequency extends BaseOpenmrsMetadata implements Serializable 
 	/**
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getOrderFrequencyId();
 	}
@@ -78,6 +79,7 @@ public class OrderFrequency extends BaseOpenmrsMetadata implements Serializable 
 	/**
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setOrderFrequencyId(id);
 	}

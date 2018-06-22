@@ -32,7 +32,8 @@ public class PersonNameValidator implements Validator {
 	/**
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
 	 */
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return PersonName.class.isAssignableFrom(c);
 	}
 	
@@ -46,6 +47,7 @@ public class PersonNameValidator implements Validator {
 	 * @should pass validation if field lengths are correct
 	 * @should fail validation if field lengths are not correct
 	 */
+	@Override
 	public void validate(Object object, Errors errors) {
 		if (log.isDebugEnabled()) {
 			log.debug(this.getClass().getName() + ".validate...");
@@ -55,8 +57,8 @@ public class PersonNameValidator implements Validator {
 			// Validate that the person name object is not null
 			if (personName == null) {
 				errors.reject("error.name");
-			} else if (!personName.isVoided()) {
-				validatePersonName(personName, errors, true, false);
+			} else if (!personName.getVoided()) {
+				validatePersonName(personName, errors, false, true);
 			}
 		}
 		catch (Exception e) {
@@ -76,9 +78,9 @@ public class PersonNameValidator implements Validator {
 	 * @should fail validation if PersonName.givenName is just spaces
 	 * @should fail validation if PersonName.givenName is spaces surrounded by quotation marks
 	 * @should pass validation if PersonName.givenName is not blank
-	 * @should fail validation if PersonName.familyName is null
-	 * @should fail validation if PersonName.familyName is empty
-	 * @should fail validation if PersonName.familyName is just spaces
+	 * @should pass validation if PersonName.familyName is null
+	 * @should pass validation if PersonName.familyName is empty
+	 * @should pass validation if PersonName.familyName is just spaces
 	 * @should fail validation if PersonName.familyName is spaces surrounded by quotation marks
 	 * @should pass validation if PersonName.familyName is not blank
 	 * @should fail validation if PersonName.prefix is too long
@@ -128,10 +130,7 @@ public class PersonNameValidator implements Validator {
 		        || StringUtils.isBlank(personName.getGivenName().replaceAll("\"", ""))) {
 			errors.rejectValue(getFieldKey("givenName", arrayInd, testInd), "Patient.names.required.given.family");
 		}
-		if (StringUtils.isBlank(personName.getFamilyName())
-		        || StringUtils.isBlank(personName.getFamilyName().replaceAll("\"", ""))) {
-			errors.rejectValue(getFieldKey("familyName", arrayInd, testInd), "Patient.names.required.given.family");
-		}
+
 		// Make sure the entered name value is sensible 
 		String namePattern = Context.getAdministrationService().getGlobalProperty(
 		    OpenmrsConstants.GLOBAL_PROPERTY_PATIENT_NAME_REGEX);

@@ -24,7 +24,6 @@ import org.openmrs.messagesource.PresentationMessage;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Extensible implementation of the MessageSourceService, which relies on injected implementations
@@ -33,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
  * ResourceBundleMessageSourceService can be specified in the applicationContext-service.xml file to
  * use the usual .properties files to provide messages.
  */
-@Transactional(readOnly = true)
 public class MessageSourceServiceImpl implements MessageSourceService {
 	
 	private Log log = LogFactory.getLog(getClass());
@@ -45,6 +43,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.openmrs.messagesource.MessageSourceService#getMessage(java.lang.String)
 	 */
+	@Override
 	public String getMessage(String s) {
 		return Context.getMessageSourceService().getMessage(s, null, Context.getLocale());
 	}
@@ -54,6 +53,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * 
 	 * @return the activeMessageSource
 	 */
+	@Override
 	public MutableMessageSource getActiveMessageSource() {
 		return activeMessageSource;
 	}
@@ -63,6 +63,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * 
 	 * @param activeMessageSource the activeMessageSourceService to set
 	 */
+	@Override
 	public void setActiveMessageSource(MutableMessageSource activeMessageSource) {
 		
 		log.debug("Setting activeMessageSource: " + activeMessageSource);
@@ -78,6 +79,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * 
 	 * @see org.openmrs.messagesource.MessageSourceService#getLocales()
 	 */
+	@Override
 	public Collection<Locale> getLocales() {
 		return activeMessageSource.getLocales();
 	}
@@ -87,6 +89,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * 
 	 * @see org.openmrs.messagesource.MessageSourceService#getPresentations()
 	 */
+	@Override
 	public Collection<PresentationMessage> getPresentations() {
 		return activeMessageSource.getPresentations();
 	}
@@ -95,14 +98,21 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * @see org.springframework.context.MessageSource#getMessage(org.springframework.context.MessageSourceResolvable,
 	 *      java.util.Locale)
 	 */
+	@Override
 	public String getMessage(MessageSourceResolvable resolvable, Locale locale) {
-		return activeMessageSource.getMessage(resolvable, locale);
+		if((resolvable.getCodes()[0]).equals((activeMessageSource.getMessage(resolvable, locale)))){
+			return (resolvable.getCodes()[(resolvable.getCodes().length) - 1]);
+		}
+		else{
+			return activeMessageSource.getMessage(resolvable, locale);
+		}
 	}
 	
 	/**
 	 * @see org.springframework.context.MessageSource#getMessage(java.lang.String,
 	 *      java.lang.Object[], java.util.Locale)
 	 */
+	@Override
 	public String getMessage(String code, Object[] args, Locale locale) throws NoSuchMessageException {
 		if (StringUtils.isBlank(code)) {
 			return StringUtils.EMPTY;
@@ -115,6 +125,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * @see org.springframework.context.MessageSource#getMessage(java.lang.String,
 	 *      java.lang.Object[], java.lang.String, java.util.Locale)
 	 */
+	@Override
 	public String getMessage(String code, Object[] args, String defaultMessage, Locale locale) {
 		if (StringUtils.isBlank(code) && StringUtils.isBlank(defaultMessage)) {
 			return StringUtils.EMPTY;
@@ -126,6 +137,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.openmrs.messagesource.MutableMessageSource#addPresentation(org.openmrs.messagesource.PresentationMessage)
 	 */
+	@Override
 	public void addPresentation(PresentationMessage message) {
 		activeMessageSource.addPresentation(message);
 	}
@@ -133,6 +145,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.openmrs.messagesource.MutableMessageSource#addPresentation(org.openmrs.messagesource.PresentationMessage)
 	 */
+	@Override
 	public void removePresentation(PresentationMessage message) {
 		activeMessageSource.removePresentation(message);
 	}
@@ -140,6 +153,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @return the availableMessageSources
 	 */
+	@Override
 	public Set<MutableMessageSource> getMessageSources() {
 		return availableMessageSources;
 	}
@@ -147,6 +161,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @param availableMessageSources the availableMessageSources to set
 	 */
+	@Override
 	public void setMessageSources(Set<MutableMessageSource> availableMessageSources) {
 		this.availableMessageSources.addAll(availableMessageSources);
 	}
@@ -156,6 +171,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * 
 	 * @see org.openmrs.messagesource.MutableMessageSource#merge(MutableMessageSource, boolean)
 	 */
+	@Override
 	public void merge(MutableMessageSource fromSource, boolean overwrite) {
 		activeMessageSource.merge(fromSource, overwrite);
 	}
@@ -164,6 +180,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	 * @see org.openmrs.messagesource.MutableMessageSource#getPresentation(java.lang.String,
 	 *      java.util.Locale)
 	 */
+	@Override
 	public PresentationMessage getPresentation(String key, Locale forLocale) {
 		return activeMessageSource.getPresentation(key, forLocale);
 	}
@@ -171,6 +188,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.openmrs.messagesource.MutableMessageSource#getPresentationsInLocale(java.util.Locale)
 	 */
+	@Override
 	public Collection<PresentationMessage> getPresentationsInLocale(Locale locale) {
 		return activeMessageSource.getPresentationsInLocale(locale);
 	}
@@ -178,6 +196,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.springframework.context.HierarchicalMessageSource#getParentMessageSource()
 	 */
+	@Override
 	public MessageSource getParentMessageSource() {
 		return activeMessageSource.getParentMessageSource();
 	}
@@ -185,6 +204,7 @@ public class MessageSourceServiceImpl implements MessageSourceService {
 	/**
 	 * @see org.springframework.context.HierarchicalMessageSource#setParentMessageSource(org.springframework.context.MessageSource)
 	 */
+	@Override
 	public void setParentMessageSource(MessageSource parent) {
 		activeMessageSource.setParentMessageSource(parent);
 	}

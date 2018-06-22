@@ -16,7 +16,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.BaseOpenmrsMetadata;
-import org.openmrs.User;
 
 /**
  * Represents the metadata for a task that can be scheduled.
@@ -79,6 +78,7 @@ public class TaskDefinition extends BaseOpenmrsMetadata {
 	 * 
 	 * @return <code>Integer</code> identifier of the task
 	 */
+	@Override
 	public Integer getId() {
 		return this.id;
 	}
@@ -88,6 +88,7 @@ public class TaskDefinition extends BaseOpenmrsMetadata {
 	 * 
 	 * @param id
 	 */
+	@Override
 	public void setId(Integer id) {
 		this.id = id;
 	}

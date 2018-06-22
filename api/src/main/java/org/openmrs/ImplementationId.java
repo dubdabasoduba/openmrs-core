@@ -9,16 +9,11 @@
  */
 package org.openmrs;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
-
 /**
  * Every installation of OpenMRS should get a unique implementation id. If multiple sites use the
  * same dictionary/form setup, than those sites should share the same implementation id. The
  * ImplementationId is stored and verified on the openmrs servers.
  */
-@Root
 public class ImplementationId implements java.io.Serializable {
 	
 	public static final long serialVersionUID = 3752234110L;
@@ -36,6 +31,7 @@ public class ImplementationId implements java.io.Serializable {
 	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof ImplementationId) {
 			ImplementationId other = (ImplementationId) o;
@@ -52,6 +48,7 @@ public class ImplementationId implements java.io.Serializable {
 	/**
 	 * @see java.lang.Object#hashCode()
 	 */
+	@Override
 	public int hashCode() {
 		if (getImplementationId() != null) {
 			return getImplementationId().hashCode() * 342 + 3;
@@ -66,7 +63,6 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @return Returns the description.
 	 */
-	@Element(data = true)
 	public String getDescription() {
 		return description;
 	}
@@ -77,7 +73,6 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @param description The description to set.
 	 */
-	@Element(data = true)
 	public void setDescription(String description) {
 		this.description = description;
 	}
@@ -92,7 +87,6 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @return the implementationId
 	 */
-	@Attribute
 	public String getImplementationId() {
 		return implementationId;
 	}
@@ -107,33 +101,30 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @param implementationId the implementationId to set
 	 */
-	@Attribute
 	public void setImplementationId(String implementationId) {
 		this.implementationId = implementationId;
 	}
 	
 	/**
 	 * This text is a long text string that is used to validate who uses an implementation id.
-	 * Multiple installations of openmrs can use the same implmentation id, but they must all know
+	 * Multiple installations of openmrs can use the same implementation id, but they must all know
 	 * the passphrase. (Note that if an implementation id is shared, it is assumed that those
 	 * installations are the same implementation).
 	 *
 	 * @return the passphrase
 	 */
-	@Element(data = true, required = false)
 	public String getPassphrase() {
 		return passphrase;
 	}
 	
 	/**
 	 * This text is a long text string that is used to validate who uses an implementation id.
-	 * Multiple installations of openmrs can use the same implmentation id, but they must all know
+	 * Multiple installations of openmrs can use the same implementation id, but they must all know
 	 * the passphrase. (Note that if an implementation id is shared, it is assumed that those
 	 * installations are the same implementation).
 	 *
 	 * @param passphrase the passphrase to set
 	 */
-	@Element(data = true, required = false)
 	public void setPassphrase(String passphrase) {
 		this.passphrase = passphrase;
 	}
@@ -143,7 +134,6 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @return Returns the name.
 	 */
-	@Element(data = true)
 	public String getName() {
 		return name;
 	}
@@ -153,11 +143,11 @@ public class ImplementationId implements java.io.Serializable {
 	 *
 	 * @param name The concept source name to set.
 	 */
-	@Element(data = true)
 	public void setName(String name) {
 		this.name = name;
 	}
 	
+	@Override
 	public String toString() {
 		return "Impl Id: " + getImplementationId() + " name: " + getName() + " desc: " + getDescription();
 	}

@@ -10,7 +10,6 @@
 package org.openmrs.util;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -56,6 +55,7 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -66,6 +66,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -124,7 +125,7 @@ public class OpenmrsUtil {
 	private static Map<Locale, SimpleDateFormat> dateFormatCache = new HashMap<Locale, SimpleDateFormat>();
 	
 	private static Map<Locale, SimpleDateFormat> timeFormatCache = new HashMap<Locale, SimpleDateFormat>();
-		
+
 	/**
 	 * Compares origList to newList returning map of differences
 	 * 
@@ -218,7 +219,7 @@ public class OpenmrsUtil {
 	 * @throws IOException
 	 */
 	public static String getFileAsString(File file) throws IOException {
-		StringBuffer fileData = new StringBuffer(1000);
+		StringBuilder fileData = new StringBuilder(1000);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		char[] buf = new char[1024];
 		int numRead = 0;
@@ -270,47 +271,25 @@ public class OpenmrsUtil {
 	 * @param inputStream Stream to copy from
 	 * @param outputStream Stream/location to copy to
 	 * @throws IOException thrown if an error occurs during read/write
+	 * @should not copy the outputstream if outputstream is null
+	 * @should not copy the outputstream if inputstream is null
+	 * @should copy inputstream to outputstream and close the outputstream
 	 */
 	public static void copyFile(InputStream inputStream, OutputStream outputStream) throws IOException {
+
 		if (inputStream == null || outputStream == null) {
 			if (outputStream != null) {
-				try {
-					outputStream.close();
-				}
-				catch (Exception e) { /* pass */
-				}
+				IOUtils.closeQuietly(outputStream);
 			}
-			
 			return;
 		}
-		
-		InputStream in = null;
-		OutputStream out = null;
+
 		try {
-			in = new BufferedInputStream(inputStream);
-			out = new BufferedOutputStream(outputStream);
-			while (true) {
-				int data = in.read();
-				if (data == -1) {
-					break;
-				}
-				out.write(data);
-			}
+			IOUtils.copy(inputStream, outputStream);
+		} finally {
+			IOUtils.closeQuietly(outputStream);
 		}
-		finally {
-			if (in != null) {
-				in.close();
-			}
-			if (out != null) {
-				out.close();
-			}
-			try {
-				outputStream.close();
-			}
-			catch (Exception e) { /* pass */
-			}
-		}
-		
+
 	}
 	
 	/**
@@ -617,15 +596,14 @@ public class OpenmrsUtil {
 		}
 		return ret;
 	}
-	
+
 	public static <Arg1, Arg2 extends Arg1> boolean nullSafeEquals(Arg1 d1, Arg2 d2) {
 		if (d1 == null) {
 			return d2 == null;
 		} else if (d2 == null) {
 			return false;
-		} else {
-			return d1.equals(d2);
 		}
+		return (d1 instanceof Date && d2 instanceof Date) ? compare((Date) d1, (Date) d2) == 0 : d1.equals(d2);
 	}
 	
 	/**
@@ -1038,43 +1016,35 @@ public class OpenmrsUtil {
 	 */
 	public static String getApplicationDataDirectory() {
 		String filepath = null;
+		final String openmrsDir = "OpenMRS";
 		
-		String systemProperty = System.getProperty("OPENMRS_APPLICATION_DATA_DIRECTORY");
+		String systemProperty = System.getProperty(OpenmrsConstants.KEY_OPENMRS_APPLICATION_DATA_DIRECTORY);
 		//System and runtime property take precedence
-		if (systemProperty != null) {
+		if (StringUtils.isNotBlank(systemProperty)) {
 			filepath = systemProperty;
 		} else {
 			String runtimeProperty = Context.getRuntimeProperties().getProperty(
 			    OpenmrsConstants.APPLICATION_DATA_DIRECTORY_RUNTIME_PROPERTY, null);
-			if (runtimeProperty != null) {
+			if (StringUtils.isNotBlank(runtimeProperty)) {
 				filepath = runtimeProperty;
 			}
 		}
 		
 		if (filepath == null) {
 			if (OpenmrsConstants.UNIX_BASED_OPERATING_SYSTEM) {
-				filepath = System.getProperty("user.home") + File.separator + ".OpenMRS";
+				filepath = System.getProperty("user.home") + File.separator + "." + openmrsDir;
 				if (!canWrite(new File(filepath))) {
 					log.warn("Unable to write to users home dir, fallback to: "
 					        + OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX);
-					filepath = OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX + File.separator + "OpenMRS";
+					filepath = OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX + File.separator + openmrsDir;
 				}
 			} else {
-				if (OpenmrsConstants.UNIX_BASED_OPERATING_SYSTEM) {
-					filepath = System.getProperty("user.home") + File.separator + ".OpenMRS";
-					if (!canWrite(new File(filepath))) {
-						log.warn("Unable to write to users home dir, fallback to: "
-						        + OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX);
-						filepath = OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_UNIX + File.separator + "OpenMRS";
-					}
-				} else {
-					filepath = System.getProperty("user.home") + File.separator + "Application Data" + File.separator
-					        + "OpenMRS";
-					if (!canWrite(new File(filepath))) {
-						log.warn("Unable to write to users home dir, fallback to: "
-						        + OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_WIN);
-						filepath = OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_WIN + File.separator + "OpenMRS";
-					}
+				filepath = System.getProperty("user.home") + File.separator + "Application Data" + File.separator
+						+ "OpenMRS";
+				if (!canWrite(new File(filepath))) {
+					log.warn("Unable to write to users home dir, fallback to: "
+							+ OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_WIN);
+					filepath = OpenmrsConstants.APPLICATION_DATA_DIRECTORY_FALLBACK_WIN + File.separator + openmrsDir;
 				}
 			}
 			
@@ -1098,7 +1068,12 @@ public class OpenmrsUtil {
 	 * @since 1.11
 	 */
 	public static void setApplicationDataDirectory(String path) {
-		System.setProperty("OPENMRS_APPLICATION_DATA_DIRECTORY", path);
+		if (StringUtils.isBlank(path)) {
+			System.clearProperty(OpenmrsConstants.KEY_OPENMRS_APPLICATION_DATA_DIRECTORY);
+		}
+		else {
+			System.setProperty(OpenmrsConstants.KEY_OPENMRS_APPLICATION_DATA_DIRECTORY, path);
+		}
 	}
 	
 	/**
@@ -1568,7 +1543,7 @@ public class OpenmrsUtil {
 		Random gen = new Random();
 		File outFile;
 		do {
-			// format to print date in filenmae
+			// format to print date in filename
 			DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd-HHmm-ssSSS");
 			
 			// use current date if none provided
@@ -1609,7 +1584,7 @@ public class OpenmrsUtil {
 	 */
 	public static String generateUid(Integer size) {
 		Random gen = new Random();
-		StringBuffer sb = new StringBuffer(size);
+		StringBuilder sb = new StringBuilder(size);
 		for (int i = 0; i < size; i++) {
 			int ch = gen.nextInt() * 62;
 			if (ch < 10) {
@@ -2215,4 +2190,14 @@ public class OpenmrsUtil {
 		return (c1.get(Calendar.ERA) == c2.get(Calendar.ERA) && c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) && c1
 		        .get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR));
 	}
+
+	/**
+	 * Get declared field names of a class
+	 * @param clazz
+	 * @return
+	 */
+	public static Set<String> getDeclaredFields(Class<?> clazz) {
+		return Arrays.asList(clazz.getDeclaredFields()).stream().map(f -> f.getName()).collect(Collectors.toSet());
+	}
+	
 }

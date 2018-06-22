@@ -12,14 +12,9 @@ package org.openmrs;
 import java.util.Date;
 import java.util.Locale;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
-
 /**
  * ConceptDescription is the localized description of a concept.
  */
-@Root
 public class ConceptDescription extends BaseOpenmrsObject implements Auditable, java.io.Serializable {
 	
 	private static final long serialVersionUID = -7223075113369136584L;
@@ -70,7 +65,6 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @return Returns the conceptDescriptionId.
 	 */
-	@Attribute
 	public Integer getConceptDescriptionId() {
 		return conceptDescriptionId;
 	}
@@ -78,48 +72,32 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @param conceptDescriptionId The conceptId to set.
 	 */
-	@Attribute
 	public void setConceptDescriptionId(Integer conceptDescriptionId) {
 		this.conceptDescriptionId = conceptDescriptionId;
 	}
 	
 	// Property accessors
 	
-	/**
-	 * 
-	 */
-	@Element
 	public Concept getConcept() {
 		return concept;
 	}
 	
-	@Element
 	public void setConcept(Concept concept) {
 		this.concept = concept;
 	}
 	
-	/**
-	 * 
-	 */
-	@Element(data = true)
 	public String getDescription() {
 		return description;
 	}
 	
-	@Element(data = true)
 	public void setDescription(String description) {
 		this.description = description;
 	}
 	
-	/**
-	 * 
-	 */
-	@Attribute
 	public Locale getLocale() {
 		return locale;
 	}
 	
-	@Attribute
 	public void setLocale(Locale locale) {
 		this.locale = locale;
 	}
@@ -127,7 +105,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @return Returns the creator.
 	 */
-	@Element
+	@Override
 	public User getCreator() {
 		return creator;
 	}
@@ -135,7 +113,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @param creator The creator to set.
 	 */
-	@Element
+	@Override
 	public void setCreator(User creator) {
 		this.creator = creator;
 	}
@@ -143,7 +121,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @return Returns the dateCreated.
 	 */
-	@Element
+	@Override
 	public Date getDateCreated() {
 		return dateCreated;
 	}
@@ -151,7 +129,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @param dateCreated The dateCreated to set.
 	 */
-	@Element
+	@Override
 	public void setDateCreated(Date dateCreated) {
 		this.dateCreated = dateCreated;
 	}
@@ -159,7 +137,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @return Returns the User who last changed the description.
 	 */
-	@Element(required = false)
+	@Override
 	public User getChangedBy() {
 		return changedBy;
 	}
@@ -167,7 +145,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @param changedBy The user who changed this description
 	 */
-	@Element(required = false)
+	@Override
 	public void setChangedBy(User changedBy) {
 		this.changedBy = changedBy;
 	}
@@ -175,7 +153,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @return Returns the date the description was last changed.
 	 */
-	@Element(required = false)
+	@Override
 	public Date getDateChanged() {
 		return dateChanged;
 	}
@@ -185,7 +163,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	 * 
 	 * @param dateChanged the data the description was changed.
 	 */
-	@Element(required = false)
+	@Override
 	public void setDateChanged(Date dateChanged) {
 		this.dateChanged = dateChanged;
 	}
@@ -193,6 +171,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return this.description;
 	}
@@ -201,6 +180,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getConceptDescriptionId();
 	}
@@ -209,6 +189,7 @@ public class ConceptDescription extends BaseOpenmrsObject implements Auditable, 
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setConceptDescriptionId(id);
 	}

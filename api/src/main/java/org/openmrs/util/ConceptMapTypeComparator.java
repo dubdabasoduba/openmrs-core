@@ -9,9 +9,9 @@
  */
 package org.openmrs.util;
 
-import org.openmrs.ConceptMapType;
-
 import java.util.Comparator;
+
+import org.openmrs.ConceptMapType;
 
 /**
  * A utility class which sorts a collection of ConceptMapType objects in the following order:
@@ -47,6 +47,6 @@ public class ConceptMapTypeComparator implements Comparator<ConceptMapType> {
 	 * </ol>
 	 */
 	public static int getConceptMapTypeSortWeight(ConceptMapType conceptMapType) {
-		return ((conceptMapType.isRetired() ? 1 : 0) + (conceptMapType.isHidden() ? 2 : 0));
+		return ((conceptMapType.getRetired() ? 1 : 0) + (conceptMapType.isHidden() ? 2 : 0));
 	}
 }

@@ -16,15 +16,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.openmrs.BaseOpenmrsData;
-import org.openmrs.Concept;
-import org.openmrs.Patient;
 import org.openmrs.util.OpenmrsUtil;
 
 /**
  * Represent allergy
  */
-public class Allergy extends BaseOpenmrsData implements java.io.Serializable {
+public class Allergy extends BaseOpenmrsData {
 	
 	public static final long serialVersionUID = 1;
 	
@@ -320,7 +317,7 @@ public class Allergy extends BaseOpenmrsData implements java.io.Serializable {
 	 * Copies all property values, apart from the id and uuid,
 	 * from the given allergy into this object
 	 * 
-	 * @param allergy the allergy whose propery values to copy
+	 * @param allergy the allergy whose property values to copy
 	 * @throws InvocationTargetException
 	 * @throws IllegalAccessException
 	 */

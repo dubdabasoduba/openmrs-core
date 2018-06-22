@@ -17,12 +17,17 @@ import java.util.Date;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.search.annotations.Analyzer;
+import org.hibernate.search.annotations.Boost;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.IndexedEmbedded;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.db.hibernate.search.LuceneAnalyzers;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsUtil;
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
 
 /**
  * A PersonAttribute is meant as way for implementations to add arbitrary information about a
@@ -35,7 +40,7 @@ import org.simpleframework.xml.Root;
  * @see org.openmrs.PersonAttributeType
  * @see org.openmrs.Attributable
  */
-@Root(strict = false)
+@Indexed
 public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializable, Comparable<PersonAttribute> {
 	
 	public static final long serialVersionUID = 11231211232111L;
@@ -43,13 +48,21 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	private static final Log log = LogFactory.getLog(PersonAttribute.class);
 	
 	// Fields
-	
+	@DocumentId
 	private Integer personAttributeId;
-	
+
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	private Person person;
-	
+
+	@IndexedEmbedded
 	private PersonAttributeType attributeType;
-	
+
+	@Fields({
+			@Field(name = "valuePhrase", analyzer = @Analyzer(definition = LuceneAnalyzers.PHRASE_ANALYZER), boost = @Boost(8f)),
+			@Field(name = "valueExact", analyzer = @Analyzer(definition = LuceneAnalyzers.EXACT_ANALYZER), boost = @Boost(4f)),
+			@Field(name = "valueStart", analyzer = @Analyzer(definition = LuceneAnalyzers.START_ANALYZER), boost = @Boost(2f)),
+			@Field(name = "valueAnywhere", analyzer = @Analyzer(definition = LuceneAnalyzers.ANYWHERE_ANALYZER))
+	})
 	private String value;
 	
 	/** default constructor */
@@ -96,7 +109,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 		target.setChangedBy(getChangedBy());
 		target.setDateChanged(getDateChanged());
 		target.setVoidedBy(getVoidedBy());
-		target.setVoided(isVoided());
+		target.setVoided(getVoided());
 		target.setDateVoided(getDateVoided());
 		target.setVoidReason(getVoidReason());
 		return target;
@@ -154,7 +167,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @return Returns the person.
 	 */
-	@Element(required = true)
 	public Person getPerson() {
 		return person;
 	}
@@ -162,7 +174,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @param person The person to set.
 	 */
-	@Element(required = true)
 	public void setPerson(Person person) {
 		this.person = person;
 	}
@@ -170,7 +181,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @return the attributeType
 	 */
-	@Element(required = true)
 	public PersonAttributeType getAttributeType() {
 		return attributeType;
 	}
@@ -178,7 +188,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @param attributeType the attributeType to set
 	 */
-	@Element(required = true)
 	public void setAttributeType(PersonAttributeType attributeType) {
 		this.attributeType = attributeType;
 	}
@@ -186,7 +195,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @return the value
 	 */
-	@Element(data = true, required = false)
 	public String getValue() {
 		return value;
 	}
@@ -194,7 +202,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @param value the value to set
 	 */
-	@Element(data = true, required = false)
 	public void setValue(String value) {
 		this.value = value;
 	}
@@ -203,7 +210,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	 * @see java.lang.Object#toString()
 	 * @should return toString of hydrated value
 	 */
-	@SuppressWarnings("unchecked")
+	@Override
 	public String toString() {
 		Object o = getHydratedObject();
 		if (o instanceof Attributable) {
@@ -218,7 +225,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @return the personAttributeId
 	 */
-	@Attribute(required = true)
 	public Integer getPersonAttributeId() {
 		return personAttributeId;
 	}
@@ -226,7 +232,6 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	/**
 	 * @param personAttributeId the personAttributeId to set
 	 */
-	@Attribute(required = true)
 	public void setPersonAttributeId(Integer personAttributeId) {
 		this.personAttributeId = personAttributeId;
 	}
@@ -299,6 +304,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	 * @should not throw exception if attribute type is null
 	 * Note: this comparator imposes orderings that are inconsistent with equals
 	 */
+	@Override
 	public int compareTo(PersonAttribute other) {
 		DefaultComparator paDComparator = new DefaultComparator();
 		return paDComparator.compare(this, other);
@@ -308,6 +314,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getPersonAttributeId();
@@ -317,6 +324,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setPersonAttributeId(id);
 		
@@ -335,7 +343,7 @@ public class PersonAttribute extends BaseOpenmrsData implements java.io.Serializ
 				return retValue;
 			}
 			
-			if ((retValue = pa1.isVoided().compareTo(pa2.isVoided())) != 0) {
+			if ((retValue = pa1.getVoided().compareTo(pa2.getVoided())) != 0) {
 				return retValue;
 			}
 			

@@ -12,7 +12,7 @@ package org.openmrs;
 /**
  * FieldType
  */
-public class FieldType extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class FieldType extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 35467L;
 	
@@ -67,6 +67,7 @@ public class FieldType extends BaseOpenmrsMetadata implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getFieldTypeId();
@@ -76,6 +77,7 @@ public class FieldType extends BaseOpenmrsMetadata implements java.io.Serializab
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setFieldTypeId(id);
 		

@@ -102,6 +102,7 @@ public class ADTA28Handler implements Application {
 	 *
 	 * @return true
 	 */
+	@Override
 	public boolean canProcess(Message message) {
 		return message != null && "ADT_A28".equals(message.getName());
 	}
@@ -109,6 +110,7 @@ public class ADTA28Handler implements Application {
 	/**
 	 * Processes an ADT A28 event message
 	 */
+	@Override
 	public Message processMessage(Message message) throws ApplicationException {
 		
 		log.debug("Processing ADT_A28 message");
@@ -167,7 +169,6 @@ public class ADTA28Handler implements Application {
 			Context.getPatientService().savePatient(patient);
 			
 		} else {
-			// TODO: Add a global property that enables different behavior here.
 			log.info("Ignoring ADT_A28 message because patient (" + patientId + ") already exists.");
 		}
 		
@@ -255,7 +256,7 @@ public class ADTA28Handler implements Application {
 				continue;
 			}
 		}
-		if (goodIdentifiers.size() == 0) {
+		if (goodIdentifiers.isEmpty()) {
 			throw new HL7Exception("PID segment has no recognizable patient identifiers.");
 		}
 		patient.addIdentifiers(goodIdentifiers);

@@ -27,12 +27,14 @@
 			column="uuid" length="38" unique="true" />
 
 		<property name="name" type="java.lang.String"
-			column="name" length="50" />
+			column="name" length="50" not-null="true" />
 		<property name="description" type="java.lang.String"
-			column="description" length="1024" />
+			column="description" length="1024" not-null="true" />
 		<property name="hl7Code" type="java.lang.String"
 			column="hl7_code" length="50" />
-			
+		<property name="uniqueId" type="java.lang.String"
+				  column="unique_id" length="250" unique="true" />
+
 		<property name="dateCreated" type="java.util.Date"
 			column="date_created" not-null="true" length="19" />
 		<property name="retired" type="boolean" column="retired" not-null="true"/>
@@ -51,6 +53,9 @@
 		<many-to-one name="retiredBy" class="org.openmrs.User"
 			column="retired_by" />
 
+		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by"/>
+		<property name="dateChanged" type="java.util.Date"
+				  column="date_changed" length="19"/>
 	</class>
 
 </hibernate-mapping>

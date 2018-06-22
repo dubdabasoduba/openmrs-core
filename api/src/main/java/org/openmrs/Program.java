@@ -14,14 +14,11 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.openmrs.annotation.AllowDirectAccess;
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Root;
 
 /**
  * Program
  */
-@Root
-public class Program extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class Program extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 3214567L;
 	
@@ -117,6 +114,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	}
 	
 	/** @see Object#toString() */
+	@Override
 	public String toString() {
 		return "Program(id=" + getProgramId() + ", concept=" + getConcept() + ", workflows=" + getWorkflows() + ")";
 	}
@@ -141,12 +139,10 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 		this.outcomesConcept = concept;
 	}
 	
-	@Attribute(required = true)
 	public Integer getProgramId() {
 		return programId;
 	}
 	
-	@Attribute(required = true)
 	public void setProgramId(Integer programId) {
 		this.programId = programId;
 	}
@@ -159,7 +155,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	public Set<ProgramWorkflow> getWorkflows() {
 		Set<ProgramWorkflow> ret = new HashSet<ProgramWorkflow>();
 		for (ProgramWorkflow workflow : getAllWorkflows()) {
-			if (!workflow.isRetired()) {
+			if (!workflow.getRetired()) {
 				ret.add(workflow);
 			}
 		}
@@ -196,13 +192,14 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	}
 	
 	public void setAllWorkflows(Set<ProgramWorkflow> allWorkflows) {
-		this.allWorkflows = allWorkflows;
+		this.allWorkflows = new HashSet<ProgramWorkflow>(allWorkflows);
 	}
 	
 	/**
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getProgramId();
@@ -212,6 +209,7 @@ public class Program extends BaseOpenmrsMetadata implements java.io.Serializable
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setProgramId(id);
 		

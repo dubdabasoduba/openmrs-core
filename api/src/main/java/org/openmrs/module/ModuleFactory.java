@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.activation.Activator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -118,6 +119,11 @@ public class ModuleFactory {
 	 * 
 	 * @param module
 	 * @param replaceIfExists unload a module that has the same moduleId if one is loaded already
+	 * @should load module if it is currently not loaded
+	 * @should not load module if already loaded
+	 * @should always load module if replacement is wanted
+	 * @should not load an older version of the same module
+	 * @should load a newer version of the same module
 	 * @return module the module that was loaded or if the module exists already with the same
 	 *         version, the old module
 	 */
@@ -175,19 +181,25 @@ public class ModuleFactory {
 	 * Attempt to load the given files as OpenMRS modules
 	 * 
 	 * @param modulesToLoad the list of files to try and load
+	 * @should not crash when file is not found or broken
+	 * @should setup requirement mappings for every module
+	 * @should not start the loaded modules
 	 */
 	public static void loadModules(List<File> modulesToLoad) {
 		// loop over the modules and load all the modules that we can
 		for (File f : modulesToLoad) {
-			// ignore .svn folder and the like
-			if (!f.getName().startsWith(".")) {
-				try {
-					Module mod = loadModule(f, true); // last module loaded wins
-					log.debug("Loaded module: " + mod + " successfully");
+			if (f.exists()) {
+				// ignore .svn folder and the like
+				if (!f.getName().startsWith(".")) {
+					try {
+						Module mod = loadModule(f, true); // last module loaded wins
+						log.debug("Loaded module: " + mod + " successfully");
+					} catch (Exception e) {
+						log.debug("Unable to load file in module directory: " + f + ". Skipping file.", e);
+					}
 				}
-				catch (Exception e) {
-					log.debug("Unable to load file in module directory: " + f + ". Skipping file.", e);
-				}
+			} else {
+				log.debug("Could not find file in module directory: " + f);
 			}
 		}
 		
@@ -216,49 +228,48 @@ public class ModuleFactory {
 	public static void startModules() {
 		
 		// loop over and try starting each of the loaded modules
-		if (getLoadedModules().size() > 0) {
+		if (!getLoadedModules().isEmpty()) {
+			
+			List<Module> modules = getModulesThatShouldStart();
 			
 			try {
-				List<Module> modules = getModulesThatShouldStart();
-				
 				modules = getModulesInStartupOrder(modules);
-				
-				// try and start the modules that should be started
-				for (Module mod : modules) {
-					
-					if (mod.isStarted()) {
-						continue; // skip over modules that are already started
-					}
-					
-					// Skip module if required ones are not started
-					if (!requiredModulesStarted(mod)) {
-						String message = getFailedToStartModuleMessage(mod);
-						log.error(message);
-						mod.setStartupErrorMessage(message);
-						notifySuperUsersAboutModuleFailure(mod);
-						continue;
-					}
-					
-					try {
-						if (log.isDebugEnabled()) {
-							log.debug("starting module: " + mod.getModuleId());
-						}
-						startModule(mod);
-					}
-					catch (Exception e) {
-						log.error("Error while starting module: " + mod.getName(), e);
-						mod.setStartupErrorMessage("Error while starting module", e);
-						notifySuperUsersAboutModuleFailure(mod);
-					}
-				}
-				
 			}
-			catch (CycleException e) {
-				String message = getCyclicDependenciesMessage();
-				log.error(message);
-				notifySuperUsersAboutCyclicDependencies();
+			catch (CycleException ex) {
+				String message = getCyclicDependenciesMessage(ex.getMessage());
+				log.error(message, ex);
+				notifySuperUsersAboutCyclicDependencies(ex);
+				modules = (List<Module>)ex.getExtraData();
 			}
 			
+			// try and start the modules that should be started
+			for (Module mod : modules) {
+				
+				if (mod.isStarted()) {
+					continue; // skip over modules that are already started
+				}
+				
+				// Skip module if required ones are not started
+				if (!requiredModulesStarted(mod)) {
+					String message = getFailedToStartModuleMessage(mod);
+					log.error(message);
+					mod.setStartupErrorMessage(message);
+					notifySuperUsersAboutModuleFailure(mod);
+					continue;
+				}
+				
+				try {
+					if (log.isDebugEnabled()) {
+						log.debug("starting module: " + mod.getModuleId());
+					}
+					startModule(mod);
+				}
+				catch (Exception e) {
+					log.error("Error while starting module: " + mod.getName(), e);
+					mod.setStartupErrorMessage("Error while starting module", e);
+					notifySuperUsersAboutModuleFailure(mod);
+				}
+			}		
 		}
 	}
 	
@@ -282,7 +293,7 @@ public class ModuleFactory {
 			
 			// if a 'moduleid.started' property doesn't exist, start the module anyway
 			// as this is probably the first time they are loading it
-			if (startedProp == null || startedProp.equals("true") || "true".equalsIgnoreCase(mandatoryProp)
+			if (startedProp == null || "true".equals(startedProp) || "true".equalsIgnoreCase(mandatoryProp)
 			        || mod.isMandatory() || isCoreToOpenmrs) {
 				modules.add(mod);
 			}
@@ -362,10 +373,10 @@ public class ModuleFactory {
 	/**
 	 * Send an Alert to all super users that modules did not start due to cyclic dependencies
 	 */
-	private static void notifySuperUsersAboutCyclicDependencies() {
+	private static void notifySuperUsersAboutCyclicDependencies(Exception ex) {
 		try {
 			Context.addProxyPrivilege(PrivilegeConstants.MANAGE_ALERTS);
-			Context.getAlertService().notifySuperUsers("Module.error.cyclicDependencies", null);
+			Context.getAlertService().notifySuperUsers("Module.error.cyclicDependencies", ex, ex.getMessage());
 		}
 		catch (Exception e) {
 			log.error("Unable to send an alert to the super users", e);
@@ -574,7 +585,7 @@ public class ModuleFactory {
 	 * @see Daemon#startModule(Module)
 	 */
 	public static Module startModule(Module module) throws ModuleException {
-		return Daemon.startModule(module);
+		return startModule(module, false, null);
 	}
 	
 	/**
@@ -593,6 +604,34 @@ public class ModuleFactory {
 	 */
 	public static Module startModule(Module module, boolean isOpenmrsStartup,
 	        AbstractRefreshableApplicationContext applicationContext) throws ModuleException {
+		
+		if (!requiredModulesStarted(module)) {
+			int missingModules = 0;
+			
+			for (String packageName : module.getRequiredModulesMap().keySet()) {
+				Module mod = getModuleByPackage(packageName);
+				
+				// mod not installed
+				if (mod == null) {
+					missingModules++;
+					continue;
+				}
+				
+				if (!mod.isStarted()) {
+					startModule(mod);
+				}
+			}
+			
+			if (missingModules > 0) {
+				String message = getFailedToStartModuleMessage(module);
+				log.error(message);
+				module.setStartupErrorMessage(message);
+				notifySuperUsersAboutModuleFailure(module);
+				// instead of return null, i realized that Daemon.startModule() always returns a Module
+				// object,irrespective of whether the startup succeeded
+				return module;   
+			}
+		}
 		return Daemon.startModule(module, isOpenmrsStartup, applicationContext);
 	}
 	
@@ -631,9 +670,10 @@ public class ModuleFactory {
 	public static Module startModuleInternal(Module module, boolean isOpenmrsStartup,
 	        AbstractRefreshableApplicationContext applicationContext) throws ModuleException {
 		
+		
 		if (module != null) {
-			
 			String moduleId = module.getModuleId();
+			
 			try {
 				
 				// check to be sure this module can run with our current version
@@ -756,7 +796,7 @@ public class ModuleFactory {
 				// make sure they are added to the database
 				// (Unfortunately, placing the call here will duplicate work
 				// done at initial app startup)
-				if (module.getPrivileges().size() > 0 || module.getGlobalProperties().size() > 0) {
+				if (!module.getPrivileges().isEmpty() || !module.getGlobalProperties().isEmpty()) {
 					log.debug("Updating core dataset");
 					Context.checkCoreDataset();
 					// checkCoreDataset() currently doesn't throw an error. If
@@ -789,7 +829,6 @@ public class ModuleFactory {
 				log.warn("Error while trying to start module: " + moduleId, e);
 				module.setStartupErrorMessage("Error while trying to start module", e);
 				notifySuperUsersAboutModuleFailure(module);
-				
 				// undo all of the actions in startup
 				try {
 					boolean skipOverStartedProperty = false;
@@ -870,8 +909,8 @@ public class ModuleFactory {
 	 * 
 	 * @return the message text.
 	 */
-	private static String getCyclicDependenciesMessage() {
-		return Context.getMessageSourceService().getMessage("Module.error.cyclicDependencies", null, Context.getLocale());
+	private static String getCyclicDependenciesMessage(String message) {
+		return Context.getMessageSourceService().getMessage("Module.error.cyclicDependencies", new Object[]{ message }, Context.getLocale());
 	}
 	
 	/**
@@ -896,7 +935,6 @@ public class ModuleFactory {
 			}
 			catch (ClassNotFoundException e) {
 				log.warn("Could not load advice point: " + advice.getPoint(), e);
-				//throw new ModuleException("Could not load advice point: " + advice.getPoint(), e);
 			}
 		}
 	}
@@ -976,7 +1014,7 @@ public class ModuleFactory {
 	}
 	
 	/**
-	 * Execute all unrun changeSets in liquibase.xml for the given module
+	 * Execute all not run changeSets in liquibase.xml for the given module
 	 * 
 	 * @param module the module being executed on
 	 */
@@ -1114,11 +1152,9 @@ public class ModuleFactory {
 			List<Module> startedModulesCopy = new ArrayList<Module>();
 			startedModulesCopy.addAll(getStartedModules());
 			for (Module dependentModule : startedModulesCopy) {
-				if (dependentModule != null && !dependentModule.equals(mod)) {
-					if (dependentModule.getRequiredModules() != null && dependentModule.getRequiredModules().contains(modulePackage)) {
-						dependentModulesStopped.add(dependentModule);
-						dependentModulesStopped.addAll(stopModule(dependentModule, skipOverStartedProperty, isFailedStartup));
-					}
+				if (dependentModule != null && !dependentModule.equals(mod) && isModuleRequiredByAnother(dependentModule, modulePackage)) {
+					dependentModulesStopped.add(dependentModule);
+					dependentModulesStopped.addAll(stopModule(dependentModule, skipOverStartedProperty, isFailedStartup));
 				}
 			}
 			
@@ -1169,10 +1205,6 @@ public class ModuleFactory {
 						String extId = ext.getExtensionId();
 						try {
 							List<Extension> tmpExtensions = getExtensions(extId);
-							if (tmpExtensions == null) {
-								tmpExtensions = new Vector<Extension>();
-							}
-							
 							tmpExtensions.remove(ext);
 							getExtensionMap().put(extId, tmpExtensions);
 						}
@@ -1235,7 +1267,18 @@ public class ModuleFactory {
 		
 		return dependentModulesStopped;
 	}
-	
+
+	/**
+	 * Checks if a module is required by another
+     *
+	 * @param dependentModule the module whose required modules are to be checked
+	 * @param modulePackage the package of the module to check if required by another
+	 * @return true if the module is required, else false
+	 */
+	private static boolean isModuleRequiredByAnother(Module dependentModule, String modulePackage) {
+		return dependentModule.getRequiredModules() != null && dependentModule.getRequiredModules().contains(modulePackage);
+	}
+
 	private static ModuleClassLoader removeClassLoader(Module mod) {
 		getModuleClassLoaderMap(); // create map if it is null
 		if (!moduleClassLoaders.containsKey(mod)) {
@@ -1247,7 +1290,6 @@ public class ModuleFactory {
 	
 	/**
 	 * Removes module from module repository
-	 * 
 	 * @param mod module to unload
 	 */
 	public static void unloadModule(Module mod) {

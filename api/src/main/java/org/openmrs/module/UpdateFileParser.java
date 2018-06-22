@@ -56,6 +56,9 @@ public class UpdateFileParser {
 	 * Parse the contents of the update.rdf file.
 	 *
 	 * @throws ModuleException
+	 * @should set properties from xml file
+	 * @should set properties using the newest update
+	 * @should not set properties using updates ahead of current openmrs version
 	 */
 	public void parse() throws ModuleException {
 		StringReader stringReader = null;
@@ -72,6 +75,7 @@ public class UpdateFileParser {
 				// Disable resolution of external entities. See TRUNK-3942 
 				db.setEntityResolver(new EntityResolver() {
 					
+					@Override
 					public InputSource resolveEntity(String publicId, String systemId) {
 						return new InputSource(new StringReader(""));
 					}

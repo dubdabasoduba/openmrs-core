@@ -41,6 +41,7 @@ public class GZIPFilter extends OncePerRequestFilter {
 	 * @see org.springframework.web.filter.OncePerRequestFilter#doFilterInternal(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse, javax.servlet.FilterChain)
 	 */
+	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 	        throws IOException, ServletException {
 		try {
@@ -130,7 +131,7 @@ public class GZIPFilter extends OncePerRequestFilter {
 			String gzipEnabled = Context.getAdministrationService().getGlobalProperty(
 			    OpenmrsConstants.GLOBAL_PROPERTY_GZIP_ENABLED, "");
 			
-			boolean isEnabled = gzipEnabled.toLowerCase().equals("true");
+			boolean isEnabled = Boolean.valueOf(gzipEnabled);
 			cachedGZipEnabledFlag = isEnabled;
 			return cachedGZipEnabledFlag;
 		}

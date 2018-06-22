@@ -18,9 +18,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarFile;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,6 +33,7 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
+import org.openmrs.util.OpenmrsConstants;
 
 /**
  * Tests methods on the {@link org.openmrs.module.ModuleUtil} class
@@ -79,7 +84,58 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 		//then
 		assertThat(ModuleUtil.getMandatoryModules(), contains("firstmodule"));
 	}
-	
+
+
+	/**
+	 * @verifies return false when versions is null
+	 * @see ModuleUtil#isOpenmrsVersionInVersions(String[])
+	 */
+	@Test public void isOpenmrsVersionInVersions_shouldReturnFalseWhenVersionsIsNull() throws Exception {
+
+		Assert.assertFalse(ModuleUtil.isOpenmrsVersionInVersions(null));
+	}
+	/**
+	 * @verifies return false when versions is empty
+	 * @see ModuleUtil#isOpenmrsVersionInVersions(String[])
+	 */
+	@Test public void isOpenmrsVersionInVersions_shouldReturnFalseWhenVersionsIsEmpty() throws Exception {
+
+		Assert.assertFalse(ModuleUtil.isOpenmrsVersionInVersions( new String[] {}));
+	}
+
+	/**
+	 * @verifies return true if current openmrs version matches one element in versions
+	 * @see ModuleUtil#isOpenmrsVersionInVersions(String[])
+	 */
+	@Test public void isOpenmrsVersionInVersions_shouldReturnTrueIfCurrentOpenmrsVersionMatchesOneElementInVersions()
+			throws Exception {
+
+		Field versionField = OpenmrsConstants.class.getDeclaredField("OPENMRS_VERSION_SHORT");
+		Field modifiersField = Field.class.getDeclaredField("modifiers");
+		modifiersField.setAccessible(true);
+		modifiersField.setInt(versionField, versionField.getModifiers() & ~Modifier.FINAL);
+		final String currentVersion = "1.9.8";
+		versionField.set(null, currentVersion);
+
+		Assert.assertTrue(ModuleUtil.isOpenmrsVersionInVersions( currentVersion, "1.10.*"));
+	}
+
+	/**
+	 * @verifies return false if current openmrs version does not match any element in versions
+	 * @see ModuleUtil#isOpenmrsVersionInVersions(String[])
+	 */
+	@Test public void isOpenmrsVersionInVersions_shouldReturnFalseIfCurrentOpenmrsVersionDoesNotMatchAnyElementInVersions()
+			throws Exception {
+
+		Field versionField = OpenmrsConstants.class.getDeclaredField("OPENMRS_VERSION_SHORT");
+		Field modifiersField = Field.class.getDeclaredField("modifiers");
+		modifiersField.setAccessible(true);
+		modifiersField.setInt(versionField, versionField.getModifiers() & ~Modifier.FINAL);
+		versionField.set(null, "1.9.8");
+
+		Assert.assertFalse(ModuleUtil.isOpenmrsVersionInVersions( new String[] { "1.11.*", "2.1.0" }));
+	}
+
 	/**
 	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
@@ -206,7 +262,7 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 		String requiredOpenmrsVersion = "1.5.*";
 		Assert.assertFalse(ModuleUtil.matchRequiredVersions(openmrsVersion, requiredOpenmrsVersion));
 	}
-	
+
 	/**
 	 * @see org.openmrs.module.ModuleUtil#matchRequiredVersions(String,String)
 	 */
@@ -596,5 +652,121 @@ public class ModuleUtilTest extends BaseContextSensitiveTest {
 		Assert.assertNotNull(moduleJarFile);
 		InputStream resultStream = ModuleUtil.getResourceFromApi(moduleJarFile, moduleId, version, resource);
 		Assert.assertNull(resultStream);
+	}
+
+	/**
+	 * @see ModuleUtil#expandJar(File,File,String,boolean)
+	 * @verifies expand directory with parent tree if name is directory and keepFullPath is true
+	 */
+	@Test
+	public void expandJar_shouldExpandDirectoryWithParentTreeIfNameIsDirectoryAndKeepFullPathIsTrue() throws Exception {
+		final int numberOfFilesInSpecifiedJarDirectory = 2;
+		String directoryPath = "META-INF/maven/org.openmrs.module/test1-api";
+		File destinationFolder = this.getEmptyJarDestinationFolder();
+
+		ModuleUtil.expandJar(getJarFile(), destinationFolder, directoryPath, true);
+
+		List<File> actualExpandedFiles = (List<File>)FileUtils.listFiles(destinationFolder, null, true);
+		Assert.assertEquals(numberOfFilesInSpecifiedJarDirectory, actualExpandedFiles.size());
+		File expectedPath = new File(destinationFolder, directoryPath);
+		Assert.assertEquals(expectedPath.toString(), actualExpandedFiles.get(0).getParent());
+
+		FileUtils.deleteDirectory(destinationFolder);
+	}
+
+	/**
+	 * @see ModuleUtil#expandJar(File,File,String,boolean)
+	 * @verifies expand directory without parent tree if name is directory and keepFullPath is false
+	 */
+	@Test
+	public void expandJar_shouldExpandDirectoryWithoutParentTreeIfNameIsDirectoryAndKeepFullPathIsFalse()
+			throws Exception {
+		final int numberOfFilesInSpecifiedDirectory = 2;
+		String directoryPath = "META-INF/maven/org.openmrs.module/test1-api";
+		File destinationFolder = this.getEmptyJarDestinationFolder();
+
+		ModuleUtil.expandJar(getJarFile(), destinationFolder, directoryPath, false);
+
+		List<File> actualExpandedFiles = (List<File>)FileUtils.listFiles(destinationFolder, null, true);
+		Assert.assertEquals(numberOfFilesInSpecifiedDirectory, actualExpandedFiles.size());
+		Assert.assertEquals(destinationFolder.toString(), actualExpandedFiles.get(0).getParent());
+
+		FileUtils.deleteDirectory(destinationFolder);
+	}
+
+	/**
+	 * @see ModuleUtil#expandJar(File,File,String,boolean)
+	 * @verifies expand entire jar if name is empty string
+	 */
+	@Test
+	public void expandJar_shouldExpandEntireJarIfNameIsEmptyString() throws Exception {
+		final int numberOfFilesInJar = 6;
+		File destinationFolder = this.getEmptyJarDestinationFolder();
+
+		ModuleUtil.expandJar(getJarFile(), destinationFolder, "", false);
+
+		Assert.assertEquals(numberOfFilesInJar, FileUtils.listFiles(destinationFolder, null, true).size());
+
+		FileUtils.deleteDirectory(destinationFolder);
+	}
+
+	/**
+	 * @see ModuleUtil#expandJar(File,File,String,boolean)
+	 * @verifies expand entire jar if name is null
+	 */
+	@Test
+	public void expandJar_shouldExpandEntireJarIfNameIsNull() throws Exception {
+		final int numberOfFilesInJar = 6;
+		File destinationFolder = this.getEmptyJarDestinationFolder();
+
+		ModuleUtil.expandJar(getJarFile(), destinationFolder, null, false);
+
+		Assert.assertEquals(numberOfFilesInJar, FileUtils.listFiles(destinationFolder, null, true).size());
+
+		FileUtils.deleteDirectory(destinationFolder);
+	}
+
+	/**
+	 * @see ModuleUtil#expandJar(File,File,String,boolean)
+	 * @verifies expand file with parent tree if name is file and keepFullPath is true
+	 */
+	@Test
+	public void expandJar_shouldExpandFileWithParentTreeIfNameIsFileAndKeepFullPathIsTrue() throws Exception {
+		String fileName = "META-INF/maven/org.openmrs.module/test1-api/pom.properties";
+		File destinationFolder = this.getEmptyJarDestinationFolder();
+
+		ModuleUtil.expandJar(getJarFile(), destinationFolder, fileName, true);
+
+		List<File> actualExpandedFiles = (List<File>)FileUtils.listFiles(destinationFolder, null, true);
+		Assert.assertEquals(1, actualExpandedFiles.size());
+		File expectedPath = new File(destinationFolder, fileName);
+		Assert.assertEquals(expectedPath.toString(), actualExpandedFiles.get(0).toString());
+
+		FileUtils.deleteDirectory(destinationFolder);
+	}
+
+	/**
+	 * Gets Jar file to be expanded.
+	 * 
+	 * @return <code>File</code> containing Jar file.
+	 */
+	protected File getJarFile() {
+		return new File(this.getClass().getResource("/org/openmrs/module/include/testJarExpand.omod").getFile());
+	}
+	
+	/**
+	 * Gets folder to which Jar should be extracted. 
+	 * 
+	 * @return <code>File</code> containing folder for Jar tests.
+	 */
+	protected File getEmptyJarDestinationFolder() throws IOException {
+		File destinationFolder = new File(System.getProperty("java.io.tmpdir"), "expandedJar");
+		if (destinationFolder.exists()) {
+			FileUtils.cleanDirectory(destinationFolder);
+		}
+		else {
+			destinationFolder.mkdirs();
+		}
+		return destinationFolder;
 	}
 }

@@ -50,8 +50,9 @@ public class LogicTransform {
 		return transformOperator;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		
 		if (transformOperator != null) {
 			result.append(transformOperator);

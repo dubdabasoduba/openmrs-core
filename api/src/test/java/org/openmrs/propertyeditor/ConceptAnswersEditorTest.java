@@ -9,8 +9,7 @@
  */
 package org.openmrs.propertyeditor;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;

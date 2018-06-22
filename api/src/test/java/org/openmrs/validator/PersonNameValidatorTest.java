@@ -9,10 +9,12 @@
  */
 package org.openmrs.validator;
 
-import junit.framework.Assert;
+import java.util.HashMap;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.GlobalProperty;
 import org.openmrs.PersonName;
@@ -22,6 +24,7 @@ import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsConstants;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
+import org.springframework.validation.MapBindingResult;
 
 /**
  * Tests methods on the {@link PersonNameValidator} class.
@@ -118,38 +121,38 @@ public class PersonNameValidatorTest extends BaseContextSensitiveTest {
 	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
 	 */
 	@Test
-	@Verifies(value = "should fail validation if PersonName.familyName is null", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
-	public void validate_shouldFailValidationIfPersonNameFamilyNameIsNull() throws Exception {
+	@Verifies(value = "should pass validation if PersonName.familyName is null", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldPassValidationIfPersonNameFamilyNameIsNull() throws Exception {
 		PersonName personName = new PersonName();
 		Errors errors = new BindException(personName, "familyName");
 		new PersonNameValidator().validatePersonName(personName, errors, false, true);
-		Assert.assertTrue(errors.hasFieldErrors("familyName"));
+		Assert.assertFalse(errors.hasFieldErrors("familyName"));
 	}
 	
 	/**
 	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
 	 */
 	@Test
-	@Verifies(value = "should fail validation if PersonName.familyName is empty", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
-	public void validate_shouldFailValidationIfPersonNameFamilyNameIsEmpty() throws Exception {
+	@Verifies(value = "should pass validation if PersonName.familyName is empty", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldPassValidationIfPersonNameFamilyNameIsEmpty() throws Exception {
 		PersonName personName = new PersonName();
 		personName.setFamilyName("");
 		Errors errors = new BindException(personName, "familyName");
 		new PersonNameValidator().validatePersonName(personName, errors, false, true);
-		Assert.assertTrue(errors.hasFieldErrors("familyName"));
+		Assert.assertFalse(errors.hasFieldErrors("familyName"));
 	}
 	
 	/**
 	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
 	 */
 	@Test
-	@Verifies(value = "should fail validation if PersonName.familyName is just spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
-	public void validate_shouldFailValidationIfPersonNameFamilyNameIsJustSpaces() throws Exception {
+	@Verifies(value = "should pass validation if PersonName.familyName is just spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldPassValidationIfPersonNameFamilyNameIsJustSpaces() throws Exception {
 		PersonName personName = new PersonName();
 		personName.setFamilyName("    ");
 		Errors errors = new BindException(personName, "familyName");
 		new PersonNameValidator().validatePersonName(personName, errors, false, true);
-		Assert.assertTrue(errors.hasFieldErrors("familyName"));
+		Assert.assertFalse(errors.hasFieldErrors("familyName"));
 	}
 	
 	/**
@@ -731,4 +734,145 @@ public class PersonNameValidatorTest extends BaseContextSensitiveTest {
 		Assert.assertTrue(errors.hasFieldErrors("middleName"));
 		Assert.assertTrue(errors.hasFieldErrors("voidReason"));
 	}
+
+    /**
+     * @see PersonNameValidator#validatePersonName(PersonName, Errors, Boolean, Boolean)
+     * @verifies validate should report errors with nonstandard prefix when called in historic way
+     */
+    @Test
+    public void validatePersonName_shouldReportErrorsWithNonStandardPrefixWhenCalledInHistoricWay() throws Exception {
+		PersonName personName = new PersonName("", "reb", "feb");
+		MapBindingResult errors = new MapBindingResult(new HashMap<String, Object>(), "personName");
+		PersonNameValidator personNameValidator = new PersonNameValidator();
+		personNameValidator.validatePersonName(personName, errors, true, false);
+		Assert.assertTrue(errors.hasFieldErrors("names[0]." + "givenName"));
+    }
+
+	/**
+	 * @see PersonNameValidator#validate(Object, Errors)
+	 * @verifies validate should report on correct field names
+	 */
+	@Test
+	public void validate_shouldReportErrorsOnCorrectFieldNames() throws Exception {
+		PersonName personName = new PersonName("", "reb", "feb");
+		MapBindingResult errors = new MapBindingResult(new HashMap<String, Object>(), "personName");
+		PersonNameValidator personNameValidator = new PersonNameValidator();
+		personNameValidator.validate(personName, errors);
+		Assert.assertTrue(errors.hasFieldErrors("givenName"));
+	}
+
+
+	
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.givenName has leading spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameGivenNameHasLeadingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setGivenName(" alex");
+		Errors errors = new BindException(personName, "givenName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("givenName"));
+	}
+
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.givenName has trailing spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameGivenNameHasTrailingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setGivenName("alex ");
+		Errors errors = new BindException(personName, "givenName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("givenName"));
+	}
+	
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.middleName has leading spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameMiddleNameHasLeadingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setMiddleName(" de");
+		Errors errors = new BindException(personName, "middleName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("middleName"));
+	}
+	
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.middleName has trailing spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameMiddleNameHasTrailingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setMiddleName("de ");
+		Errors errors = new BindException(personName, "middleName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("middleName"));
+	}
+
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.familyName has leading spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameFamilyNameHasLeadingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setFamilyName(" souza");
+		Errors errors = new BindException(personName, "familyName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("familyName"));
+	}
+
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.familyName has trailing spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameFamilyNameHasTrailingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setFamilyName("souza ");
+		Errors errors = new BindException(personName, "familyName");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("familyName"));
+	}
+	
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.familyName2 has leading spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameFamilyName2HasLeadingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setFamilyName2(" souza-");
+		Errors errors = new BindException(personName, "familyName2");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("familyName2"));
+	}
+
+	/**
+	 * @see PatientNameValidator#validatePersonName(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)
+	 */
+	@Test
+	@Ignore("Unignore after investigating and fixing - RA-543")
+	@Verifies(value = "should fail validation if PersonName.familyName2 has trailing spaces", method = "validate(java.lang.Object, org.springframework.validation.Errors, boolean, boolean)")
+	public void validate_shouldFailValidationIfPersonNameFamilyName2HasTrailingSpaces() throws Exception {
+		PersonName personName = new PersonName();
+		personName.setFamilyName2("souza- ");
+		Errors errors = new BindException(personName, "familyName2");
+		new PersonNameValidator().validatePersonName(personName, errors, false, true);
+		Assert.assertTrue(errors.hasFieldErrors("familyName2"));
+	}
+
 }

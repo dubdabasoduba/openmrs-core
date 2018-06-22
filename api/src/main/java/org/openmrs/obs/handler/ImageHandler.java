@@ -15,8 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -66,6 +66,7 @@ public class ImageHandler extends AbstractHandler implements ComplexObsHandler {
 	 * 
 	 * @see org.openmrs.obs.ComplexObsHandler#getObs(org.openmrs.Obs, java.lang.String)
 	 */
+	@Override
 	public Obs getObs(Obs obs, String view) {
 		File file = getComplexDataFile(obs);
 		
@@ -120,6 +121,7 @@ public class ImageHandler extends AbstractHandler implements ComplexObsHandler {
 	/**
 	 * @see org.openmrs.obs.ComplexObsHandler#saveObs(org.openmrs.Obs)
 	 */
+	@Override
 	public Obs saveObs(Obs obs) throws APIException {
 		// Get the buffered image from the ComplexData.
 		BufferedImage img = null;
@@ -143,8 +145,9 @@ public class ImageHandler extends AbstractHandler implements ComplexObsHandler {
 			throw new APIException("Obs.error.cannot.save.complex", new Object[] { obs.getObsId() });
 		}
 		
+		File outfile = null;
 		try {
-			File outfile = getOutputFileToWrite(obs);
+			outfile = getOutputFileToWrite(obs);
 			
 			String extension = getExtension(obs.getComplexData().getTitle());
 			
@@ -161,6 +164,9 @@ public class ImageHandler extends AbstractHandler implements ComplexObsHandler {
 			
 		}
 		catch (IOException ioe) {
+		   if (outfile != null && outfile.length() == 0) {
+		      outfile.delete(); // OpenJDK 7 & 8 may leave a 0-byte file when ImageIO.write(..) fails.
+		   }
 			throw new APIException("Obs.error.trying.write.complex", null, ioe);
 		}
 		

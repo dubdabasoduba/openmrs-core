@@ -21,7 +21,7 @@ import org.openmrs.util.OpenmrsUtil;
 /**
  * PatientProgram
  */
-public class PatientProgram extends BaseOpenmrsData implements java.io.Serializable {
+public class PatientProgram extends BaseOpenmrsData {
 	
 	public static final long serialVersionUID = 0L;
 	
@@ -210,7 +210,7 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 		}
 		PatientState last = null;
 		PatientState nextToLast = null;
-		if (states.size() > 0) {
+		if (!states.isEmpty()) {
 			last = states.get(states.size() - 1);
 		}
 		if (states.size() > 1) {
@@ -290,6 +290,7 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 	}
 	
 	/** @see Object#toString() */
+	@Override
 	public String toString() {
 		return "PatientProgram(id=" + getPatientProgramId() + ", patient=" + getPatient() + ", program=" + getProgram()
 		        + ")";
@@ -359,6 +360,7 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getPatientProgramId();
 	}
@@ -367,6 +369,7 @@ public class PatientProgram extends BaseOpenmrsData implements java.io.Serializa
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setPatientProgramId(id);
 	}

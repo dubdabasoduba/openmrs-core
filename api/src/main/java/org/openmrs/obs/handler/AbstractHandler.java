@@ -13,8 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Arrays;
+import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -144,7 +144,9 @@ public class AbstractHandler {
 	 */
 	public boolean purgeComplexData(Obs obs) {
 		File file = getComplexDataFile(obs);
-		if (file.exists() && file.delete()) {
+		if (!file.exists()) {
+			return true;
+		} else if (file.delete()) {
 			obs.setComplexData(null);
 			// obs.setValueComplex(null);
 			return true;

@@ -22,22 +22,21 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.openmrs.Allergen;
+import org.openmrs.AllergenType;
+import org.openmrs.Allergies;
+import org.openmrs.Allergy;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
 import org.openmrs.Patient;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.messagesource.MessageSourceService;
-import org.openmrs.api.PatientService;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
-
-import org.openmrs.Allergy;
-import org.openmrs.Allergen;
-import org.openmrs.AllergenType;
-import org.openmrs.Allergies;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Context.class)
@@ -57,6 +56,10 @@ public class AllergyValidatorTest {
 		when(concept.getUuid()).thenReturn(uuid != null ? uuid : "some uuid");
 		when(concept.getName()).thenReturn(new ConceptName());
 		return concept;
+	}
+	
+	private String getOtherNonCodedConceptUuid() {
+		return "5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 	}
 	
 	/**
@@ -129,7 +132,7 @@ public class AllergyValidatorTest {
 	@Test
 	public void validate_shouldFailIfNonCodedAllergenIsNullAndAllergenIsSetToOtherNonCoded() throws Exception {
 		Allergy allergy = new Allergy();
-		allergy.setAllergen(new Allergen(null, createMockConcept(Allergen.OTHER_NON_CODED_UUID), null));
+		allergy.setAllergen(new Allergen(null, createMockConcept(getOtherNonCodedConceptUuid()), null));
 		Errors errors = new BindException(allergy, "allergy");
 		validator.validate(allergy, errors);
 		assertTrue(errors.hasFieldErrors("allergen"));
@@ -170,7 +173,7 @@ public class AllergyValidatorTest {
 		when(Context.getMessageSourceService()).thenReturn(ms);
 		
 		Allergies allergies = new Allergies();
-		Concept nonCodedConcept = createMockConcept(Allergen.OTHER_NON_CODED_UUID);
+		Concept nonCodedConcept = createMockConcept(getOtherNonCodedConceptUuid());
 		final String freeText = "some text";
 		Allergen allergen1 = new Allergen(AllergenType.DRUG, nonCodedConcept, freeText);
 		allergies.add(new Allergy(null, allergen1, null, null, null));

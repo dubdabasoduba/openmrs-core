@@ -9,6 +9,10 @@
  */
 package org.openmrs.layout.name;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.PersonName;
@@ -16,19 +20,17 @@ import org.openmrs.api.APIException;
 import org.openmrs.layout.LayoutSupport;
 import org.openmrs.layout.LayoutTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
  * @since 1.12
  */
 public class NameTemplate extends LayoutTemplate {
 	
+	@Override
 	public String getLayoutToken() {
 		return "IS_NAME_TOKEN";
 	}
 	
+	@Override
 	public String getNonLayoutToken() {
 		return "IS_NOT_NAME_TOKEN";
 	}

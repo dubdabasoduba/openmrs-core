@@ -3437,7 +3437,7 @@
         <addForeignKeyConstraint constraintName="privilege_which_can_edit_encounter_type" baseTableName="encounter_type" baseColumnNames="edit_privilege" referencedTableName="privilege" referencedColumnNames="privilege"/>
 	</changeSet>
     
-    <!-- Skip changesets from liquibase-update-to-latest when new installation -->
+    <!-- Skip changesets from liquibase-update-to-2.0 when new installation -->
     <!-- TODO: CustomChange to avoid replicated columns-->
     <!-- TODO: Add all changesets that are not required. Only blockers now-->
     <changeSet id="20110915-1700" author="sunbiz">

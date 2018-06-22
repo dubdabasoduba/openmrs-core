@@ -17,13 +17,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.CharArrayReader;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,8 +35,11 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
 import org.openmrs.ConceptProposal;
@@ -50,7 +49,6 @@ import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.Person;
-import org.openmrs.Allergy;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.ObsServiceImpl;
 import org.openmrs.obs.ComplexData;
@@ -60,6 +58,7 @@ import org.openmrs.obs.handler.ImageHandler;
 import org.openmrs.obs.handler.TextHandler;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.openmrs.test.Verifies;
+import org.openmrs.util.DateUtil;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsConstants.PERSON_TYPE;
 import org.openmrs.util.OpenmrsUtil;
@@ -74,6 +73,38 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	protected static final String ENCOUNTER_OBS_XML = "org/openmrs/api/include/ObsServiceTest-EncounterOverwrite.xml";
 	
 	protected static final String COMPLEX_OBS_XML = "org/openmrs/api/include/ObsServiceTest-complex.xml";
+
+	protected static final String REVISION_OBS_XML = "org/openmrs/api/include/ObsServiceTest-RevisionObs.xml";
+
+	@Rule
+	public ExpectedException expectedException = ExpectedException.none();
+
+
+	/**
+	 * This method gets the revision obs for voided obs
+	 *
+	 * @see ObsService#getRevisionObs(Obs)
+	 */
+	@Test
+	public void shouldGetRevisedObs() throws Exception {
+		executeDataSet(INITIAL_OBS_XML);
+		executeDataSet(REVISION_OBS_XML);
+
+		ObsService os = Context.getObsService();
+		Obs initialObs = os.getObsByUuid("uuid14");
+		Obs revisedObs = os.getRevisionObs(initialObs);
+		assertEquals(17, revisedObs.getId().intValue());
+		assertEquals(2, revisedObs.getGroupMembers(true).size());
+	}
+
+	@Test
+	@Verifies(value = "should throw APIException when obs is null", method = "saveObs(Obs,String)")
+	public void shouldReturnAPIExceptionWhenObsIsNull(){
+		expectedException.expect(APIException.class);
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("Obs.error.cannot.be.null"));
+		ObsService os = Context.getObsService();
+		os.saveObs(null,"Null Obs");
+	}
 	
 	/**
 	 * This test tests multi-level heirarchy obsGroup cascades for create, delete, update, void, and
@@ -263,37 +294,37 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		//unvoid:
 		obsThatWasVoided.setVoided(false);
-		assertFalse(obsThatWasVoided.isVoided());
+		assertFalse(obsThatWasVoided.getVoided());
 		
 		//Now test voiding cascade:
 		// i.e. by voiding the grandparent, we void the n-th generation leaf obs
 		os.voidObs(oGGGPThatWasUpdated, "testing void cascade");
-		assertTrue(oGGGPThatWasUpdated.isVoided());
+		assertTrue(oGGGPThatWasUpdated.getVoided());
 		
 		Obs childLeafObs = os.getObs(childOneId);
-		assertTrue(childLeafObs.isVoided());
+		assertTrue(childLeafObs.getVoided());
 		
 		//now test the un-void:
 		os.unvoidObs(oGGGPThatWasUpdated);
-		assertFalse(oGGGPThatWasUpdated.isVoided());
-		assertFalse(childLeafObs.isVoided());
+		assertFalse(oGGGPThatWasUpdated.getVoided());
+		assertFalse(childLeafObs.getVoided());
 		
 		//test this again using just the os.updateObs method on the great great grandparent:
 		
 		os.voidObs(oGGGPThatWasUpdated, "testing void cascade");
 		childLeafObs = os.getObs(childOneId);
-		assertTrue(childLeafObs.isVoided());
+		assertTrue(childLeafObs.getVoided());
 		
 		os.unvoidObs(oGGGPThatWasUpdated);
 		childLeafObs = os.getObs(childOneId);
-		assertFalse(childLeafObs.isVoided());
+		assertFalse(childLeafObs.getVoided());
 		
 		//now, test the feature that unvoid doesn't happen unless child obs has the same dateVoided as
 		// the Obj argument that gets passed into unvoid:
 		
 		os.voidObs(oGGGPThatWasUpdated, "testing void cascade");
 		childLeafObs = os.getObs(childOneId);
-		assertTrue(childLeafObs.isVoided());
+		assertTrue(childLeafObs.getVoided());
 		
 		childLeafObs.setDateVoided(new Date(childLeafObs.getDateVoided().getTime() - 5000));
 		//os.saveObs(childLeafObs, "saving child leaf obs");
@@ -339,7 +370,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Date sd = df.parse("2006-02-01");
 		Date ed = df.parse("2006-02-20");
 		List<Obs> obs = os.getObservations(null, null, null, null, null, null, null, null, null, sd, ed, false);
-		assertEquals(8, obs.size());
+		assertEquals(9, obs.size());
 		
 		// Test 2, From boundary
 		sd = df.parse("2006-02-13");
@@ -351,7 +382,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		sd = df.parse("2006-02-01");
 		ed = df.parse("2006-02-15");
 		obs = os.getObservations(null, null, null, null, null, null, null, null, null, sd, ed, false);
-		assertEquals(7, obs.size());
+		assertEquals(8, obs.size());
 		
 		// Test 4, Both Boundaries
 		sd = df.parse("2006-02-11");
@@ -386,8 +417,8 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		Date sd = df.parse("2006-02-13");
 		Date ed = df.parse("2006-02-13");
-		List<Obs> obs = os.getObservations(null, null, null, null, null, null, null, null, null, sd, OpenmrsUtil
-		        .getLastMomentOfDay(ed), false);
+		List<Obs> obs = os.getObservations(null, null, null, null, null, null, null, null, null, sd,
+		    OpenmrsUtil.getLastMomentOfDay(ed), false);
 		assertEquals(1, obs.size());
 	}
 	
@@ -659,17 +690,8 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		File complexObsDir = OpenmrsUtil.getDirectoryInApplicationDataDirectory(as
 		        .getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_COMPLEX_OBS_DIR));
 		File previouslyCreatedFile = new File(complexObsDir, "nameOfFile.txt");
-		Reader input = new CharArrayReader("a string to save to a file".toCharArray());
-		Reader buffReader = new BufferedReader(input);
-		Writer buffWriter = new BufferedWriter(new FileWriter(previouslyCreatedFile));
-		while (true) {
-			int character = buffReader.read();
-			if (character == -1) {
-				break;
-			}
-			buffWriter.write(character);
-		}
-		input.close();
+		
+		FileUtils.writeByteArrayToFile(previouslyCreatedFile, "a string to save to a file".getBytes());
 		
 		// the file we'll be creating...defining it here so we can delete it in a finally block
 		File newComplexFile = null;
@@ -783,7 +805,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		// fetch the obs from the database again
 		obs = Context.getObsService().getObs(7);
-		Assert.assertTrue(obs.isVoided());
+		Assert.assertTrue(obs.getVoided());
 	}
 	
 	/**
@@ -844,7 +866,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		    null, null, null, null, null, false, null);
 		
 		// obs 11 in INITIAL_OBS_XML and obs 13 in standardTestDataset
-		Assert.assertEquals(2, obss.size());
+		Assert.assertEquals(3, obss.size());
 		Set<Integer> ids = new HashSet<Integer>();
 		for (Obs o : obss) {
 			ids.add(o.getObsId());
@@ -867,7 +889,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Integer count = obsService.getObservationCount(null, null, null, Collections.singletonList(new Concept(7)), null,
 		    null, null, null, null, false, null);
 		
-		Assert.assertEquals(2, count.intValue());
+		Assert.assertEquals(3, count.intValue());
 		
 	}
 	
@@ -1007,7 +1029,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		List<Obs> obss = obsService.getObservations(null, null, null, null, null, null, null, null, 2 /*obsGroupId*/, null,
 		    null, false, null);
 		
-		Assert.assertEquals(1, obss.size());
+		Assert.assertEquals(2, obss.size());
 	}
 	
 	/**
@@ -1024,7 +1046,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Integer count = obsService.getObservationCount(null, null, null, null, null, null, 2 /*obsGroupId*/, null, null,
 		    false, null);
 		
-		Assert.assertEquals(1, count.intValue());
+		Assert.assertEquals(2, count.intValue());
 	}
 	
 	/**
@@ -1041,7 +1063,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		List<Obs> obss = obsService.getObservations(null, null, null, null, Collections.singletonList(PERSON_TYPE.PATIENT),
 		    null, null, null, null, null, null, false, null);
 		
-		Assert.assertEquals(13, obss.size());
+		Assert.assertEquals(15, obss.size());
 	}
 	
 	/**
@@ -1055,10 +1077,10 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		ObsService obsService = Context.getObsService();
 		
-		Integer count = obsService.getObservationCount(null, null, null, null, Collections
-		        .singletonList(PERSON_TYPE.PATIENT), null, null, null, null, false, null);
+		Integer count = obsService.getObservationCount(null, null, null, null,
+		    Collections.singletonList(PERSON_TYPE.PATIENT), null, null, null, null, false, null);
 		
-		Assert.assertEquals(13, count.intValue());
+		Assert.assertEquals(15, count.intValue());
 	}
 	
 	/**
@@ -1075,7 +1097,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		List<Obs> obss = obsService.getObservations(null, null, null, null, Collections.singletonList(PERSON_TYPE.PERSON),
 		    null, null, null, null, null, null, false, null);
 		
-		Assert.assertEquals(15, obss.size());
+		Assert.assertEquals(17, obss.size());
 	}
 	
 	/**
@@ -1092,7 +1114,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Integer count = obsService.getObservationCount(null, null, null, null,
 		    Collections.singletonList(PERSON_TYPE.PERSON), null, null, null, null, false, null);
 		
-		Assert.assertEquals(15, count.intValue());
+		Assert.assertEquals(17, count.intValue());
 	}
 	
 	/**
@@ -1153,8 +1175,8 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	public void getObservationCount_shouldReturnCountOfObsWithLocationInGivenLocationsParameter() throws Exception {
 		ObsService obsService = Context.getObsService();
 		
-		Integer count = obsService.getObservationCount(null, null, null, null, null, Collections.singletonList(new Location(
-		        1)), null, null, null, false, null);
+		Integer count = obsService.getObservationCount(null, null, null, null, null,
+		    Collections.singletonList(new Location(1)), null, null, null, false, null);
 		
 		Assert.assertEquals(8, count.intValue());
 	}
@@ -1241,6 +1263,8 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	@Verifies(value = "should get obs matching patient identifier in searchString", method = "getObservations(String)")
 	public void getObservations_shouldGetObsMatchingPatientIdentifierInSearchString() throws Exception {
 		executeDataSet(INITIAL_OBS_XML);
+
+		updateSearchIndex();
 		
 		ObsService obsService = Context.getObsService();
 		
@@ -1333,6 +1357,23 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		obsService.purgeObs(obs);
 		
 		Assert.assertNull(obsService.getObs(7));
+		
+		
+		executeDataSet(COMPLEX_OBS_XML);
+		Obs complexObs = obsService.getComplexObs(44, ComplexObsHandler.RAW_VIEW);
+		// obs #44 is coded by the concept complex #8473 pointing to ImageHandler
+		// ImageHandler inherits AbstractHandler which handles complex data files on disk
+		assertNotNull(complexObs.getComplexData());
+		AdministrationService as = Context.getAdministrationService();
+		File complexObsDir = OpenmrsUtil.getDirectoryInApplicationDataDirectory(as
+		        .getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_COMPLEX_OBS_DIR));
+		for (File file : complexObsDir.listFiles()) {
+			file.delete();
+		}
+
+		obsService.purgeObs(complexObs);
+		
+		assertNull(obsService.getObs(obs.getObsId()));
 	}
 	
 	/**
@@ -1391,10 +1432,10 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		assertEquals(comment, obsSaved.getComment());
 		assertEquals(concept, obsSaved.getConcept());
 		assertEquals(encounter, obsSaved.getEncounter());
-		assertEquals(datetime, obsSaved.getObsDatetime());
+		assertEquals(DateUtil.truncateToSeconds(datetime), obsSaved.getObsDatetime());
 		assertEquals(location, obsSaved.getLocation());
 		assertEquals(valueGroupId, obsSaved.getValueGroupId());
-		assertEquals(valueDatetime, obsSaved.getValueDatetime());
+		assertEquals(DateUtil.truncateToSeconds(valueDatetime), obsSaved.getValueDatetime());
 		assertEquals(valueCoded, obsSaved.getValueCoded());
 		assertEquals(valueNumeric, obsSaved.getValueNumeric());
 		assertEquals(valueModifier, obsSaved.getValueModifier());
@@ -1454,8 +1495,8 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		obsService.voidObs(parentObs, "testing void cascade to child obs groups");
 		
-		Assert.assertTrue(obsService.getObs(9).isVoided());
-		Assert.assertTrue(obsService.getObs(10).isVoided());
+		Assert.assertTrue(obsService.getObs(9).getVoided());
+		Assert.assertTrue(obsService.getObs(10).getVoided());
 	}
 	
 	/**
@@ -1470,7 +1511,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		obsService.unvoidObs(obs);
 		
-		assertFalse(obs.isVoided());
+		assertFalse(obs.getVoided());
 	}
 	
 	/**
@@ -1498,7 +1539,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		obsService.voidObs(obs, "testing void function");
 		
-		assertTrue(obs.isVoided());
+		assertTrue(obs.getVoided());
 	}
 	
 	/**
@@ -1559,26 +1600,29 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		ObsService obsService = Context.getObsService();
 		
 		// a obs with child groups
-		Obs parentObs = obsService.getObs(2);
-		parentObs.setValueNumeric(null);
-		
+		Obs origParentObs = obsService.getObs(2);
+		Set<Obs> originalMembers = new HashSet<>(origParentObs.getGroupMembers(true));
+		assertEquals(3, originalMembers.size());
+		assertTrue(originalMembers.contains(obsService.getObs(9)));
+		assertTrue(originalMembers.contains(obsService.getObs(10)));
+
 		Obs groupMember = new Obs();
 		groupMember.setConcept(Context.getConceptService().getConcept(3));
 		groupMember.setObsDatetime(new Date());
 		groupMember.setPerson(new Patient(2));
 		groupMember.setLocation(new Location(2));
 		groupMember.setValueNumeric(50d);
-		parentObs.addGroupMember(groupMember);
+		origParentObs.addGroupMember(groupMember);
 		assertNotNull(groupMember.getObsGroup());
 		
-		obsService.saveObs(parentObs, "Updating obs group");
-		
+		Obs newParentObs = obsService.saveObs(origParentObs, "Updating obs group");
+		assertEquals(origParentObs, newParentObs);
+		assertEquals(4, newParentObs.getGroupMembers(true).size());
 		// make sure the api filled in all of the necessary ids again
 		assertNotNull(groupMember.getObsId());
-		
-		// make sure the api didn't change the obsId of the first group member
-		Assert.assertEquals(9, parentObs.getGroupMembers().toArray(new Obs[] {})[0].getObsId().intValue());
-		
+		assertTrue(newParentObs.getGroupMembers(true).contains(obsService.getObs(9)));
+		assertTrue(newParentObs.getGroupMembers(true).contains(obsService.getObs(10)));
+		assertTrue(newParentObs.getGroupMembers(true).contains(obsService.getObs(groupMember.getObsId())));
 	}
 	
 	/**
@@ -1621,7 +1665,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 	@Test
 	@Verifies(value = "should return the count of all observations using the specified conceptNames as answers", method = "getObservationCount(List, boolean)")
 	public void getObservationCount_shouldReturnTheCountOfAllObservationsUsingTheSpecifiedConceptNamesAsAnswers()
-	        throws Exception {
+	    throws Exception {
 		ObsService os = Context.getObsService();
 		Obs o = new Obs();
 		o.setConcept(Context.getConceptService().getConcept(3));
@@ -1703,7 +1747,7 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		// change something on the obs and save it again
 		obs.setComment("Comment to make sure obs changes");
 		
-		Obs obsCreated = obsService.saveObs(obs, changeMessage);
+		obsService.saveObs(obs, changeMessage);
 		obs = obsService.getObs(obsId); //refetch original (now voided) obs
 		
 		// check
@@ -1723,41 +1767,40 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		
 		assertEquals(obs.getPerson(), obsSaved.getEncounter().getPatient());
 	}
-
+	
 	/**
 	 * @see ObsService#purgeObs(Obs,boolean)
 	 */
 	@Test
 	@Verifies(value = "should delete any obsGroupMembers before deleting the obs", method = "purgeObs(Obs,boolean)")
 	public void purgeObs_shouldDeleteAnyObsGroupMembersBeforeDeletingTheObs() throws Exception {
-
+		
 		executeDataSet(INITIAL_OBS_XML);
 		ObsService obsService = Context.getObsService();
-
+		
 		final int parentObsId = 1;
 		Obs obs = obsService.getObs(parentObsId);
-
+		
 		final int childObsId = 2;
 		final int unrelatedObsId = 3;
 		final int orderReferencingObsId = 4;
-		Obs unrelatedObservation = obsService.getObs(unrelatedObsId);
 		obs.addGroupMember(obsService.getObs(childObsId));
 		obs.addGroupMember(obsService.getObs(orderReferencingObsId));
-
+		
 		final int conceptProposalObsId = 5;
 		ConceptProposal conceptProposal = new ConceptProposal();
 		conceptProposal.setObs(obsService.getObs(conceptProposalObsId));
 		obs.addGroupMember(conceptProposal.getObs());
-
+		
 		//before calling purgeObs method the Obs exists
 		Assert.assertNotNull(obsService.getObs(parentObsId));
 		Assert.assertNotNull(obsService.getObs(childObsId));
 		Assert.assertNotNull(obsService.getObs(unrelatedObsId));
 		Assert.assertNotNull(obsService.getObs(orderReferencingObsId));
 		Assert.assertNotNull(obsService.getObs(conceptProposalObsId));
-
+		
 		Context.getObsService().purgeObs(obs, false);
-
+		
 		//	After calling purgeObs method Obs are deleted
 		Assert.assertNull(obsService.getObs(parentObsId));
 		Assert.assertNull(obsService.getObs(childObsId));
@@ -1765,27 +1808,186 @@ public class ObsServiceTest extends BaseContextSensitiveTest {
 		Assert.assertNull(obsService.getObs(orderReferencingObsId));
 		Assert.assertNull(obsService.getObs(conceptProposalObsId));
 	}
-
+	
 	/**
 	 * @see ObsService#purgeObs(Obs,boolean)
 	 */
 	@Test
 	@Verifies(value = "should not delete referenced orders when purging obs", method = "purgeObs(Obs,boolean)")
 	public void purgeObs_shouldNotDeleteReferencedOrdersWhenPurgingObs() throws Exception {
-
+		
 		executeDataSet(INITIAL_OBS_XML);
 		ObsService obsService = Context.getObsService();
 		final OrderService orderService = Context.getOrderService();
-
+		
 		final int orderReferencingObsId = 4;
 		final Obs obs = obsService.getObs(orderReferencingObsId);
-
+		
 		final Order order = obs.getOrder();
 		final Integer referencedOrderId = order.getOrderId();
-
+		
 		Context.getObsService().purgeObs(obs, false);
-
+		
 		Assert.assertNull(obsService.getObs(orderReferencingObsId));
 		Assert.assertNotNull(orderService.getOrder(referencedOrderId));
+	}
+	
+	/**
+	 * @see ObsService#saveObs(Obs,String)
+	 */
+	@Test
+	@Verifies(value = "should delete the previous file when a complex observation is updated with a new complex value", method = "saveObs(Obs,String)")
+	public void saveObs_shouldDeleteThePreviousFileWhenAComplexObservationIsUpdatedWithANewComplexValue() throws Exception {
+		
+		String changeMessage = "Testing TRUNK-4538";
+		
+		executeDataSet(COMPLEX_OBS_XML);
+		
+		ObsService os = Context.getObsService();
+		ConceptService cs = Context.getConceptService();
+		AdministrationService as = Context.getAdministrationService();
+		
+		// make sure the file isn't there to begin with
+		File complexObsDir = OpenmrsUtil.getDirectoryInApplicationDataDirectory(as
+		        .getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_COMPLEX_OBS_DIR));
+		final File createdFile = new File(complexObsDir, "nameOfFile.txt");
+		if (createdFile.exists())
+			createdFile.delete();
+		
+		// the complex data to put onto an obs that will be saved
+		Reader input = new CharArrayReader("This is a string to save to a file".toCharArray());
+		ComplexData complexData = new ComplexData("nameOfFile.txt", input);
+		
+		// must fetch the concept instead of just new Concept(8473) because the attributes on concept are checked
+		// this is a concept mapped to the text handler
+		Concept questionConcept = cs.getConcept(8474);
+		
+		Obs obsToSave = new Obs(new Person(1), questionConcept, new Date(), new Location(1));
+		obsToSave.setComplexData(complexData);
+		os.saveObs(obsToSave, null);
+		
+		File updatedFile = new File(complexObsDir, "nameOfUpdatedFile.txt");
+		if (updatedFile.exists())
+			updatedFile.delete();
+		
+		// the complex data to put onto an obs that will be updated
+		Reader updatedInput = new CharArrayReader(
+		        "This is a string to save to a file which uploaded to update an obs".toCharArray());
+		ComplexData updatedComplexData = new ComplexData("nameOfUpdatedFile.txt", updatedInput);
+		
+		obsToSave.setComplexData(updatedComplexData);
+		try {
+			os.saveObs(obsToSave, changeMessage);
+			
+			Assert.assertFalse(createdFile.exists());
+		}
+		finally {
+			// we always have to delete this inside the same unit test because it is outside the
+			// database and hence can't be "rolled back" like everything else
+			updatedFile.delete();
+		}
+		
+	}
+	
+	/**
+	 * @see ObsService#saveObs(Obs,String)
+	 * @verifies not void an Obs with no changes
+	 */
+	@Test
+	public void saveObs_shouldNotVoidAnObsWithNoChanges() throws Exception {
+		executeDataSet(ENCOUNTER_OBS_XML);
+		ObsService os = Context.getObsService();
+		Obs obs = os.getObs(14);
+		assertFalse(obs.getGroupMembers(true).isEmpty());
+		assertFalse(obs.getGroupMembers(false).isEmpty());
+		assertFalse(obs.isDirty());
+		Set<Obs> originalMembers = new HashSet<>(obs.getGroupMembers());
+		for (Obs o : originalMembers) {
+			assertFalse(o.isDirty());
+		}
+		Obs saveObs = os.saveObs(obs, "no change");
+		assertEquals(obs, saveObs);
+		assertFalse(saveObs.getVoided());
+
+		Set<Obs> savedMembers = new HashSet<>(saveObs.getGroupMembers());
+		assertFalse(saveObs.isDirty());
+		for (Obs o : savedMembers) {
+			assertFalse("obs"+o.getId(), o.isDirty());
+		}
+
+	}
+
+	/**
+	 * @see ObsService#saveObs(Obs,String)
+	 */
+	@Test
+	@Verifies(value = "should contain the form_namespace_and_path value in the edited obs", method = "saveObs(Obs,String)")
+	public void saveObs_shouldCopyTheFormNamespaceAndPathFieldInEditedObs() throws Exception {
+		executeDataSet(INITIAL_OBS_XML);
+		Obs obs = Context.getObsService().getObs(7);
+		obs.setValueNumeric(5.0);
+		Obs o2 = Context.getObsService().saveObs(obs, "just testing");
+		Assert.assertNotNull(obs.getFormFieldNamespace());
+
+		// fetch the obs from the database again
+		obs = Context.getObsService().getObs(o2.getObsId());
+		Assert.assertNotNull(obs.getFormFieldNamespace());
+		Assert.assertNotNull(obs.getFormFieldPath());
+	}
+
+	/**
+	 * @see ObsService#saveObs(Obs,String)
+	 */
+	@Test
+	public void saveObs_shouldVoidOnlyOldObsWhenAllObsEditedAndNewObsAdded() throws Exception {
+		executeDataSet(INITIAL_OBS_XML);
+		ConceptService cs = Context.getConceptService();
+		Date newDate = new Date();
+		//Update the entire Obs Tree obsDateTime
+		Obs obs = Context.getObsService().getObs(2);
+		obs.setObsDatetime(new Date());
+		Obs child = null;
+		for(Obs member : obs.getGroupMembers()) {
+			member.setObsDatetime(newDate);
+			if(member.getId() == 17) {
+				child = member;
+			}
+		}
+
+		Obs child1 = child.getGroupMembers().iterator().next();
+		child1.setObsDatetime(newDate);
+
+		//add a new obs at depth>1
+		Obs o1 = new Obs();
+		o1.setConcept(cs.getConcept(3));
+		o1.setDateCreated(newDate);
+		o1.setCreator(Context.getAuthenticatedUser());
+		o1.setLocation(new Location(1));
+		o1.setObsDatetime(newDate);
+		o1.setValueText("NewObs Value");
+		o1.setPerson(new Patient(2));
+		child.addGroupMember(o1);
+
+		int count = 0;
+
+		Obs newObs = Context.getObsService().saveObs(obs, "just testing");
+
+		Assert.assertEquals(newObs.getObsDatetime().toString(), newDate.toString());
+
+		for(Obs member : newObs.getGroupMembers()) {
+			Assert.assertEquals(member.getObsDatetime().toString(), newDate.toString());
+			if(member.getGroupMembers()!= null) {
+
+				for (Obs memberChild : member.getGroupMembers()) {
+					Assert.assertEquals(memberChild.getObsDatetime().toString(), newDate.toString());
+					if (memberChild.getValueText()!= null && memberChild.getValueText().equals("NewObs Value")) {
+						count++;
+					}
+				}
+				if (count == 0) {
+					Assert.fail("New Obs not created");
+				}
+			}
+		}
 	}
 }

@@ -111,11 +111,11 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 		//testing (un)retiration
 		
 		formService.retireForm(form2, "reason");
-		assertTrue(form2.isRetired());
+		assertTrue(form2.getRetired());
 		assertTrue(form2.getRetireReason().equals("reason"));
 		
 		formService.unretireForm(form2);
-		assertFalse(form2.isRetired());
+		assertFalse(form2.getRetired());
 		assertNull(form2.getRetireReason());
 		
 		//testing deletion
@@ -844,6 +844,7 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 	 */
 	private class NeighborHandler implements SerializableComplexObsHandler {
 		
+		@Override
 		public Set<FormField> getFormFields() {
 			Set<FormField> formFields = new HashSet<FormField>();
 			Field firstName = new Field();
@@ -862,26 +863,32 @@ public class FormServiceTest extends BaseContextSensitiveTest {
 			return formFields;
 		}
 		
+		@Override
 		public Obs saveObs(Obs obs) throws APIException {
 			return null;
 		}
 		
+		@Override
 		public Obs getObs(Obs obs, String view) {
 			return null;
 		}
 		
+		@Override
 		public boolean purgeComplexData(Obs obs) {
 			return false;
 		}
 		
+		@Override
 		public String serializeFormData(String data) {
 			return null;
 		}
 		
+		@Override
 		public String[] getSupportedViews() {
 			return new String[0];
 		}
 		
+		@Override
 		public boolean supportsView(String view) {
 			return false;
 		}

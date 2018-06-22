@@ -22,11 +22,11 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.hibernate.search.annotations.ContainedIn;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
 import org.openmrs.util.OpenmrsUtil;
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.springframework.util.StringUtils;
 
 /**
@@ -37,31 +37,35 @@ import org.springframework.util.StringUtils;
  * 
  * @see org.openmrs.Patient
  */
-@Root(strict = false)
-public class Person extends BaseOpenmrsData implements java.io.Serializable {
+public class Person extends BaseOpenmrsData {
 	
 	public static final long serialVersionUID = 2L;
 	
 	protected final Log log = LogFactory.getLog(getClass());
-	
+
+	@DocumentId
 	protected Integer personId;
-	
+
 	private Set<PersonAddress> addresses = null;
-	
+
+	@ContainedIn
 	private Set<PersonName> names = null;
-	
+
+	@ContainedIn
 	private Set<PersonAttribute> attributes = null;
-	
+
+	@Field
 	private String gender;
-	
+
 	private Date birthdate;
-	
+
 	private Date birthtime;
-	
+
 	private Boolean birthdateEstimated = false;
-	
+
 	private Boolean deathdateEstimated = false;
-	
+
+	@Field
 	private Boolean dead = false;
 	
 	private Date deathDate;
@@ -75,7 +79,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	private User personChangedBy;
 	
 	private Date personDateChanged;
-	
+
 	private Boolean personVoided = false;
 	
 	private User personVoidedBy;
@@ -83,7 +87,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	private Date personDateVoided;
 	
 	private String personVoidReason;
-	
+
+	@Field
 	private boolean isPatient;
 	
 	/**
@@ -105,10 +110,10 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * This constructor is used to build a new Person object copy from another person object
 	 * (usually a patient or a user subobject). All attributes are copied over to the new object.
-	 * NOTE! All child collection objects are copied as pointers, each individual element is not
-	 * copied. <br>
 	 * 
 	 * @param person Person to create this person object from
+	 * @should deep copy all collections
+	 * @should not fail for a collection element with no primary key assigned
 	 */
 	public Person(Person person) {
 		if (person == null) {
@@ -117,9 +122,10 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 		
 		personId = person.getPersonId();
 		setUuid(person.getUuid());
-		addresses = person.getAddresses();
-		names = person.getNames();
-		attributes = person.getAttributes();
+		
+		deepCopyAddresses(person.getAddresses());
+		deepCopyNames(person.getNames());
+		deepCopyAttributes(person.getAttributes());
 		
 		gender = person.getGender();
 		birthdate = person.getBirthdate();
@@ -133,7 +139,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 		// base creator/voidedBy/changedBy info is not copied here
 		// because that is specific to and will be recreated
 		// by the subobject upon save
-		
+
 		setPersonCreator(person.getPersonCreator());
 		setPersonDateCreated(person.getPersonDateCreated());
 		setPersonChangedBy(person.getPersonChangedBy());
@@ -142,6 +148,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 		setPersonVoidedBy(person.getPersonVoidedBy());
 		setPersonDateVoided(person.getPersonDateVoided());
 		setPersonVoidReason(person.getPersonVoidReason());
+
+		setPatient(person.getIsPatient());
 	}
 	
 	/**
@@ -159,7 +167,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return Returns the personId.
 	 */
-	@Attribute(required = true)
 	public Integer getPersonId() {
 		return personId;
 	}
@@ -167,7 +174,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param personId The personId to set.
 	 */
-	@Attribute(required = true)
 	public void setPersonId(Integer personId) {
 		this.personId = personId;
 	}
@@ -175,7 +181,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return person's gender
 	 */
-	@Attribute(required = false)
 	public String getGender() {
 		return this.gender;
 	}
@@ -183,7 +188,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param gender person's gender
 	 */
-	@Attribute(required = false)
 	public void setGender(String gender) {
 		this.gender = gender;
 	}
@@ -191,7 +195,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return person's date of birth
 	 */
-	@Element(required = false)
 	public Date getBirthdate() {
 		return this.birthdate;
 	}
@@ -199,30 +202,31 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param birthdate person's date of birth
 	 */
-	@Element(required = false)
 	public void setBirthdate(Date birthdate) {
 		this.birthdate = birthdate;
 	}
 	
 	/**
 	 * @return true if person's birthdate is estimated
+	 * 
+	 * @deprecated as of 2.0, use {@link #getBirthdateEstimated()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isBirthdateEstimated() {
 		// if (this.birthdateEstimated == null) {
 		// return new Boolean(false);
 		// }
-		return this.birthdateEstimated;
+		return getBirthdateEstimated();
 	}
 	
-	@Attribute(required = true)
 	public Boolean getBirthdateEstimated() {
-		return isBirthdateEstimated();
+		return birthdateEstimated;
 	}
 	
 	/**
 	 * @param birthdateEstimated true if person's birthdate is estimated
 	 */
-	@Attribute(required = true)
 	public void setBirthdateEstimated(Boolean birthdateEstimated) {
 		this.birthdateEstimated = birthdateEstimated;
 	}
@@ -241,7 +245,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param birthtime person's time of birth
 	 */
-	@Element(required = false)
 	public void setBirthtime(Date birthtime) {
 		this.birthtime = birthtime;
 	}
@@ -249,7 +252,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return person's time of birth with the date portion set to the date from person's birthdate
 	 */
-	@Element(required = false)
 	public Date getBirthDateTime() {
         if(birthdate != null && birthtime != null){
             String birthDateString = new SimpleDateFormat("yyyy-MM-dd").format(birthdate);
@@ -267,30 +269,31 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return person's time of birth.
 	 */
-	@Element(required = false)
 	public Date getBirthtime() {
         return this.birthtime;
     }
 
 	/**
 	 * @return Returns the death status.
+	 * 
+	 * @deprecated as of 2.0, use {@link #getDead()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isDead() {
-		return dead;
+		return getDead();
 	}
 	
 	/**
 	 * @return Returns the death status.
 	 */
-	@Attribute(required = true)
 	public Boolean getDead() {
-		return isDead();
+		return dead;
 	}
 	
 	/**
 	 * @param dead The dead to set.
 	 */
-	@Attribute(required = true)
 	public void setDead(Boolean dead) {
 		this.dead = dead;
 	}
@@ -298,7 +301,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return date of person's death
 	 */
-	@Element(required = false)
 	public Date getDeathDate() {
 		return this.deathDate;
 	}
@@ -306,7 +308,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param deathDate date of person's death
 	 */
-	@Element(required = false)
 	public void setDeathDate(Date deathDate) {
 		this.deathDate = deathDate;
 	}
@@ -314,7 +315,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return cause of person's death
 	 */
-	@Element(required = false)
 	public Concept getCauseOfDeath() {
 		return this.causeOfDeath;
 	}
@@ -322,7 +322,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @param causeOfDeath cause of person's death
 	 */
-	@Element(required = false)
 	public void setCauseOfDeath(Concept causeOfDeath) {
 		this.causeOfDeath = causeOfDeath;
 	}
@@ -333,7 +332,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should not get voided addresses
 	 * @should not fail with null addresses
 	 */
-	@ElementList(required = false)
 	public Set<PersonAddress> getAddresses() {
 		if (addresses == null) {
 			addresses = new TreeSet<PersonAddress>();
@@ -345,7 +343,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @param addresses Set&lt;PersonAddress&gt; list of known addresses for person
 	 * @see org.openmrs.PersonAddress
 	 */
-	@ElementList(required = false)
 	public void setAddresses(Set<PersonAddress> addresses) {
 		this.addresses = addresses;
 	}
@@ -356,7 +353,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should not get voided names
 	 * @should not fail with null names
 	 */
-	@ElementList
 	public Set<PersonName> getNames() {
 		if (names == null) {
 			names = new TreeSet<PersonName>();
@@ -368,7 +364,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @param names update all known names for person
 	 * @see org.openmrs.PersonName
 	 */
-	@ElementList
 	public void setNames(Set<PersonName> names) {
 		this.names = names;
 	}
@@ -378,8 +373,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @see org.openmrs.PersonAttribute
 	 * @should not get voided attributes
 	 * @should not fail with null attributes
+	 *
 	 */
-	@ElementList
 	public Set<PersonAttribute> getAttributes() {
 		if (attributes == null) {
 			attributes = new TreeSet<PersonAttribute>();
@@ -397,7 +392,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	public List<PersonAttribute> getActiveAttributes() {
 		List<PersonAttribute> attrs = new Vector<PersonAttribute>();
 		for (PersonAttribute attr : getAttributes()) {
-			if (!attr.isVoided()) {
+			if (!attr.getVoided()) {
 				attrs.add(attr);
 			}
 		}
@@ -408,7 +403,6 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @param attributes update all known attributes for person
 	 * @see org.openmrs.PersonAttribute
 	 */
-	@ElementList
 	public void setAttributes(Set<PersonAttribute> attributes) {
 		this.attributes = attributes;
 		attributeMap = null;
@@ -449,7 +443,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 				
 				// if the to-be-added attribute isn't already voided itself
 				// and if we have the same type, different value
-				if (!newAttribute.isVoided() || newIsNull) {
+				if (!newAttribute.getVoided() || newIsNull) {
 					if (currentAttribute.getCreator() != null) {
 						currentAttribute.voidAttribute("New value: " + newAttribute.getValue());
 					} else {
@@ -477,11 +471,9 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @should remove attribute when exist
 	 */
 	public void removeAttribute(PersonAttribute attribute) {
-		if (attributes != null) {
-			if (attributes.remove(attribute)) {
-				attributeMap = null;
-				allAttributeMap = null;
-			}
+		if (attributes != null && attributes.remove(attribute)) {
+			attributeMap = null;
+			allAttributeMap = null;
 		}
 	}
 	
@@ -498,12 +490,12 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @return PersonAttribute that matches the given type
 	 * @should not fail when attribute type is null
 	 * @should not return voided attribute
-	 * @should return null when given attribute type is not exist
+	 * @should return null when existing PersonAttributeType is voided 
 	 */
 	public PersonAttribute getAttribute(PersonAttributeType pat) {
 		if (pat != null) {
 			for (PersonAttribute attribute : getAttributes()) {
-				if (pat.equals(attribute.getAttributeType()) && !attribute.isVoided()) {
+				if (pat.equals(attribute.getAttributeType()) && !attribute.getVoided()) {
 					return attribute;
 				}
 			}
@@ -521,12 +513,14 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @param attributeName the name string to match on
 	 * @return PersonAttribute whose {@link PersonAttributeType#getName()} matchs the given name
 	 *         string
+	 * @should return person attribute based on attributeName
+	 * @should return null if AttributeName is voided
 	 */
 	public PersonAttribute getAttribute(String attributeName) {
 		if (attributeName != null) {
 			for (PersonAttribute attribute : getAttributes()) {
 				PersonAttributeType type = attribute.getAttributeType();
-				if (type != null && attributeName.equals(type.getName()) && !attribute.isVoided()) {
+				if (type != null && attributeName.equals(type.getName()) && !attribute.getVoided()) {
 					return attribute;
 				}
 			}
@@ -546,6 +540,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * 
 	 * @param attributeTypeId the id of the {@link PersonAttributeType} to look for
 	 * @return PersonAttribute whose {@link PersonAttributeType#getId()} equals the given Integer id
+	 * @should return PersonAttribute based on attributeTypeId
+	 * @should return null when existing personAttribute with matching attribute type id is voided
 	 */
 	public PersonAttribute getAttribute(Integer attributeTypeId) {
 		for (PersonAttribute attribute : getActiveAttributes()) {
@@ -561,6 +557,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * PersonAttributeType.name equal to <code>attributeName</code>.
 	 * 
 	 * @param attributeName
+	 * @should return all PersonAttributes with matching attributeType names
 	 */
 	public List<PersonAttribute> getAttributes(String attributeName) {
 		List<PersonAttribute> ret = new Vector<PersonAttribute>();
@@ -580,6 +577,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * equal to <code>attributeTypeId</code>.
 	 * 
 	 * @param attributeTypeId
+	 * @should return empty list when matching personAttribute by id is voided
+	 * @should return list of person attributes based on AttributeTypeId
 	 */
 	public List<PersonAttribute> getAttributes(Integer attributeTypeId) {
 		List<PersonAttribute> ret = new Vector<PersonAttribute>();
@@ -602,7 +601,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	public List<PersonAttribute> getAttributes(PersonAttributeType personAttributeType) {
 		List<PersonAttribute> ret = new Vector<PersonAttribute>();
 		for (PersonAttribute attribute : getAttributes()) {
-			if (personAttributeType.equals(attribute.getAttributeType()) && !attribute.isVoided()) {
+			if (personAttributeType.equals(attribute.getAttributeType()) && !attribute.getVoided()) {
 				ret.add(attribute);
 			}
 		}
@@ -664,7 +663,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 		
 		for (PersonAttribute attribute : getAttributes()) {
 			s.append(attribute.getAttributeType()).append(" : ").append(attribute.getValue()).append(" : voided? ").append(
-			    attribute.isVoided()).append("\n");
+			    attribute.getVoided()).append("\n");
 		}
 		
 		return s.toString();
@@ -743,7 +742,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * 
 	 * @return the "preferred" person name.
 	 * @see #getNames()
-	 * @see PersonName#isPreferred()
+	 * @see PersonName#getPreferred()
 	 * @should get preferred and not-voided person name if exist
 	 * @should get not-voided person name if preferred address does not exist
 	 * @should get voided person address if person is voided and not-voided address does not exist
@@ -752,19 +751,19 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	public PersonName getPersonName() {
 		// normally the DAO layer returns these in the correct order, i.e. preferred and non-voided first, but it's possible that someone
 		// has fetched a Person, changed their names around, and then calls this method, so we have to be careful.
-		if (getNames() != null && getNames().size() > 0) {
+		if (getNames() != null && !getNames().isEmpty()) {
 			for (PersonName name : getNames()) {
-				if (name.isPreferred() && !name.isVoided()) {
+				if (name.getPreferred() && !name.getVoided()) {
 					return name;
 				}
 			}
 			for (PersonName name : getNames()) {
-				if (!name.isVoided()) {
+				if (!name.getVoided()) {
 					return name;
 				}
 			}
 			
-			if (isVoided()) {
+			if (getVoided()) {
 				return getNames().iterator().next();
 			}
 		}
@@ -814,7 +813,8 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * Convenience method to get the {@link PersonAddress} object that is marked as "preferred". <br>
+	 * Convenience method to get the {@link PersonAddress} object that is marked as "preferred".
+	 * <br>
 	 * <br>
 	 * If two addresses are marked as preferred (or no addresses), the database ordering comes into
 	 * effect and the one that was created most recently will be returned. <br>
@@ -825,7 +825,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * 
 	 * @return the "preferred" person address.
 	 * @see #getAddresses()
-	 * @see PersonAddress#isPreferred()
+	 * @see PersonAddress#getPreferred()
 	 * @should get preferred and not-voided person address if exist
 	 * @should get not-voided person address if preferred address does not exist
 	 * @should get voided person address if person is voided and not-voided address does not exist
@@ -834,19 +834,19 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	public PersonAddress getPersonAddress() {
 		// normally the DAO layer returns these in the correct order, i.e. preferred and non-voided first, but it's possible that someone
 		// has fetched a Person, changed their addresses around, and then calls this method, so we have to be careful.
-		if (getAddresses() != null && getAddresses().size() > 0) {
+		if (getAddresses() != null && !getAddresses().isEmpty()) {
 			for (PersonAddress addr : getAddresses()) {
-				if (addr.isPreferred() && !addr.isVoided()) {
+				if (addr.getPreferred() && !addr.getVoided()) {
 					return addr;
 				}
 			}
 			for (PersonAddress addr : getAddresses()) {
-				if (!addr.isVoided()) {
+				if (!addr.getVoided()) {
 					return addr;
 				}
 			}
 			
-			if (isVoided()) {
+			if (getVoided()) {
 				return getAddresses().iterator().next();
 			}
 		}
@@ -986,11 +986,16 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	public Boolean getPersonVoided() {
-		return isPersonVoided();
+		return personVoided;
 	}
 	
+	/**
+	 * @deprecated as of 2.0, use {@link #getPersonVoided()}
+	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isPersonVoided() {
-		return personVoided;
+		return getPersonVoided();
 	}
 	
 	public User getPersonVoidedBy() {
@@ -1013,25 +1018,33 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	
 	/**
 	 * @return true/false whether this person is a patient or not
+	 *
+	 * @deprecated as of 2.0, use {@link #getIsPatient()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public boolean isPatient() {
-		return isPatient;
+		return getIsPatient();
 	}
 	
+	public boolean getIsPatient() {
+		return isPatient;
+	}
+
 	/**
 	 * This should only be set by the database layer by looking at whether a row exists in the
 	 * patient table
 	 * 
 	 * @param isPatient whether this person is a patient or not
 	 */
-	@SuppressWarnings("unused")
-	private void setPatient(boolean isPatient) {
+	protected void setPatient(boolean isPatient) {
 		this.isPatient = isPatient;
 	}
 	
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return "Person(personId=" + personId + ")";
 	}
@@ -1040,6 +1053,7 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getPersonId();
@@ -1049,9 +1063,54 @@ public class Person extends BaseOpenmrsData implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setPersonId(id);
 		
 	}
 	
+	// Deep copy helpers
+	
+	/**
+	 * Creates deep copy of set of addresses.
+	 * 
+	 * @param personAddressesSrc Set of addresses to be copied.
+	 * @return Deep copy of given set of addresses.
+	 */
+	private void deepCopyAddresses(Set<PersonAddress> personAddressesSrc) {
+		for (PersonAddress personAddressSrc : personAddressesSrc) {
+			PersonAddress personAddressDst = (PersonAddress) personAddressSrc.clone();
+			personAddressDst.setPerson(this);
+			this.getAddresses().add(personAddressDst);
+		}
+	}
+	
+	/**
+	 * Creates deep copy of set of names.
+	 * 
+	 * @param personNamesSrc Set of names to be copied.
+	 * @return Deep copy of given set of names.
+	 */
+	private void deepCopyNames(Set<PersonName> personNamesSrc) {
+		for (PersonName personNameSrc : personNamesSrc) {
+			PersonName personNameDst = PersonName.newInstance(personNameSrc);
+			personNameDst.setPerson(this);
+			this.getNames().add(personNameDst);
+		}
+	}
+	
+	/**
+	 * Creates deep copy of set of attributes.
+	 * 
+	 * @param personAttributesSrc Set of attributes to be copied.
+	 * @return Deep copy of given set of attributes.
+	 */
+	private void deepCopyAttributes(Set<PersonAttribute> personAttributesSrc) {
+		for (PersonAttribute personAttributeSrc : personAttributesSrc) {
+			PersonAttribute personAttributeDst = personAttributeSrc.copy();
+			personAttributeDst.setPerson(this);
+			personAttributeDst.setPersonAttributeId(personAttributeSrc.getPersonAttributeId());
+			this.getAttributes().add(personAttributeDst);
+		}
+	}
 }

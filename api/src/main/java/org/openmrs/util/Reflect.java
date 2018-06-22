@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.azeckoski.reflectutils.ClassData;
 import org.azeckoski.reflectutils.ClassDataCacher;
 import org.azeckoski.reflectutils.ClassFields;
 import org.azeckoski.reflectutils.exceptions.FieldnameNotFoundException;
@@ -30,14 +29,12 @@ import org.azeckoski.reflectutils.exceptions.FieldnameNotFoundException;
  */
 public class Reflect {
 	
-	@SuppressWarnings("unchecked")
 	private Class parametrizedClass;
 	
 	/**
 	 * @param parametrizedClass Class
 	 * @should throw exception when null is passed
 	 */
-	@SuppressWarnings("unchecked")
 	public Reflect(Class parametrizedClass) {
 		
 		if (parametrizedClass == null) {

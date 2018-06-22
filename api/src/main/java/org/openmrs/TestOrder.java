@@ -45,6 +45,7 @@ public class TestOrder extends Order {
 	 * @see org.openmrs.Order#copy()
 	 * @should copy all test order fields
 	 */
+	@Override
 	public TestOrder copy() {
 		return copyHelper(new TestOrder());
 	}
@@ -164,7 +165,6 @@ public class TestOrder extends Order {
 		newOrder.setPreviousOrder(this);
 		newOrder.setPatient(getPatient());
 		newOrder.setOrderType(getOrderType());
-		
 		return newOrder;
 	}
 	
@@ -192,7 +192,6 @@ public class TestOrder extends Order {
 		target.setClinicalHistory(getClinicalHistory());
 		target.setFrequency(getFrequency());
 		target.setNumberOfRepeats(getNumberOfRepeats());
-		
 		return target;
 	}
 }

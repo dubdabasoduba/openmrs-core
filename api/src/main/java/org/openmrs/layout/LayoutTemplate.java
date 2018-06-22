@@ -44,7 +44,8 @@ public abstract class LayoutTemplate {
 	
 	protected List<String> requiredElements;
 	
-	protected int maxTokens = 0; // The largest number of tokens on one given line
+	// The largest number of tokens on one given line
+	protected int maxTokens = 0;
 	
 	protected String startDate;
 	
@@ -72,7 +73,7 @@ public abstract class LayoutTemplate {
 		LayoutSupport<?> as = getLayoutSupportInstance();
 		List<String> specialTokens = nonUniqueStringsGoLast(as.getSpecialTokens());
 		for (String token : specialTokens) {
-			line = line.replaceAll(token, this.LAYOUT_TOKEN);
+			line = line.replaceAll(token, LAYOUT_TOKEN);
 		}
 		return line;
 	}
@@ -183,7 +184,7 @@ public abstract class LayoutTemplate {
 					ret = new Vector<List<Map<String, String>>>();
 				}
 				String tokenizedLine = replaceTokens(line);
-				String[] nonTokens = tokenizedLine.split(this.LAYOUT_TOKEN);
+				String[] nonTokens = tokenizedLine.split(LAYOUT_TOKEN);
 				List<Map<String, String>> lineTokens = convertToTokens(line, nonTokens);
 				ret.add(lineTokens);
 			}
@@ -323,7 +324,8 @@ public abstract class LayoutTemplate {
 	 */
 	public int getMaxTokens() {
 		if (maxTokens == -1) {
-			getLines(); // initialize the maxTokens variable
+			// initialize the maxTokens variable
+			getLines();
 		}
 		
 		return maxTokens;
@@ -368,7 +370,8 @@ public abstract class LayoutTemplate {
 	
 	public List<String> nonUniqueStringsGoLast(List<String> strListArg) {
 		List<String> dup = new ArrayList<String>();
-		List<String> strList = new ArrayList(strListArg); // copy the list so we don't get concurrentmodification exceptions
+		// copy the list so we don't get concurrentmodification exceptions
+		List<String> strList = new ArrayList(strListArg);
 		for (String s : strList) {
 			for (String sInner : strList) {
 				if (sInner.indexOf(s) != -1 && s.length() < sInner.length() && !dup.contains(s)) {

@@ -15,19 +15,27 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.openmrs.Concept;
 import org.openmrs.api.APIException;
+import org.openmrs.api.context.Context;
+import org.openmrs.test.BaseContextSensitiveTest;
+import org.openmrs.util.OpenmrsConstants;
 
 /**
  * Tests methods in {@link org.openmrs.Allergies}.
  */
-public class AllergiesTest {
+public class AllergiesTest extends BaseContextSensitiveTest {
+	
+	private static final String ALLERGY_OTHER_NONCODED_TEST_DATASET = "org/openmrs/api/include/otherNonCodedConcept.xml";
 	
 	Allergies allergies;
 	
 	@Before
-	public void setup(){
+	public void setup() throws Exception {
 		allergies = new Allergies();
+
+		executeDataSet(ALLERGY_OTHER_NONCODED_TEST_DATASET);
+		Allergen.setOtherNonCodedConceptUuid(Context.getAdministrationService().getGlobalProperty(
+			    OpenmrsConstants.GP_ALLERGEN_OTHER_NON_CODED_UUID));
 	}
 	
 	/**
@@ -177,8 +185,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void add_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));
@@ -195,8 +202,7 @@ public class AllergiesTest {
 	 */
 	@Test
 	public void add_shouldAllowNonDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE1"));
@@ -244,8 +250,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void add2_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));
@@ -262,8 +267,7 @@ public class AllergiesTest {
 	 */
 	@Test
 	public void add2_shouldAllowNonDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE1"));
@@ -316,8 +320,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));
@@ -337,8 +340,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll_shouldAllowNonDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE1"));
@@ -394,8 +396,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll2_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));
@@ -415,8 +416,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll2_shouldAllowNonDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE1"));
@@ -474,8 +474,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll6_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));
@@ -495,8 +494,7 @@ public class AllergiesTest {
 	 */
 	@Test(expected = APIException.class)
 	public void addAll7_shouldNotAllowDuplicateNonCodedAllergen(){
-		Concept concept = new Concept();
-		concept.setUuid(Allergen.OTHER_NON_CODED_UUID);
+		Concept concept = Context.getConceptService().getConceptByUuid(Allergen.getOtherNonCodedConceptUuid());
 		
 		Allergy allergy1 = new Allergy();
 		allergy1.setAllergen(new Allergen(null, concept, "OTHER VALUE"));

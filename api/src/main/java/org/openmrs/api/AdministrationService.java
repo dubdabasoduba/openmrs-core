@@ -18,6 +18,7 @@ import java.util.SortedMap;
 import org.openmrs.GlobalProperty;
 import org.openmrs.ImplementationId;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.User;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.db.AdministrationDAO;
 import org.openmrs.util.HttpClient;
@@ -213,6 +214,7 @@ public interface AdministrationService extends OpenmrsService {
 	 * @should overwrite global property if exists
 	 * @should not allow different properties to have the same string with different case
 	 * @should save a global property whose typed value is handled by a custom datatype
+	 * @should evict all entries of search locale cache
 	 */
 	@Authorized(PrivilegeConstants.MANAGE_GLOBAL_PROPERTIES)
 	public GlobalProperty saveGlobalProperty(GlobalProperty gp) throws APIException;
@@ -291,7 +293,7 @@ public interface AdministrationService extends OpenmrsService {
 	 * MessageSourceService) filtered by the allowed locales (as indicated by this
 	 * AdministrationService).
 	 * 
-	 * @return list of allowed presentation locales TODO change this return type to list?
+	 * @return list of allowed presentation locales
 	 * @should return at least one locale if no locales defined in database yet
 	 * @should not return more locales than message source service locales
 	 * @should return only country locale if both country locale and language locale are specified in allowed list
@@ -333,7 +335,17 @@ public interface AdministrationService extends OpenmrsService {
 	 * @should throw throw APIException if the input is null
 	 */
 	public void validate(Object object, Errors errors) throws APIException;
-	
+
+	/**
+	 * Returns a list of locales used by the user when searching.
+	 *
+	 * @param currentLocale currently selected locale
+	 * @param user authenticated user
+	 * @return
+	 * @throws APIException
+     */
+	public List<Locale> getSearchLocales(Locale currentLocale, User user) throws APIException;
+
 	/**
 	 * Returns a list of locales used by the user when searching.
 	 * <p>
@@ -342,9 +354,10 @@ public interface AdministrationService extends OpenmrsService {
 	 * @return locales
 	 * @throws APIException
 	 * @since 1.8.4, 1.9.1, 1.10
-	 * @should include currently selected full locale and langugage
+	 * @should include currently selected full locale and language
 	 * @should include users proficient locales
 	 * @should exclude not allowed locales
+	 * @should cache results for a user
 	 */
 	public List<Locale> getSearchLocales() throws APIException;
 	

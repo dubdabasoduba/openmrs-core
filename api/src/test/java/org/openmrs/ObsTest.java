@@ -11,21 +11,32 @@ package org.openmrs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.Field;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.api.APIException;
+import org.openmrs.obs.ComplexData;
 import org.openmrs.test.Verifies;
+import org.openmrs.util.Reflect;
 
 /**
  * This class tests all methods that are not getter or setters in the Obs java object TODO: finish
@@ -38,6 +49,88 @@ public class ObsTest {
 	private static final String VERO = "Vero";
 	
 	private static final String FORM_NAMESPACE_PATH_SEPARATOR = "^";
+	
+	//ignore these fields, groupMembers and formNamespaceAndPath field are taken care of by other tests
+	private static final List<String> IGNORED_FIELDS = Arrays.asList("dirty", "log", "serialVersionUID",
+	    "DATE_TIME_PATTERN", "TIME_PATTERN", "DATE_PATTERN", "FORM_NAMESPACE_PATH_SEPARATOR",
+	    "FORM_NAMESPACE_PATH_MAX_LENGTH", "obsId", "groupMembers", "uuid", "changedBy", "dateChanged", "voided", "voidedBy",
+	    "voidReason", "dateVoided", "formNamespaceAndPath", "$jacocoData");
+	
+	private void resetObs(Obs obs) throws Exception {
+		Field field = Obs.class.getDeclaredField("dirty");
+		field.setAccessible(true);
+		try {
+			field.set(obs, false);
+		}
+		finally {
+			field.setAccessible(false);
+		}
+		assertFalse(obs.isDirty());
+	}
+	
+	private Obs createObs(Integer id) throws Exception {
+		Obs obs = new Obs(id);
+		List<Field> fields = Reflect.getAllFields(Obs.class);
+		for (Field field : fields) {
+			if (IGNORED_FIELDS.contains(field.getName())) {
+				continue;
+			}
+			setFieldValue(obs, field, false);
+		}
+		assertFalse(obs.isDirty());
+		return obs;
+	}
+
+	private void setFieldValue(Obs obs, Field field, boolean setAlternateValue) throws Exception {
+		final boolean accessible = field.isAccessible();
+		if (!accessible) {
+			field.setAccessible(true);
+		}
+		try {
+			Object oldFieldValue = field.get(obs);
+			Object newFieldValue = generateValue(field, setAlternateValue);
+			//sanity check
+			if (setAlternateValue) {
+				assertNotEquals("The old and new values should be different for field: Obs." + field.getName(),
+				    oldFieldValue, newFieldValue);
+			}
+			
+			field.set(obs, newFieldValue);
+		}
+		finally {
+			field.setAccessible(accessible);
+		}
+	}
+	
+	private Object generateValue(Field field, boolean setAlternateValue) throws Exception {
+		Object fieldValue;
+		if (field.getType().equals(Boolean.class)) {
+			fieldValue = setAlternateValue ? true : false;
+		} else if (field.getType().equals(Integer.class)) {
+			fieldValue = setAlternateValue ? 10 : 17;
+		} else if (field.getType().equals(Double.class)) {
+			fieldValue = setAlternateValue ? 5.0 : 7.0;
+		} else if (field.getType().equals(Date.class)) {
+			fieldValue = new Date();
+			if (setAlternateValue) {
+				Calendar c = Calendar.getInstance();
+				c.add(Calendar.MINUTE, 2);
+				fieldValue = c.getTime();
+			}
+		} else if (field.getType().equals(String.class)) {
+			fieldValue = setAlternateValue ? "old" : "new";
+		} else if (field.getType().equals(Person.class)) {
+			//setPerson updates the personId, so we want the personIds to match for the tests to be valid
+			fieldValue = new Person(setAlternateValue ? 10 : 17);
+		} else if (field.getType().equals(ComplexData.class)) {
+			fieldValue = new ComplexData(setAlternateValue ? "some complex data" : "Some other value", new Object());
+		} else {
+			fieldValue = field.getType().newInstance();
+		}
+		assertNotNull("Failed to generate a value for field: Obs." + field.getName());
+		
+		return fieldValue;
+	}
 	
 	/**
 	 * Tests the addToGroup method in ObsGroup
@@ -316,7 +409,7 @@ public class ObsTest {
 	@Test
 	public void getGroupMembers_shouldGetAllGroupMembersIfPassedTrueAndNonvoidedIfPassedFalse() throws Exception {
 		Obs parent = new Obs(1);
-		Set<Obs> members = new HashSet<Obs>();
+		Set<Obs> members = new HashSet<>();
 		members.add(new Obs(101));
 		members.add(new Obs(103));
 		Obs voided = new Obs(99);
@@ -554,4 +647,405 @@ public class ObsTest {
 		Obs obs = new Obs();
 		obs.setFormField("", path);
 	}
+	
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return false when no change has been made
+	 */
+	@Test
+	public void isDirty_shouldReturnFalseWhenNoChangeHasBeenMade() throws Exception {
+		assertFalse(new Obs().isDirty());
+		
+		//Should also work if setters are called with same values as the original
+		Obs obs = createObs(2);
+		obs.setGroupMembers(new LinkedHashSet<>());
+		obs.getConcept().setDatatype(new ConceptDatatype());
+		assertFalse(obs.isDirty());
+		BeanUtils.copyProperties(obs, BeanUtils.cloneBean(obs));
+		assertFalse(obs.isDirty());
+
+		obs = createObs(null);
+		obs.setGroupMembers(new LinkedHashSet<>());
+		obs.getConcept().setDatatype(new ConceptDatatype());
+		assertFalse(obs.isDirty());
+		BeanUtils.copyProperties(obs, BeanUtils.cloneBean(obs));
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return true when any immutable field has been changed with edited obs
+	 */
+	@Test
+	public void isDirty_shouldReturnTrueWhenAnyImmutableFieldHasBeenChangedForEditedObs() throws Exception {
+		Obs obs = createObs(2);
+		assertFalse(obs.isDirty());
+		updateImmutableFieldsAndAssert(obs, true);
+	}
+
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return false when any immutable field has been changed with new obs
+	 */
+	@Test
+	public void isDirty_shouldReturnFalseWhenAnyImmutableFieldHasBeenChangedForNewObs() throws Exception {
+		Obs obs = createObs(null);
+		assertFalse(obs.isDirty());
+		updateImmutableFieldsAndAssert(obs, false);
+	}
+
+	private void updateImmutableFieldsAndAssert(Obs obs, boolean assertion) throws Exception {
+		//Set all fields to some random values via reflection
+		List<Field> fields = Reflect.getAllFields(Obs.class);
+
+		final Integer originalPersonId = obs.getPersonId();
+		//call each setter and check that dirty has been set to true for each
+		for (Field field : fields) {
+			String fieldName = field.getName();
+			if (IGNORED_FIELDS.contains(fieldName)) {
+				continue;
+			}
+
+			if ("personId".equals(fieldName)) {
+				//call setPersonId because it is protected so BeanUtils.setProperty won't work
+				obs.setPersonId((Integer) generateValue(field, true));
+			} else {
+				BeanUtils.setProperty(obs, fieldName, generateValue(field, true));
+			}
+			assertEquals("Obs was not marked as dirty after changing: " + fieldName, obs.isDirty(), assertion);
+			if ("person".equals(fieldName)) {
+				//Because setPerson updates the personId we need to reset personId to its original value 
+				//that matches that of person otherwise the test will fail for the personId field
+				obs.setPersonId(originalPersonId);
+			}
+			
+			//reset for next field
+			resetObs(obs);
+		}
+	}
+	
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return false when only mutable fields are changed
+	 */
+	@Test
+	public void isDirty_shouldReturnFalseWhenOnlyMutableFieldsAreChanged() throws Exception {
+		Obs obs = new Obs();
+		obs.setVoided(true);
+		obs.setVoidedBy(new User(1000));
+		obs.setVoidReason("some other reason");
+		obs.setDateVoided(new Date());
+		assertFalse(obs.isDirty());
+
+		Obs obsEdited = new Obs(5);
+		obsEdited.setVoided(true);
+		obsEdited.setVoidedBy(new User(1000));
+		obsEdited.setVoidReason("some other reason");
+		obsEdited.setDateVoided(new Date());
+		assertFalse(obsEdited.isDirty());
+	}
+
+
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return true when a field is changed from a non null to a null value for edited obs
+	 */
+	@Test
+	public void isDirty_shouldReturnTrueWhenAnImmutableFieldIsChangedFromANonNullToANullValueForEditedObs() throws Exception {
+		Obs obs = createObs(2);
+		assertNotNull(obs.getComment());
+		obs.setComment(null);
+		assertTrue(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return true when a field is changed from a non null to a null value for new obs
+	 */
+	@Test
+	public void isDirty_shouldReturnFalsWhenAnImmutableFieldIsChangedFromANonNullToANullValueForNewObs() throws Exception {
+		Obs obs = createObs(null);
+		assertNotNull(obs.getComment());
+		obs.setComment(null);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return true when a field is changed from a null to a non null value in existing obs
+	 */
+	@Test
+	public void isDirty_shouldReturnTrueWhenAnImmutableFieldIsChangedFromANullToANonNullValueInExistingObs() throws Exception {
+		Obs obs = new Obs(5);
+		assertNull(obs.getComment());
+		obs.setComment("some non null value");
+		assertTrue(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#isDirty()
+	 * @verifies return true when a field is changed from a null to a non null value in new obs
+	 */
+	@Test
+	public void isDirty_shouldReturnFalseWhenAnImmutableFieldIsChangedFromANullToANonNullValueInNewObs() throws Exception {
+		Obs obs = new Obs();
+		assertNull(obs.getComment());
+		obs.setComment("some non null value");
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setFormField(String,String)
+	 * @verifies not mark the obs as dirty when the value has not been changed
+	 */
+	@Test
+	public void setFormField_shouldNotMarkTheObsAsDirtyWhenTheValueHasNotBeenChanged() throws Exception {
+		Obs obs = createObs(3);
+		obs.setFormField(obs.getFormFieldNamespace(), obs.getFormFieldPath());
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setFormField(String,String)
+	 * @verifies mark the obs as dirty when the value has been changed
+	 */
+	@Test
+	public void setFormField_shouldMarkTheObsAsDirtyWhenTheValueHasBeenChanged() throws Exception {
+		Obs obs = createObs(5);
+		final String newNameSpace = "someNameSpace";
+		final String newPath = "somePath";
+		assertNotEquals(newPath, obs.getFormFieldNamespace());
+		assertNotEquals(newNameSpace, obs.getFormFieldPath());
+		obs.setFormField(newNameSpace, newPath);
+		assertTrue(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setFormField(String,String)
+	 * @verifies mark the obs as dirty when the value is changed from a non null to a null value
+	 */
+	@Test
+	public void setFormField_shouldMarkTheObsAsDirtyWhenTheValueIsChangedFromANonNullToANullValue() throws Exception {
+		Obs obs = new Obs(2);
+		obs.setFormField("someNameSpace", "somePath");
+		resetObs(obs);
+		assertFalse(obs.isDirty());
+		assertNotNull(obs.getFormFieldNamespace());
+		assertNotNull(obs.getFormFieldPath());
+		obs.setFormField(null, null);
+		assertTrue(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#setFormField(String,String)
+	 * @verifies mark the obs as dirty when the value is changed from a null to a non null value
+	 */
+	@Test
+	public void setFormField_shouldMarkTheObsAsDirtyWhenTheValueIsChangedFromANullToANonNullValue() throws Exception {
+		Obs obs = new Obs(5);
+		assertNull(obs.getFormFieldNamespace());
+		assertNull(obs.getFormFieldPath());
+		obs.setFormField("someNameSpace", "somePath");
+		assertTrue(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#addGroupMember(Obs)
+	 * @verifies return dirtyflag as false when a duplicate obs is added as a member to existing obs
+	 */
+	@Test
+	public void addGroupMember_shouldReturnFalseWhenADuplicateObsIsAddedAsAMember() throws Exception {
+		Obs obs = new Obs(2);
+		Obs member = new Obs();
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+		resetObs(obs);
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#addGroupMember(Obs)
+	 * @verifies return dirtyflag as false when a duplicate obs is added as a member to existing obs
+	 */
+	@Test
+	public void addGroupMember_shouldReturnFalseWhenADuplicateObsIsAddedAsAMemberToNewObs() throws Exception {
+		Obs obs = new Obs();
+		Obs member = new Obs();
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+		resetObs(obs);
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#addGroupMember(Obs)
+	 * @verifies return isDirty false when a new obs is added as a member
+	 */
+	@Test
+	public void addGroupMember_shouldReturnFalseWhenANewObsIsAddedAsAMember() throws Exception {
+		Obs obs = new Obs(2);
+		Obs member1 = new Obs();
+		obs.addGroupMember(member1);
+		assertFalse(obs.isDirty());
+		resetObs(obs);
+		Obs member2 = new Obs();
+		obs.addGroupMember(member2);
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#removeGroupMember(Obs)
+	 * @verifies return false when a non existent obs is removed
+	 */
+	@Test
+	public void removeGroupMember_shouldReturnFalseWhenANonExistentObsIsRemoved() throws Exception {
+		Obs obs = new Obs();
+		obs.removeGroupMember(new Obs());
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#removeGroupMember(Obs)
+	 * @verifies return isDirty as false when an existing obs is removed from the group
+	 */
+	@Test
+	public void removeGroupMember_shouldReturnDirtyFalseWhenAnObsIsRemoved() throws Exception {
+		Obs obs = new Obs(2);
+		Obs member = new Obs();
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+		resetObs(obs);
+		obs.removeGroupMember(member);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#removeGroupMember(Obs)
+	 * @verifies return isDirty false when an new obs is removed from the group
+	 */
+	@Test
+	public void removeGroupMember_shouldReturnFalseForDirtyFlagWhenAnObsIsRemovedFromGroup() throws Exception {
+		Obs obs = new Obs();
+		Obs member = new Obs();
+		obs.addGroupMember(member);
+		assertFalse(obs.isDirty());
+		resetObs(obs);
+		obs.removeGroupMember(member);
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies do not mark the existing obs as dirty when the set is changed from null to a non empty one
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkTheExistingObsAsDirtyWhenTheSetIsChangedFromNullToANonEmptyOne() throws Exception {
+		Obs obs = new Obs(5);
+		assertNull(Obs.class.getDeclaredField("groupMembers").get(obs));
+		Set<Obs> members = new HashSet<>();
+		members.add(new Obs());
+		obs.setGroupMembers(members);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies do not mark the new obs as dirty when the set is changed from null to a non empty one
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkNewObsAsDirtyWhenTheSetIsChangedFromNullToANonEmptyOne() throws Exception {
+		Obs obs = new Obs();
+		assertNull(Obs.class.getDeclaredField("groupMembers").get(obs));
+		Set<Obs> members = new HashSet<>();
+		members.add(new Obs());
+		obs.setGroupMembers(members);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies do not mark the existing obs as dirty when the set is replaced with another with different members
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkTheExistingObsAsDirtyWhenTheSetIsReplacedWithAnotherWithDifferentMembers()
+	    throws Exception {
+		Obs obs = new Obs(2);
+		Set<Obs> members1 = new HashSet<>();
+		members1.add(new Obs());
+		obs.setGroupMembers(members1);
+		resetObs(obs);
+		Set<Obs> members2 = new HashSet<>();
+		members2.add(new Obs());
+		obs.setGroupMembers(members2);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies do not mark the new obs as dirty when the set is replaced with another with different members
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkTheNewObsAsDirtyWhenTheSetIsReplacedWithAnotherWithDifferentMembers()
+			throws Exception {
+		Obs obs = new Obs();
+		Set<Obs> members1 = new HashSet<>();
+		members1.add(new Obs());
+		obs.setGroupMembers(members1);
+		assertFalse(obs.isDirty());
+		Set<Obs> members2 = new HashSet<>();
+		members2.add(new Obs());
+		obs.setGroupMembers(members2);
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies not mark the obs as dirty when the set is changed from null to an empty one
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkTheObsAsDirtyWhenTheSetIsChangedFromNullToAnEmptyOne() throws Exception {
+		Obs obs = new Obs();
+		assertNull(Obs.class.getDeclaredField("groupMembers").get(obs));
+		obs.setGroupMembers(new HashSet<>());
+		assertFalse(obs.isDirty());
+	}
+	
+	/**
+	 * @see Obs#setGroupMembers(Set)
+	 * @verifies not mark the obs as dirty when the set is replaced with another with same members
+	 */
+	@Test
+	public void setGroupMembers_shouldNotMarkTheObsAsDirtyWhenTheSetIsReplacedWithAnotherWithSameMembers() throws Exception {
+		Obs obs = new Obs();
+		Obs o = new Obs();
+		Set<Obs> members1 = new HashSet<>();
+		members1.add(o);
+		obs.setGroupMembers(members1);
+		resetObs(obs);
+		Set<Obs> members2 = new HashSet<>();
+		members2.add(o);
+		obs.setGroupMembers(members2);
+		assertFalse(obs.isDirty());
+	}
+
+	/**
+	 * @see Obs#setObsDatetime(Date)
+	 * @verifies not mark the obs as dirty when same date is set again and existing value is of Timestamp instance
+	 */
+	@Test
+	public void setObsDateTime_shouldNotMarkTheObsAsDirtyWhenDateIsNotChangedAndExistingValueIsOfTimeStampType(){
+		Obs obs = new Obs();
+		Date date = new Date();
+		Timestamp timestamp = new Timestamp(date.getTime());
+		obs.setObsDatetime(timestamp);
+		obs.setId(1);
+		assertFalse(obs.isDirty());
+
+		obs.setObsDatetime(date);
+
+		assertFalse(obs.isDirty());
+	}
+
 }

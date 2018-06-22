@@ -24,14 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.Assert;
-
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.openmrs.Cohort;
 import org.openmrs.Patient;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
@@ -163,8 +161,8 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		assertEquals(11, allUsers.size());
 		
 		// there should still only be the one patient we created in the xml file
-		Cohort allPatientsSet = Context.getPatientSetService().getAllPatients();
-		assertEquals(1, allPatientsSet.getSize());
+		List<Patient> allPatientsSet = Context.getPatientService().getAllPatients();
+		assertEquals(1, allPatientsSet.size());
 	}
 	
 	/**
@@ -1082,7 +1080,7 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		UserService userService = Context.getUserService();
 		User user = userService.getUser(502);
 		userService.retireUser(user, "because");
-		Assert.assertTrue(user.isRetired());
+		Assert.assertTrue(user.getRetired());
 		Assert.assertNotNull(user.getDateRetired());
 		Assert.assertNotNull(user.getRetiredBy());
 		Assert.assertEquals("because", user.getRetireReason());
@@ -1097,7 +1095,7 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		UserService userService = Context.getUserService();
 		User user = userService.getUser(501);
 		userService.unretireUser(user);
-		Assert.assertFalse(user.isRetired());
+		Assert.assertFalse(user.getRetired());
 		Assert.assertNull(user.getDateRetired());
 		Assert.assertNull(user.getRetiredBy());
 		Assert.assertNull(user.getRetireReason());
@@ -1259,7 +1257,7 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		Context.authenticate(user6001.getUsername(), "userServiceTest");
 		
 		expectedException.expect(APIAuthenticationException.class);
-		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.privilegesRequired"));
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.privilegesRequired", new Object[] {PrivilegeConstants.EDIT_USER_PASSWORDS}, null));
 		userService.changePassword(user6001, wrongPassword, newPassword);
 	}
 	
@@ -1281,7 +1279,7 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		Context.authenticate(user6001.getUsername(), "userServiceTest");
 		
 		expectedException.expect(APIException.class);
-		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.privilegesRequired"));
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.privilegesRequired", new Object[] {PrivilegeConstants.EDIT_USER_PASSWORDS}, null));
 		userService.changePassword(user6001, oldPassword, newPassword);
 	}
 	
@@ -1298,7 +1296,7 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		String oldPassword = "userServiceTest";
 		String weakPassword = "weak";
 		
-		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.password.length"));
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.password.length", new Object[] {"8"}, null));
 		userService.changePassword(user6001, oldPassword, weakPassword);
 	}
 	
@@ -1314,15 +1312,71 @@ public class UserServiceTest extends BaseContextSensitiveTest {
 		String anyString = "anyString";
 		
 		expectedException.expect(APIException.class);
-		expectedException.expectMessage("user.must.exist");
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("user.must.exist"));
 		userService.changePassword(notExistingUser, anyString, anyString);
 	}
 
     @Test
     public void changePassword_shouldThrowShortPasswordExceptionWithShortPassword() throws Exception {
         expectedException.expect(ShortPasswordException.class);
-        expectedException.expectMessage("error.password.length");
+        expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.password.length", new Object[] {"8"}, null));
 
         Context.getUserService().changePassword("test", "");
     }
+    
+	@Test
+	@Verifies(value = "should update password of given user when logged in user has edit users password privilege", method = "changePassword(User,String)")
+	public void changePassword_shouldUpdatePasswordOfGivenUserWhenLoggedInUserHasEditUsersPasswordPrivilege() throws Exception {
+		UserService userService = Context.getUserService();
+		User user = userService.getUserByUsername("admin");
+		assertNotNull("There needs to be a user with username 'admin' in the database", user);
+		
+		userService.changePassword(user, "testTest123");
+		
+		Context.authenticate(user.getUsername(), "testTest123");
+	}
+	
+	@Test
+	@Verifies(value = "should not update password of given user when logged in user does not have edit users password privilege", method = "changePassword(User,String)")
+	public void changePassword_shouldNotUpdatePasswordOfGivenUserWhenLoggedInUserDoesNotHaveEditUsersPasswordPrivilege() throws Exception {
+		executeDataSet(XML_FILENAME_WITH_DATA_FOR_CHANGE_PASSWORD_ACTION);
+		UserService userService = Context.getUserService();
+		User user = userService.getUser(6001);
+		assertFalse(user.hasPrivilege(PrivilegeConstants.EDIT_USER_PASSWORDS));
+		Context.authenticate(user.getUsername(), "userServiceTest");
+		
+		expectedException.expect(APIAuthenticationException.class);
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("error.privilegesRequired", new Object[] {PrivilegeConstants.EDIT_USER_PASSWORDS}, null));
+		
+		userService.changePassword(user, "testTest123");
+	}
+	
+	@Test
+	@Verifies(value = "should update password if secret is correct", method = "changePasswordUsingSecretAnswer(String,String)")
+	public void changePasswordUsingSecretAnswer_shouldUpdatePasswordIfSecretIsCorrect() throws Exception {
+		executeDataSet(XML_FILENAME_WITH_DATA_FOR_CHANGE_PASSWORD_ACTION);
+		UserService userService = Context.getUserService();
+		User user = userService.getUser(6001);
+		assertFalse(user.hasPrivilege(PrivilegeConstants.EDIT_USER_PASSWORDS));
+		Context.authenticate(user.getUsername(), "userServiceTest");
+		
+		userService.changePasswordUsingSecretAnswer("answer", "userServiceTest2");
+		
+		Context.authenticate(user.getUsername(), "userServiceTest2");
+	}
+
+	@Test
+	@Verifies(value = "should not update password if secret is not correct", method = "changePasswordUsingSecretAnswer(String,String)")
+	public void changePasswordUsingSecretAnswer_shouldNotUpdatePasswordIfSecretIsNotCorrect() throws Exception {
+		executeDataSet(XML_FILENAME_WITH_DATA_FOR_CHANGE_PASSWORD_ACTION);
+		UserService userService = Context.getUserService();
+		User user = userService.getUser(6001);
+		assertFalse(user.hasPrivilege(PrivilegeConstants.EDIT_USER_PASSWORDS));
+		Context.authenticate(user.getUsername(), "userServiceTest");
+		
+		expectedException.expect(APIException.class);
+		expectedException.expectMessage(Context.getMessageSourceService().getMessage("secret.answer.not.correct"));
+		
+		userService.changePasswordUsingSecretAnswer("wrong answer", "userServiceTest2");
+	}
 }

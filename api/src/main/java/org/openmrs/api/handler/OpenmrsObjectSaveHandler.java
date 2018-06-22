@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.Obs;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 import org.openmrs.Voidable;
@@ -54,6 +55,7 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 	 * @should trim strings without AllowLeadingOrTrailingWhitespace annotation
 	 * @should trim empty strings for AllowEmptyStrings annotation
 	 */
+	@Override
 	public void handle(OpenmrsObject openmrsObject, User creator, Date dateCreated, String reason) {
 		if (openmrsObject.getUuid() == null) {
 			openmrsObject.setUuid(UUID.randomUUID().toString());
@@ -82,7 +84,8 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 			}
 			
 			//We are dealing with only strings
-			if (!property.getPropertyType().equals(String.class)) {
+            //TODO We shouldn't be doing this for all immutable types and fields
+			if (openmrsObject instanceof Obs ||!property.getPropertyType().equals(String.class)) {
 				continue;
 			}
 			
@@ -107,7 +110,7 @@ public class OpenmrsObjectSaveHandler implements SaveHandler<OpenmrsObject> {
 					continue;
 				}
 				
-				if ("".equals(value) && !(openmrsObject instanceof Voidable && ((Voidable) openmrsObject).isVoided())) {
+				if ("".equals(value) && !(openmrsObject instanceof Voidable && ((Voidable) openmrsObject).getVoided())) {
 					//Set to null only if object is not already voided
 					PropertyUtils.setProperty(openmrsObject, property.getName(), null);
 				}

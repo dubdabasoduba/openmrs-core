@@ -9,12 +9,11 @@
  */
 package org.openmrs.notification;
 
-import java.io.Serializable;
 import java.util.Map;
 
 import org.openmrs.BaseOpenmrsObject;
 
-public class Template extends BaseOpenmrsObject implements Serializable {
+public class Template extends BaseOpenmrsObject {
 	
 	/**
 	 * 
@@ -37,7 +36,6 @@ public class Template extends BaseOpenmrsObject implements Serializable {
 	private String subject;
 	
 	// Not persisted
-	@SuppressWarnings("unchecked")
 	private Map data;
 	
 	private String content;
@@ -51,10 +49,12 @@ public class Template extends BaseOpenmrsObject implements Serializable {
 		this.template = template;
 	}
 	
+	@Override
 	public void setId(Integer id) {
 		this.id = id;
 	}
 	
+	@Override
 	public Integer getId() {
 		return id;
 	}
@@ -107,12 +107,10 @@ public class Template extends BaseOpenmrsObject implements Serializable {
 		return ordinal;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void setData(Map data) {
 		this.data = data;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Map getData() {
 		return this.data;
 	}

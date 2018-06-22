@@ -22,7 +22,7 @@ import org.openmrs.util.OpenmrsConstants;
  * encounter that prompted this proposal is updated with a new observation pointing at the new (or
  * edited) concept.
  */
-public class ConceptProposal extends BaseOpenmrsObject implements java.io.Serializable {
+public class ConceptProposal extends BaseOpenmrsObject {
 	
 	public static final long serialVersionUID = 57344L;
 	
@@ -207,6 +207,7 @@ public class ConceptProposal extends BaseOpenmrsObject implements java.io.Serial
 		this.encounter = encounter;
 	}
 	
+	@Override
 	public String toString() {
 		if (conceptProposalId == null) {
 			return "";
@@ -269,6 +270,7 @@ public class ConceptProposal extends BaseOpenmrsObject implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getConceptProposalId();
 	}
@@ -277,6 +279,7 @@ public class ConceptProposal extends BaseOpenmrsObject implements java.io.Serial
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setConceptProposalId(id);
 	}

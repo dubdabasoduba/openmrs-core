@@ -9,8 +9,6 @@
  */
 package org.openmrs;
 
-import java.io.Serializable;
-
 /**
  * The concept Reference Term map object represents a mapping between two Concept Reference Terms. A
  * concept reference term can have 0 to N concept reference term mappings to any or all Concept
@@ -18,7 +16,7 @@ import java.io.Serializable;
  *
  * @since 1.9
  */
-public class ConceptReferenceTermMap extends BaseConceptMap implements Serializable {
+public class ConceptReferenceTermMap extends BaseConceptMap {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -95,6 +93,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	/**
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getConceptReferenceTermMapId();
 	}
@@ -102,6 +101,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	/**
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setConceptReferenceTermMapId(id);
 	}
@@ -109,6 +109,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
+	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof ConceptReferenceTermMap)) {
 			return false;
@@ -124,6 +125,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	/**
 	 * @see java.lang.Object#hashCode()
 	 */
+	@Override
 	public int hashCode() {
 		if (this.conceptReferenceTermMapId == null) {
 			return super.hashCode();
@@ -136,6 +138,7 @@ public class ConceptReferenceTermMap extends BaseConceptMap implements Serializa
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		if (conceptReferenceTermMapId == null) {
 			return "";

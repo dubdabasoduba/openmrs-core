@@ -12,7 +12,9 @@ package org.openmrs.api.db;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,7 @@ public class EncounterDAOTest extends BaseContextSensitiveTest {
 			// fetch the dao from the spring application context
 			// this bean name matches the name in /metadata/spring/applicationContext-service.xml
 			dao = (EncounterDAO) applicationContext.getBean("encounterDAO");
+		
 	}
 	
 	/**
@@ -74,4 +77,48 @@ public class EncounterDAOTest extends BaseContextSensitiveTest {
 		assertEquals(origDate, encounterDateFromDatabase);
 	}
 	
+	/**
+	 * @see EncounterDAO#getEncounters(query, patientId, start, length, includeVoided)
+	 */
+	@Test
+	@Verifies(value = "should return encounter when query by name", method = "getEncounters(Name, null, null, null, true)")
+	public void getEncounters_shouldWork_WithNameQuery() throws Exception {
+		List<Encounter> expectedEncountersForPatientOne = initializeExpectedEncounters();
+		List<Encounter> encounters = dao.getEncounters("John Doe", null, null, null, true);
+		assertEquals(expectedEncountersForPatientOne, encounters);
+	}
+	
+	/**
+	 * @see EncounterDAO#getEncounters(query, patientId, start, length, includeVoided)
+	 */
+	@Test
+	@Verifies(value = "should return encounter when querying by numeric and string identifiers", method = "getEncounters(Identifier, null, null, null, true)")
+	public void getEncounters_shouldWork_WithIdentifierQuery() throws Exception {
+		List<Encounter> expectedEncountersForPatientOne = initializeExpectedEncounters();
+		
+		List<Encounter> encountersByNumericIdentifier = dao.getEncounters("1234", null, null, null, true);
+		assertEquals(expectedEncountersForPatientOne, encountersByNumericIdentifier);
+		
+		List<Encounter> encountersByStringIdentifier = dao.getEncounters("abcd", null, null, null, true);
+		assertEquals(expectedEncountersForPatientOne, encountersByStringIdentifier);
+	}
+	
+	private List<Encounter> initializeExpectedEncounters() {
+		Encounter encounterOne = Context.getEncounterService().getEncounter(1);
+		Encounter encounterSix = Context.getEncounterService().getEncounter(6);
+		List<Encounter> expectedEncountersForPatientOne = new ArrayList<Encounter>();
+		expectedEncountersForPatientOne.add(encounterOne);
+		expectedEncountersForPatientOne.add(encounterSix);
+		return expectedEncountersForPatientOne;
+	}
+	
+	/**
+	 * @see EncounterDAO#getEncounters(query, patientId, start, length, includeVoided)
+	 */
+	@Test
+	@Verifies(value = "should not return encounter on a partial match of an identifier", method = "getEncounters(Identifier, null, null, null, true)")
+	public void getEncounters_shouldNotWork_WithPartialIdentifier() throws Exception {	
+		List<Encounter> encountersByPartialIdentifier = dao.getEncounters("123", null, null, null, true);
+		assertEquals(0, encountersByPartialIdentifier.size());
+	}
 }

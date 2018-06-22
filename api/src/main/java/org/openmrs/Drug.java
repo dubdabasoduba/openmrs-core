@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -24,7 +25,7 @@ import org.openmrs.api.context.Context;
  * Drug
  */
 @Indexed
-public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class Drug extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 285L;
 	
@@ -36,15 +37,9 @@ public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
 	
 	private Concept dosageForm;
 	
-	private Double doseStrength;
-	
 	private Double maximumDailyDose;
 	
 	private Double minimumDailyDose;
-	
-	private Concept route;
-	
-	private String units;
 	
 	private String strength;
 	
@@ -89,7 +84,7 @@ public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
 	}
 	
 	/**
-	 * Gets the entires concept drug name in the form of CONCEPTNAME (Drug: DRUGNAME)
+	 * Gets the entries concept drug name in the form of CONCEPTNAME (Drug: DRUGNAME)
 	 * 
 	 * @param locale
 	 * @return full drug name (with concept name appended)
@@ -106,13 +101,17 @@ public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * Gets whether or not this is a combination drug
 	 *
 	 * @return Boolean
+	 * 
+	 * @deprecated as of 2.0, use {@link #getCombination()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public Boolean isCombination() {
-		return this.combination;
+		return getCombination();
 	}
 	
 	public Boolean getCombination() {
-		return isCombination();
+		return combination;
 	}
 	
 	/**
@@ -207,6 +206,7 @@ public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		
 		return getDrugId();
@@ -216,6 +216,7 @@ public class Drug extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setDrugId(id);
 	}

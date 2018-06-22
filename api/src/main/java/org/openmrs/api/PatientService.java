@@ -563,8 +563,7 @@ public interface PatientService extends OpenmrsService {
 	/**
 	 * Convenience method to establish that a patient has died. In addition to exiting the patient
 	 * from care (see above), this method will also set the appropriate patient characteristics to
-	 * indicate that they have died, when they died, etc. TODO Keep this in the PatientService? Or
-	 * move to appropriate service
+	 * indicate that they have died, when they died, etc.
 	 * 
 	 * @param patient - the patient who has died
 	 * @param dateDied - the declared date/time of the patient's death
@@ -572,14 +571,14 @@ public interface PatientService extends OpenmrsService {
 	 * @param otherReason - if the concept representing the reason is OTHER NON-CODED, and a
 	 *            string-based "other" reason is supplied
 	 * @throws APIException
-	 * @should be tested more thoroughly
+	 * @should throw API exception if patient is null 
 	 */
 	@Authorized( { PrivilegeConstants.EDIT_PATIENTS })
 	public void processDeath(Patient patient, Date dateDied, Concept causeOfDeath, String otherReason) throws APIException;
 	
 	/**
 	 * Convenience method that saves the Obs that indicates when and why the patient died (including
-	 * any "other" reason there might be) TODO keep this in the PatientService?
+	 * any "other" reason there might be)
 	 * 
 	 * @param patient - the patient who has died
 	 * @param dateDied - the declared date/time of the patient's death
@@ -735,14 +734,27 @@ public interface PatientService extends OpenmrsService {
 	Allergies setAllergies(Patient patient, Allergies allergies);
 	
 	/**
-	 * Returns the Allergy
+	 * Returns the Allergy identified by internal Ingerger Id
 	 * 
-	 * @param allergyListId
+	 * @param allergyListId identifies allergy by internal Ingerger Id
 	 * @return the allergy
 	 * @throws APIException
 	 */
 	@Authorized( { PrivilegeConstants.GET_ALLERGIES })
 	public Allergy getAllergy(Integer allergyListId) throws APIException;
+	
+	/**
+	 * Returns the Allergy identified by uuid
+	 * 
+	 * @since 2.0
+	 * @param uuid identifies allergy 
+	 * @return the allergy matching the given uuid
+	 * @should return allergy given valid uuid
+	 * @should return null if no object found with given uuid
+	 * @throws APIException
+	 */
+	@Authorized( { PrivilegeConstants.GET_ALLERGIES })
+	public Allergy getAllergyByUuid(String uuid) throws APIException;
 	
 	/**
 	 * Creates an AllergyListItem to the Patient's Allergy Active List. Sets the start date to now,

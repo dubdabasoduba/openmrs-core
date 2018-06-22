@@ -22,7 +22,7 @@ import org.openmrs.api.context.Context;
  * Radiology TestOrders
  *
  */
-public class OrderType extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class OrderType extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 23232L;
 	
@@ -85,6 +85,7 @@ public class OrderType extends BaseOpenmrsMetadata implements java.io.Serializab
 	/**
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getOrderTypeId();
 	}
@@ -92,6 +93,7 @@ public class OrderType extends BaseOpenmrsMetadata implements java.io.Serializab
 	/**
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setOrderTypeId(id);
 		

@@ -9,13 +9,12 @@
  */
 package org.openmrs.util;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.Drug;
 
 /**
- * The Class DrugsByNameComparatorTest. Contains tests for DrugsByNameCOmparator
+ * The Class DrugsByNameComparatorTest. Contains tests for DrugsByNameComparator
  */
 public class DrugsByNameComparatorTest {
 	

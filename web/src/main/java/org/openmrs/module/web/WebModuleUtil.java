@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.jar.JarEntry;
@@ -51,7 +50,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.Module;
-import org.openmrs.module.ModuleConstants;
 import org.openmrs.module.ModuleException;
 import org.openmrs.module.ModuleFactory;
 import org.openmrs.module.ModuleUtil;
@@ -133,9 +131,6 @@ public class WebModuleUtil {
 				webInf.mkdir();
 			}
 			
-			copyModuleMessagesIntoWebapp(mod, realPath);
-			log.debug("Done copying messages");
-			
 			// flag to tell whether we added any xml/dwr/etc changes that necessitate a refresh
 			// of the web application context
 			boolean moduleNeedsContextRefresh = false;
@@ -158,7 +153,7 @@ public class WebModuleUtil {
 						// trim out the starting path of "web/module/"
 						String filepath = name.substring(11);
 						
-						StringBuffer absPath = new StringBuffer(realPath + "/WEB-INF");
+						StringBuilder absPath = new StringBuilder(realPath + "/WEB-INF");
 						
 						// If this is within the tag file directory, copy it into /WEB-INF/tags/module/moduleId/...
 						if (filepath.startsWith("tags/")) {
@@ -198,7 +193,7 @@ public class WebModuleUtil {
 							inStream = jarFile.getInputStream(entry);
 							OpenmrsUtil.copyFile(inStream, outStream);
 						}
-					} else if (name.equals("moduleApplicationContext.xml") || name.equals("webModuleApplicationContext.xml")) {
+					} else if ("moduleApplicationContext.xml".equals(name) || "webModuleApplicationContext.xml".equals(name)) {
 						moduleNeedsContextRefresh = true;
 					} else if (name.equals(mod.getModuleId() + "Context.xml")) {
 						String msg = "DEPRECATED: '" + name
@@ -298,7 +293,7 @@ public class WebModuleUtil {
 			outFile.deleteOnExit();
 			
 			// additional checks on module needing a context refresh
-			if (moduleNeedsContextRefresh == false && mod.getAdvicePoints() != null && mod.getAdvicePoints().size() > 0) {
+			if (!moduleNeedsContextRefresh && mod.getAdvicePoints() != null && !mod.getAdvicePoints().isEmpty()) {
 				
 				// AOP advice points are only loaded during the context refresh now.
 				// if the context hasn't been marked to be refreshed yet, mark it
@@ -309,7 +304,7 @@ public class WebModuleUtil {
 			
 			// refresh the spring web context to get the just-created xml
 			// files into it (if we copied an xml file)
-			if (moduleNeedsContextRefresh && delayContextRefresh == false) {
+			if (moduleNeedsContextRefresh && !delayContextRefresh) {
 				if (log.isDebugEnabled()) {
 					log.debug("Refreshing context for module" + mod);
 				}
@@ -359,7 +354,7 @@ public class WebModuleUtil {
 			}
 			
 			// return true if the module needs a context refresh and we didn't do it here
-			return (moduleNeedsContextRefresh && delayContextRefresh == true);
+			return (moduleNeedsContextRefresh && delayContextRefresh);
 			
 		}
 		
@@ -402,83 +397,6 @@ public class WebModuleUtil {
 	public static boolean isModulePackageNameInTaskClass(String modulePackageName, String taskClass) {
 		return modulePackageName.length() <= taskClass.length()
 		        && taskClass.matches(Pattern.quote(modulePackageName) + "(\\..*)+");
-	}
-	
-	/**
-	 * Method visibility is package-private for testing
-	 *
-	 * @param mod
-	 * @param realPath
-	 * @should prefix messages with module id
-	 * @should not prefix messages with module id if override setting is specified
-	 */
-	static void copyModuleMessagesIntoWebapp(Module mod, String realPath) {
-		for (Entry<String, Properties> localeEntry : mod.getMessages().entrySet()) {
-			if (log.isDebugEnabled()) {
-				log.debug("Copying message property file: " + localeEntry.getKey());
-			}
-			
-			Properties props = localeEntry.getValue();
-			
-			if (!"true".equalsIgnoreCase(props
-			        .getProperty(ModuleConstants.MESSAGE_PROPERTY_ALLOW_KEYS_OUTSIDE_OF_MODULE_NAMESPACE))) {
-				// set all properties to start with 'moduleName.' if not already
-				List<Object> keys = new Vector<Object>();
-				keys.addAll(props.keySet());
-				for (Object obj : keys) {
-					String key = (String) obj;
-					if (!key.startsWith(mod.getModuleId())) {
-						props.put(mod.getModuleId() + "." + key, props.get(key));
-						props.remove(key);
-					}
-				}
-			}
-			
-			String lang = "_" + localeEntry.getKey();
-			if (lang.equals("_en") || lang.equals("_")) {
-				lang = "";
-			}
-			
-			insertIntoModuleMessagePropertiesFile(realPath, props, lang);
-		}
-	}
-	
-	/**
-	 * Copies a module's messages into the shared module_messages(lang).properties file
-	 *
-	 * @param realPath actual file path of the servlet context
-	 * @param props messages to copy into the shared message properties file (replacing any existing
-	 *            ones)
-	 * @param lang the empty string to represent the locale "en", or something like "_fr" for any
-	 *            other locale
-	 * @return true if the everything worked
-	 */
-	private static boolean insertIntoModuleMessagePropertiesFile(String realPath, Properties props, String lang) {
-		String path = "/WEB-INF/module_messages@LANG@.properties";
-		String currentPath = path.replace("@LANG@", lang);
-		
-		String absolutePath = realPath + currentPath;
-		File file = new File(absolutePath);
-		try {
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-		}
-		catch (IOException ioe) {
-			log.error("Unable to create new file " + file.getAbsolutePath() + " " + ioe);
-		}
-		
-		try {
-			//Copy to the module properties file replacing any keys that already exist
-			Properties allModulesProperties = new Properties();
-			OpenmrsUtil.loadProperties(allModulesProperties, file);
-			allModulesProperties.putAll(props);
-			OpenmrsUtil.storeProperties(allModulesProperties, new FileOutputStream(file), null);
-		}
-		catch (FileNotFoundException e) {
-			throw new ModuleException("Unable to load module messages from file: " + file.getAbsolutePath(), e);
-		}
-		return true;
 	}
 	
 	/**
@@ -652,7 +570,7 @@ public class WebModuleUtil {
 	public static void unloadFilters(Module module) {
 		
 		// Unload Filter Mappings
-		for (java.util.Iterator<ModuleFilterMapping> mapIter = moduleFilterMappings.iterator(); mapIter.hasNext();) {
+		for (Iterator<ModuleFilterMapping> mapIter = moduleFilterMappings.iterator(); mapIter.hasNext();) {
 			ModuleFilterMapping mapping = mapIter.next();
 			if (module.equals(mapping.getModule())) {
 				mapIter.remove();
@@ -811,7 +729,7 @@ public class WebModuleUtil {
 	 * @param servletContext
 	 * @param skipRefresh
 	 */
-	private static void stopModule(Module mod, ServletContext servletContext, boolean skipRefresh) {
+	public static void stopModule(Module mod, ServletContext servletContext, boolean skipRefresh) {
 		
 		String moduleId = mod.getModuleId();
 		String modulePackage = mod.getPackageName();
@@ -907,7 +825,7 @@ public class WebModuleUtil {
 			}
 		}
 		
-		if (skipRefresh == false) {
+		if (!skipRefresh) {
 			//try {
 			//	if (dispatcherServlet != null)
 			//		dispatcherServlet.reInitFrameworkServlet();
@@ -934,7 +852,7 @@ public class WebModuleUtil {
 		XmlWebApplicationContext wac = (XmlWebApplicationContext) WebApplicationContextUtils
 		        .getWebApplicationContext(servletContext);
 		if (log.isDebugEnabled()) {
-			log.debug("Refreshing web applciation Context of class: " + wac.getClass().getName());
+			log.debug("Refreshing web application Context of class: " + wac.getClass().getName());
 		}
 		
 		if (dispatcherServlet != null) {

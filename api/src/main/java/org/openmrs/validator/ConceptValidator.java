@@ -19,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
+import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptName;
 import org.openmrs.annotation.Handler;
@@ -36,7 +37,7 @@ import org.springframework.validation.Validator;
  * to this source also need to be reflected on that page.
  */
 @Handler(supports = { Concept.class }, order = 50)
-public class ConceptValidator implements Validator {
+public class ConceptValidator extends BaseCustomizableValidator implements Validator {
 	
 	// Log for this class
 	private static final Log log = LogFactory.getLog(ConceptValidator.class);
@@ -46,8 +47,8 @@ public class ConceptValidator implements Validator {
 	 *
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
 	 */
-	@SuppressWarnings("rawtypes")
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return Concept.class.isAssignableFrom(c);
 	}
 	
@@ -56,7 +57,7 @@ public class ConceptValidator implements Validator {
 	 *
 	 * @see org.springframework.validation.Validator#validate(java.lang.Object,
 	 *      org.springframework.validation.Errors)
-	 * @should pass if the concept has atleast one fully specified name added to it
+	 * @should pass if the concept has at least one fully specified name added to it
 	 * @should fail if there is a duplicate unretired concept name in the locale
 	 * @should fail if there is a duplicate unretired preferred name in the same locale
 	 * @should fail if there is a duplicate unretired fully specified name in the same locale
@@ -84,7 +85,10 @@ public class ConceptValidator implements Validator {
 	 * @should fail validation if field lengths are not correct
 	 * @should pass if fully specified name is the same as short name
 	 * @should pass if different concepts have the same short name
+	 * @should fail if the concept datatype is null
+	 * @should fail if the concept class is null
 	 */
+	@Override
 	public void validate(Object obj, Errors errors) throws APIException, DuplicateConceptNameException {
 		
 		if (obj == null || !(obj instanceof Concept)) {
@@ -93,17 +97,20 @@ public class ConceptValidator implements Validator {
 		
 		Concept conceptToValidate = (Concept) obj;
 		//no name to validate, but why is this the case?
-		if (conceptToValidate.getNames().size() == 0) {
+		if (conceptToValidate.getNames().isEmpty()) {
 			errors.reject("Concept.name.atLeastOneRequired");
 			return;
 		}
-		
+
+		ValidationUtils.rejectIfEmpty(errors, "datatype", "Concept.datatype.empty");
+		ValidationUtils.rejectIfEmpty(errors, "conceptClass", "Concept.conceptClass.empty");
+
 		boolean hasFullySpecifiedName = false;
 		for (Locale conceptNameLocale : conceptToValidate.getAllConceptNameLocales()) {
 			boolean fullySpecifiedNameForLocaleFound = false;
 			boolean preferredNameForLocaleFound = false;
 			boolean shortNameForLocaleFound = false;
-			Set<String> validNamesFoundInLocale = new HashSet<String>();
+			Set<String> validNamesFoundInLocale = new HashSet<>();
 			Collection<ConceptName> namesInLocale = conceptToValidate.getNames(conceptNameLocale);
 			for (ConceptName nameInLocale : namesInLocale) {
 				if (StringUtils.isBlank(nameInLocale.getName())) {
@@ -111,8 +118,8 @@ public class ConceptValidator implements Validator {
 					        + "' cannot be an empty string or white space");
 					errors.reject("Concept.name.empty");
 				}
-				if (nameInLocale.isLocalePreferred() != null) {
-					if (nameInLocale.isLocalePreferred() && !preferredNameForLocaleFound) {
+				if (nameInLocale.getLocalePreferred() != null) {
+					if (nameInLocale.getLocalePreferred() && !preferredNameForLocaleFound) {
 						if (nameInLocale.isIndexTerm()) {
 							log.warn("Preferred name in locale '" + conceptNameLocale.toString()
 							        + "' shouldn't be an index term");
@@ -121,7 +128,7 @@ public class ConceptValidator implements Validator {
 							log.warn("Preferred name in locale '" + conceptNameLocale.toString()
 							        + "' shouldn't be a short name");
 							errors.reject("Concept.error.preferredName.is.shortName");
-						} else if (nameInLocale.isVoided()) {
+						} else if (nameInLocale.getVoided()) {
 							log.warn("Preferred name in locale '" + conceptNameLocale.toString()
 							        + "' shouldn't be a voided name");
 							errors.reject("Concept.error.preferredName.is.voided");
@@ -130,7 +137,7 @@ public class ConceptValidator implements Validator {
 						preferredNameForLocaleFound = true;
 					}
 					//should have one preferred name per locale
-					else if (nameInLocale.isLocalePreferred() && preferredNameForLocaleFound) {
+					else if (nameInLocale.getLocalePreferred() && preferredNameForLocaleFound) {
 						log.warn("Found multiple preferred names in locale '" + conceptNameLocale.toString() + "'");
 						errors.reject("Concept.error.multipleLocalePreferredNames");
 					}
@@ -146,7 +153,7 @@ public class ConceptValidator implements Validator {
 						log.warn("Found multiple fully specified names in locale '" + conceptNameLocale.toString() + "'");
 						errors.reject("Concept.error.multipleFullySpecifiedNames");
 					}
-					if (nameInLocale.isVoided()) {
+					if (nameInLocale.getVoided()) {
 						log.warn("Fully Specified name in locale '" + conceptNameLocale.toString()
 						        + "' shouldn't be a voided name");
 						errors.reject("Concept.error.fullySpecifiedName.is.voided");
@@ -193,7 +200,7 @@ public class ConceptValidator implements Validator {
 			}
 		}
 		
-		//Ensure that each concept has atleast a fully specified name
+		//Ensure that each concept has at least a fully specified name
 		if (!hasFullySpecifiedName) {
 			log.debug("Concept has no fully specified name");
 			errors.reject("Concept.error.no.FullySpecifiedName");
@@ -228,7 +235,7 @@ public class ConceptValidator implements Validator {
 				}
 				
 				if (mappedTermIds == null) {
-					mappedTermIds = new HashSet<Integer>();
+					mappedTermIds = new HashSet<>();
 				}
 				
 				//if we already have a mapping to this term, reject it this map
@@ -241,6 +248,14 @@ public class ConceptValidator implements Validator {
 				index++;
 			}
 		}
+		if (CollectionUtils.isNotEmpty(conceptToValidate.getAnswers())) {
+			for (ConceptAnswer conceptAnswer : conceptToValidate.getAnswers()) {
+				if (conceptAnswer.getAnswerConcept().equals(conceptToValidate)) {
+					errors.reject("Concept.contains.itself.as.answer");
+				}
+			}
+		}
 		ValidateUtil.validateFieldLengths(errors, obj.getClass(), "version", "retireReason");
+		super.validateAttributes(conceptToValidate, errors, Context.getConceptService().getAllConceptAttributeTypes());
 	}
 }

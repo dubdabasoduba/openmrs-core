@@ -25,13 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -46,6 +39,13 @@ import org.dbunit.operation.DatabaseOperation;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
+
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 
 /**
  * Allows to test database upgrade. It accepts initialDatabasePath which should point to the h2
@@ -218,8 +218,12 @@ public class DatabaseUpgradeTestUtil {
 	}
 	
 	public void upgrade() throws IOException, SQLException {
+		upgrade("liquibase-update-to-latest.xml");
+	}
+
+	public void upgrade(String filename) throws IOException, SQLException {
 		try {
-			Liquibase liquibase = new Liquibase("liquibase-update-to-latest.xml", new ClassLoaderResourceAccessor(getClass()
+			Liquibase liquibase = new Liquibase(filename, new ClassLoaderResourceAccessor(getClass()
 			        .getClassLoader()), liqubaseConnection);
 			liquibase.update(null);
 			

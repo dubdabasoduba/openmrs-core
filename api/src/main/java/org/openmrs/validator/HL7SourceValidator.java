@@ -11,8 +11,8 @@ package org.openmrs.validator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.hl7.HL7Source;
 import org.openmrs.annotation.Handler;
+import org.openmrs.hl7.HL7Source;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
@@ -33,8 +33,8 @@ public class HL7SourceValidator implements Validator {
 	 * 
 	 * @see org.springframework.validation.Validator#supports(java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
-	public boolean supports(Class c) {
+	@Override
+	public boolean supports(Class<?> c) {
 		return c.equals(HL7Source.class);
 	}
 	
@@ -49,6 +49,7 @@ public class HL7SourceValidator implements Validator {
 	 * @should pass validation if field lengths are correct
 	 * @should fail validation if field lengths are not correct
 	 */
+	@Override
 	public void validate(Object obj, Errors errors) {
 		HL7Source hl7Source = (HL7Source) obj;
 		if (hl7Source == null) {

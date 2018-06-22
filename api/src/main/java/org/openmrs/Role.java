@@ -25,7 +25,7 @@ import org.openmrs.util.RoleConstants;
  *
  * @see Privilege
  */
-public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class Role extends BaseOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 1234233L;
 	
@@ -72,6 +72,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 		this.privileges = privileges;
 	}
 	
+	@Override
 	public String getName() {
 		return this.getRole();
 	}
@@ -127,6 +128,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return this.role;
 	}
@@ -182,7 +184,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @return true/false whether this role inherits from other roles
 	 */
 	public boolean inheritsRoles() {
-		return getInheritedRoles() != null && getInheritedRoles().size() > 0;
+		return getInheritedRoles() != null && !getInheritedRoles().isEmpty();
 	}
 	
 	/**
@@ -236,6 +238,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		throw new UnsupportedOperationException();
 	}
@@ -244,6 +247,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.5
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		throw new UnsupportedOperationException();
 	}
@@ -274,7 +278,7 @@ public class Role extends BaseOpenmrsMetadata implements java.io.Serializable {
 	 * @since 1.9
 	 */
 	public boolean hasChildRoles() {
-		return getChildRoles() != null && getChildRoles().size() > 0;
+		return getChildRoles() != null && !getChildRoles().isEmpty();
 	}
 	
 	/**

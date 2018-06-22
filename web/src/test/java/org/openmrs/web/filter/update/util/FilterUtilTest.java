@@ -9,8 +9,7 @@
  */
 package org.openmrs.web.filter.update.util;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.test.Verifies;

@@ -9,13 +9,15 @@
  */
 package org.openmrs;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
  * ConceptMapType are used to define relationships between concepts and concept reference terms e.g
  * IS_A or SAME_AS, BROADER_THAN
  *
  * @since 1.9
  */
-public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Serializable {
+public class ConceptMapType extends BaseOpenmrsMetadata {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -65,6 +67,7 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	/**
 	 * @see org.openmrs.OpenmrsObject#getId()
 	 */
+	@Override
 	public Integer getId() {
 		return getConceptMapTypeId();
 	}
@@ -72,6 +75,7 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	/**
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
+	@Override
 	public void setId(Integer id) {
 		setConceptMapTypeId(id);
 	}
@@ -79,6 +83,7 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		if (getName() == null) {
 			return "";
@@ -91,8 +96,12 @@ public class ConceptMapType extends BaseOpenmrsMetadata implements java.io.Seria
 	 * Returns true if this concept map type is hidden otherwise false
 	 *
 	 * @return true if this concept map type is hidden otherwise false
+	 *
+	 * @deprecated as of 2.0, use {@link #getIsHidden()}
 	 */
+	@Deprecated
+	@JsonIgnore
 	public boolean isHidden() {
-		return isHidden;
+		return getIsHidden();
 	}
 }

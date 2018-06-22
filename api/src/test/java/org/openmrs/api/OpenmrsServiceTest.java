@@ -12,8 +12,7 @@ package org.openmrs.api;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;

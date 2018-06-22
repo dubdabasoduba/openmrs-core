@@ -22,20 +22,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.openmrs.api.context.Context;
+import org.openmrs.util.OpenmrsConstants;
+import org.openmrs.util.OpenmrsUtil;
+
 import liquibase.change.custom.CustomTaskChange;
 import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.exception.CustomChangeException;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.SetupException;
-
 import liquibase.exception.ValidationErrors;
 import liquibase.resource.ResourceAccessor;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openmrs.api.context.Context;
-import org.openmrs.util.OpenmrsConstants;
-import org.openmrs.util.OpenmrsUtil;
 
 /**
  * Executes (aka "source"s) the given file on the current database. <br>
@@ -127,7 +127,7 @@ public class SourceMySqldiffFile implements CustomTaskChange {
 		        + databaseName;
 		
 		// run the command line string
-		StringBuffer output = new StringBuffer();
+		StringBuilder output = new StringBuilder();
 		Integer exitValue = -1; // default to a non-zero exit value in case of exceptions
 		try {
 			exitValue = execCmd(tmpOutputFile.getParentFile(), commands.toArray(new String[] {}), output);
@@ -190,7 +190,7 @@ public class SourceMySqldiffFile implements CustomTaskChange {
 	 * @param the string
 	 * @return process exit value
 	 */
-	private Integer execCmd(File wd, String[] cmdWithArguments, StringBuffer out) throws Exception {
+	private Integer execCmd(File wd, String[] cmdWithArguments, StringBuilder out) throws Exception {
 		log.debug("executing command: " + Arrays.toString(cmdWithArguments));
 		
 		Integer exitValue = -1;

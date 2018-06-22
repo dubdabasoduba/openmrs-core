@@ -16,13 +16,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 import org.openmrs.BaseOpenmrsObject;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Visit;
-import org.openmrs.VisitAttribute;
 import org.openmrs.test.Verifies;
 import org.springframework.util.ReflectionUtils;
 
@@ -277,20 +275,23 @@ class OpenmrsObjectImp extends NormalClass implements OpenmrsObject {
 	@SuppressWarnings("unused")
 	private String nonCollectionField;
 	
-	@SuppressWarnings("unchecked")
 	Collection genericCollectionField;
 	
+	@Override
 	public Integer getId() {
 		return null;
 	}
 	
+	@Override
 	public String getUuid() {
 		return null;
 	}
 	
+	@Override
 	public void setId(Integer id) {
 	}
 	
+	@Override
 	public void setUuid(String uuid) {
 	}
 	

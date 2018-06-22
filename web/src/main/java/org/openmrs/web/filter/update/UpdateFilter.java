@@ -31,9 +31,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import liquibase.changelog.ChangeSet;
-import liquibase.exception.LockException;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -57,6 +54,9 @@ import org.openmrs.web.filter.util.CustomResourceLoader;
 import org.openmrs.web.filter.util.ErrorMessageConstants;
 import org.openmrs.web.filter.util.FilterUtil;
 import org.springframework.web.context.ContextLoader;
+
+import liquibase.changelog.ChangeSet;
+import liquibase.exception.LockException;
 
 /**
  * This is the second filter that is processed. It is only active when OpenMRS has some liquibase
@@ -142,7 +142,8 @@ public class UpdateFilter extends StartupFilter {
 	@Override
 	protected synchronized void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException,
 	        ServletException {
-		
+
+        final String updJobStatus = "updateJobStarted";
 		String page = httpRequest.getParameter("page");
 		Map<String, Object> referenceMap = new HashMap<String, Object>();
 		if (httpRequest.getSession().getAttribute(FilterUtil.LOCALE_ATTRIBUTE) != null) {
@@ -168,7 +169,7 @@ public class UpdateFilter extends StartupFilter {
 				// if another super user has already launched database update
 				// allow current super user to review update progress
 				if (isDatabaseUpdateInProgress) {
-					referenceMap.put("updateJobStarted", true);
+					referenceMap.put(updJobStatus, true);
 					httpResponse.setContentType("text/html");
 					renderTemplate(REVIEW_CHANGES, referenceMap, httpResponse);
 					return;
@@ -230,13 +231,13 @@ public class UpdateFilter extends StartupFilter {
 				// allows current user see progress of running update
 				// and also will hide the "Run Updates" button
 				
-				referenceMap.put("updateJobStarted", true);
+				referenceMap.put(updJobStatus, true);
 			} else {
 				referenceMap.put("isDatabaseUpdateInProgress", true);
 				// as well we need to allow current user to
 				// see progress of already started updates
 				// and also will hide the "Run Updates" button
-				referenceMap.put("updateJobStarted", true);
+				referenceMap.put(updJobStatus, true);
 			}
 			
 			renderTemplate(REVIEW_CHANGES, referenceMap, httpResponse);
@@ -286,7 +287,7 @@ public class UpdateFilter extends StartupFilter {
 				}
 			}
 			
-			String jsonText = toJSONString(result, true);
+			String jsonText = toJSONString(result);
 			httpResponse.getWriter().write(jsonText);
 		}
 	}
@@ -523,10 +524,10 @@ public class UpdateFilter extends StartupFilter {
 					setUpdatesRequired(false);
 				} else {
 					if (log.isDebugEnabled()) {
-						log.debug("Setting updates required to " + (model.changes.size() > 0)
+						log.debug("Setting updates required to " + (!model.changes.isEmpty())
 						        + " because of the size of unrun changes");
 					}
-					setUpdatesRequired(model.changes.size() > 0);
+					setUpdatesRequired(!model.changes.isEmpty());
 				}
 			}
 			catch (Exception e) {
@@ -574,7 +575,7 @@ public class UpdateFilter extends StartupFilter {
 	/**
 	 * @param updatesRequired the updatesRequired to set
 	 */
-	protected static synchronized void setUpdatesRequired(boolean updatesRequired) {
+	public static synchronized void setUpdatesRequired(boolean updatesRequired) {
 		UpdateFilter.updatesRequired = updatesRequired;
 	}
 	
@@ -621,22 +622,22 @@ public class UpdateFilter extends StartupFilter {
 		
 		private List<String> updateWarnings = new LinkedList<String>();
 		
-		synchronized public void reportError(String error, Object... params) {
+		public synchronized void reportError(String error, Object... params) {
 			Map<String, Object[]> errors = new HashMap<String, Object[]>();
 			errors.put(error, params);
 			reportErrors(errors);
 		}
-		
-		synchronized public void reportErrors(Map<String, Object[]> errs) {
+
+		public synchronized void reportErrors(Map<String, Object[]> errs) {
 			errors.putAll(errs);
 			erroneous = true;
 		}
-		
-		synchronized public boolean hasErrors() {
+
+		public synchronized boolean hasErrors() {
 			return erroneous;
 		}
-		
-		synchronized public Map<String, Object[]> getErrors() {
+
+		public synchronized Map<String, Object[]> getErrors() {
 			return errors;
 		}
 		
@@ -658,24 +659,24 @@ public class UpdateFilter extends StartupFilter {
 			}
 		}
 		
-		synchronized public void setMessage(String message) {
+		public synchronized void setMessage(String message) {
 			this.message = message;
 		}
 		
-		synchronized public String getMessage() {
+		public synchronized String getMessage() {
 			return message;
 		}
 		
-		synchronized public void addChangesetId(String changesetid) {
+		public synchronized void addChangesetId(String changesetid) {
 			this.changesetIds.add(changesetid);
 			this.executingChangesetId = changesetid;
 		}
 		
-		synchronized public List<String> getChangesetIds() {
+		public synchronized List<String> getChangesetIds() {
 			return changesetIds;
 		}
 		
-		synchronized public String getExecutingChangesetId() {
+		public synchronized String getExecutingChangesetId() {
 			return executingChangesetId;
 		}
 		
@@ -686,11 +687,11 @@ public class UpdateFilter extends StartupFilter {
 			return updateWarnings;
 		}
 		
-		synchronized public boolean hasWarnings() {
+		public synchronized boolean hasWarnings() {
 			return hasUpdateWarnings;
 		}
 		
-		synchronized public void reportWarnings(List<String> warnings) {
+		public synchronized void reportWarnings(List<String> warnings) {
 			updateWarnings.addAll(warnings);
 			hasUpdateWarnings = true;
 		}
@@ -706,6 +707,7 @@ public class UpdateFilter extends StartupFilter {
 				 *
 				 * @see java.lang.Runnable#run()
 				 */
+				@Override
 				public void run() {
 					try {
 						/**

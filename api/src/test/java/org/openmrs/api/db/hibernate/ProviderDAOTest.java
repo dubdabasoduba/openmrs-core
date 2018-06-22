@@ -9,6 +9,9 @@
  */
 package org.openmrs.api.db.hibernate;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +21,6 @@ import org.openmrs.api.db.PersonDAO;
 import org.openmrs.api.db.ProviderDAO;
 import org.openmrs.test.BaseContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Collection;
-import java.util.List;
 
 public class ProviderDAOTest extends BaseContextSensitiveTest {
 	
@@ -50,7 +50,7 @@ public class ProviderDAOTest extends BaseContextSensitiveTest {
 	public void getProvidersByPerson_shouldNotReturnRetiredProvidersIfIncludeRetiredFalse() throws Exception {
 		Collection<Provider> providers = providerDao.getProvidersByPerson(personDao.getPerson(2), false);
 		Assert.assertEquals(1, providers.size());
-		Assert.assertFalse(providers.iterator().next().isRetired());
+		Assert.assertFalse(providers.iterator().next().getRetired());
 	}
 	
 	/**

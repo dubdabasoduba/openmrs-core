@@ -139,6 +139,13 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 			}
 			
 		} else if (t instanceof Class) {
+			Type genericSuperclass = ((Class) t).getGenericSuperclass();
+			if (genericSuperclass != null) {
+				Class ret = datatypeClassHandled(genericSuperclass);
+				if (ret != null) {
+					return ret;
+				}
+			}
 			for (Type candidate : ((Class) t).getGenericInterfaces()) {
 				Class ret = datatypeClassHandled(candidate);
 				if (ret != null) {
@@ -183,7 +190,7 @@ public class DatatypeServiceImpl extends BaseOpenmrsService implements DatatypeS
 			prioritizedHandlerClasses = new LinkedHashMap<Class<? extends CustomDatatype>, Class<? extends CustomDatatypeHandler>>();
 			for (Class dt : getAllDatatypeClasses()) {
 				List<Class<? extends CustomDatatypeHandler>> handlerClasses = getHandlerClasses(dt);
-				if (handlerClasses == null || handlerClasses.size() == 0) {
+				if (handlerClasses == null || handlerClasses.isEmpty()) {
 					prioritizedHandlerClasses.put(dt, null);
 				} else {
 					prioritizedHandlerClasses.put(dt, handlerClasses.get(0));

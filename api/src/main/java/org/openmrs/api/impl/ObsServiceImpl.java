@@ -9,6 +9,7 @@
  */
 package org.openmrs.api.impl;
 
+import java.io.File;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +31,9 @@ import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.ObsDAO;
 import org.openmrs.api.handler.SaveHandler;
+import org.openmrs.obs.ComplexData;
 import org.openmrs.obs.ComplexObsHandler;
+import org.openmrs.obs.handler.AbstractHandler;
 import org.openmrs.util.OpenmrsClassLoader;
 import org.openmrs.util.OpenmrsConstants.PERSON_TYPE;
 import org.openmrs.util.OpenmrsUtil;
@@ -65,6 +68,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#setObsDAO(org.openmrs.api.db.ObsDAO)
 	 */
+	@Override
 	public void setObsDAO(ObsDAO dao) {
 		this.dao = dao;
 	}
@@ -83,9 +87,155 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#saveObs(org.openmrs.Obs, String)
 	 */
+	@Override
 	public Obs saveObs(Obs obs, String changeMessage) throws APIException {
-		if (null != obs && null != obs.getConcept() && obs.getConcept().isComplex()
-		        && null != obs.getComplexData().getData()) {
+		if(obs == null){
+			throw new APIException("Obs.error.cannot.be.null", (Object[]) null);
+		}
+
+		if(obs.getId() != null && changeMessage == null){
+			throw new APIException("Obs.error.ChangeMessage.required", (Object[]) null);
+		}
+
+		handleExistingObsWithComplexConcept(obs);
+
+		ensureRequirePrivilege(obs);
+
+		//Should allow updating a voided Obs, it seems to be pointless to restrict it,
+		//otherwise operations like merge patients won't be possible when to moving voided obs
+		if (obs.getObsId() == null || obs.getVoided()) {
+			return saveNewOrVoidedObs(obs,changeMessage);
+		} else if(!obs.isDirty()){
+			setPersonFromEncounter(obs);
+			return saveObsNotDirty(obs, changeMessage);
+		} else {
+			setPersonFromEncounter(obs);
+			return saveExistingObs(obs,changeMessage);
+		}
+	}
+
+	private void setPersonFromEncounter(Obs obs) {
+		Encounter encounter = obs.getEncounter();
+		if (encounter != null) {
+			obs.setPerson(encounter.getPatient());
+		}
+	}
+
+	private void voidExistingObs(Obs obs, String changeMessage, Obs newObs) {
+		// void out the original observation to keep it around for
+		// historical purposes
+		try {
+			Context.addProxyPrivilege(PrivilegeConstants.DELETE_OBS);
+
+			// fetch a clean copy of this obs from the database so that
+			// we don't write the changes to the database when we save
+			// the fact that the obs is now voided
+			evictObsAndChildren(obs);
+			obs = Context.getObsService().getObs(obs.getObsId());
+			//delete the previous file from the appdata/complex_obs folder
+			if (newObs.hasPreviousVersion() && newObs.getPreviousVersion().isComplex()) {
+				File previousFile = AbstractHandler.getComplexDataFile(obs);
+				previousFile.delete();
+			}
+			// calling this via the service so that AOP hooks are called
+			Context.getObsService().voidObs(obs, changeMessage);
+
+		}
+		finally {
+			Context.removeProxyPrivilege(PrivilegeConstants.DELETE_OBS);
+		}
+	}
+
+	private Obs saveExistingObs(Obs obs, String changeMessage) {
+		// get a copy of the passed in obs and save it to the
+		// database. This allows us to create a new row and new obs_id
+		// this method doesn't copy the obs_id
+		Obs newObs = Obs.newInstance(obs);
+
+		unsetVoidedAndCreationProperties(newObs,obs);
+
+		RequiredDataAdvice.recursivelyHandle(SaveHandler.class, newObs, changeMessage);
+
+		// save the new row to the database with the changes that
+		// have been made to it
+		dao.saveObs(newObs);
+
+		saveObsGroup(newObs,null);
+
+		voidExistingObs(obs, changeMessage, newObs);
+
+		return newObs;
+
+	}
+        
+        private void unsetVoidedAndCreationProperties(Obs newObs,Obs obs) {
+		newObs.setVoided(false);
+		newObs.setVoidReason(null);
+		newObs.setDateVoided(null);
+		newObs.setVoidedBy(null);
+		newObs.setCreator(null);
+		newObs.setDateCreated(null);
+		newObs.setPreviousVersion(obs);
+        }
+
+	private Obs saveObsNotDirty(Obs obs, String changeMessage) {
+		if(!obs.isObsGrouping()){
+			return obs;
+		}
+
+		ObsService os = Context.getObsService();
+		boolean refreshNeeded = false;
+		for (Obs o : obs.getGroupMembers(true)) {
+			if (o.getId() == null) {
+				os.saveObs(o, null);
+			} else {
+				Obs newObs = os.saveObs(o, changeMessage);
+				refreshNeeded = !newObs.equals(o) || refreshNeeded;
+			}
+		}
+
+		if(refreshNeeded) {
+			Context.refreshEntity(obs);
+		}
+		return obs;
+	}
+
+	private Obs saveNewOrVoidedObs(Obs obs, String changeMessage) {
+		Obs ret = dao.saveObs(obs);
+		saveObsGroup(ret,changeMessage);
+		return ret;
+	}
+
+	private void evictObsAndChildren(Obs obs) {
+		Context.evictFromSession(obs);
+		if(obs.hasGroupMembers()) {
+			for(Obs member : obs.getGroupMembers()) {
+				evictObsAndChildren(member);
+			}
+		}
+	}
+
+	private void ensureRequirePrivilege(Obs obs){
+		if (obs.getObsId() == null) {
+			Context.requirePrivilege(PrivilegeConstants.ADD_OBS);
+		} else {
+			Context.requirePrivilege(PrivilegeConstants.EDIT_OBS);
+		}
+	}
+
+	private void saveObsGroup(Obs obs, String changeMessage){
+		if (obs.isObsGrouping()) {
+			for (Obs o : obs.getGroupMembers(true)) {
+				Context.getObsService().saveObs(o, changeMessage);
+			}
+		}
+	}
+
+	private void handleExistingObsWithComplexConcept(Obs obs) {
+		ComplexData complexData = obs.getComplexData();
+		Concept concept = obs.getConcept();
+		if (null != concept && concept.isComplex()
+		        && null != complexData && null != complexData.getData()) {
 			// save or update complexData object on this obs
 			// this is done before the database save so that the obs.valueComplex
 			// can be filled in by the handler.
@@ -93,72 +243,15 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 			if (null != handler) {
 				handler.saveObs(obs);
 			} else {
-				throw new APIException("unknown.handler", new Object[] { obs.getConcept() });
+				throw new APIException("unknown.handler", new Object[] {concept});
 			}
-		}
-		
-		if (obs != null && obs.getObsId() == null) {
-			Context.requirePrivilege(PrivilegeConstants.ADD_OBS);
-			return dao.saveObs(obs);
-		} else {
-			Context.requirePrivilege(PrivilegeConstants.EDIT_OBS);
-			
-			if (changeMessage == null) {
-				throw new APIException("Obs.error.ChangeMessage.required", (Object[]) null);
-			}
-			
-			Encounter encounter = obs.getEncounter();
-			if (encounter != null) {
-				obs.setPerson(encounter.getPatient());
-			}
-			
-			// get a copy of the passed in obs and save it to the
-			// database. This allows us to create a new row and new obs_id
-			// this method doesn't copy the obs_id
-			Obs newObs = Obs.newInstance(obs);
-			
-			// unset any voided properties on the new obs
-			newObs.setVoided(false);
-			newObs.setVoidReason(null);
-			newObs.setDateVoided(null);
-			newObs.setVoidedBy(null);
-			// unset the creation stats
-			newObs.setCreator(null);
-			newObs.setDateCreated(null);
-			newObs.setPreviousVersion(obs);
-			
-			RequiredDataAdvice.recursivelyHandle(SaveHandler.class, newObs, changeMessage);
-			
-			// save the new row to the database with the changes that
-			// have been made to it
-			dao.saveObs(newObs);
-			
-			// void out the original observation to keep it around for
-			// historical purposes
-			try {
-				Context.addProxyPrivilege(PrivilegeConstants.DELETE_OBS);
-				
-				// fetch a clean copy of this obs from the database so that
-				// we don't write the changes to the database when we save
-				// the fact that the obs is now voided
-				Context.evictFromSession(obs);
-				obs = Context.getObsService().getObs(obs.getObsId());
-				
-				// calling this via the service so that AOP hooks are called
-				Context.getObsService().voidObs(obs, changeMessage);
-				
-			}
-			finally {
-				Context.removeProxyPrivilege(PrivilegeConstants.DELETE_OBS);
-			}
-			
-			return newObs;
 		}
 	}
-	
+
 	/**
 	 * @see org.openmrs.api.ObsService#getObs(java.lang.Integer)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public Obs getObs(Integer obsId) throws APIException {
 		return dao.getObs(obsId);
@@ -172,6 +265,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 * @param reason the void reason
 	 * @throws APIException
 	 */
+	@Override
 	public Obs voidObs(Obs obs, String reason) throws APIException {
 		return dao.saveObs(obs);
 	}
@@ -187,6 +281,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 * @return the unvoided Obs
 	 * @throws APIException
 	 */
+	@Override
 	public Obs unvoidObs(Obs obs) throws APIException {
 		return dao.saveObs(obs);
 	}
@@ -194,6 +289,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#purgeObs(org.openmrs.Obs, boolean)
 	 */
+	@Override
 	public void purgeObs(Obs obs, boolean cascade) throws APIException {
 		if (!purgeComplexData(obs)) {
 			throw new APIException("Obs.error.unable.purge.complex.data", new Object[] { obs });
@@ -212,6 +308,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#purgeObs(org.openmrs.Obs)
 	 */
+	@Override
 	public void purgeObs(Obs obs) throws APIException {
 		Context.getObsService().purgeObs(obs, false);
 	}
@@ -221,11 +318,12 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 *      java.util.List, java.util.List, List, List, java.util.List, java.lang.Integer,
 	 *      java.lang.Integer, java.util.Date, java.util.Date, boolean)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public List<Obs> getObservations(List<Person> whom, List<Encounter> encounters, List<Concept> questions,
-	        List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations, List<String> sort,
-	        Integer mostRecentN, Integer obsGroupId, Date fromDate, Date toDate, boolean includeVoidedObs)
-	        throws APIException {
+	                                 List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations,
+	                                 List<String> sort, Integer mostRecentN, Integer obsGroupId, Date fromDate, Date toDate,
+	                                 boolean includeVoidedObs) throws APIException {
 		
 		if (sort == null) {
 			sort = new Vector<String>();
@@ -243,11 +341,12 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 *      java.util.List, java.util.List, List, List, java.util.List, java.lang.Integer,
 	 *      java.lang.Integer, java.util.Date, java.util.Date, boolean, java.lang.String)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public List<Obs> getObservations(List<Person> whom, List<Encounter> encounters, List<Concept> questions,
-	        List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations, List<String> sort,
-	        Integer mostRecentN, Integer obsGroupId, Date fromDate, Date toDate, boolean includeVoidedObs,
-	        String accessionNumber) throws APIException {
+	                                 List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations,
+	                                 List<String> sort, Integer mostRecentN, Integer obsGroupId, Date fromDate, Date toDate,
+	                                 boolean includeVoidedObs, String accessionNumber) throws APIException {
 		
 		if (sort == null) {
 			sort = new Vector<String>();
@@ -265,10 +364,12 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 *      java.util.List, java.util.List, java.util.List, java.util.List, java.lang.Integer,
 	 *      java.util.Date, java.util.Date, boolean)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public Integer getObservationCount(List<Person> whom, List<Encounter> encounters, List<Concept> questions,
-	        List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations, Integer obsGroupId,
-	        Date fromDate, Date toDate, boolean includeVoidedObs) throws APIException {
+	                                   List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations,
+	                                   Integer obsGroupId, Date fromDate, Date toDate, boolean includeVoidedObs)
+	    throws APIException {
 		return OpenmrsUtil.convertToInteger(dao.getObservationCount(whom, encounters, questions, answers, personTypes,
 		    locations, obsGroupId, fromDate, toDate, null, includeVoidedObs, null));
 	}
@@ -278,10 +379,12 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 *      java.util.List, java.util.List, java.util.List, java.util.List, java.lang.Integer,
 	 *      java.util.Date, java.util.Date, boolean, java.lang.String)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public Integer getObservationCount(List<Person> whom, List<Encounter> encounters, List<Concept> questions,
-	        List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations, Integer obsGroupId,
-	        Date fromDate, Date toDate, boolean includeVoidedObs, String accessionNumber) throws APIException {
+	                                   List<Concept> answers, List<PERSON_TYPE> personTypes, List<Location> locations,
+	                                   Integer obsGroupId, Date fromDate, Date toDate, boolean includeVoidedObs,
+	                                   String accessionNumber) throws APIException {
 		return OpenmrsUtil.convertToInteger(dao.getObservationCount(whom, encounters, questions, answers, personTypes,
 		    locations, obsGroupId, fromDate, toDate, null, includeVoidedObs, accessionNumber));
 	}
@@ -292,6 +395,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 * 
 	 * @see org.openmrs.api.ObsService#getObservations(java.lang.String)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public List<Obs> getObservations(String searchString) {
 		
@@ -316,7 +420,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 		
 		List<Obs> returnList = new Vector<Obs>();
 		
-		if (encounters.size() > 0 || persons.size() > 0) {
+		if (!encounters.isEmpty() || !persons.isEmpty()) {
 			returnList = Context.getObsService().getObservations(persons, encounters, null, null, null, null, null, null,
 			    null, null, null, false);
 		}
@@ -338,6 +442,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#getObservationsByPerson(org.openmrs.Person)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public List<Obs> getObservationsByPerson(Person who) {
 		List<Person> whom = new Vector<Person>();
@@ -350,6 +455,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 * @see org.openmrs.api.ObsService#getObservationsByPersonAndConcept(org.openmrs.Person,
 	 *      org.openmrs.Concept)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public List<Obs> getObservationsByPersonAndConcept(Person who, Concept question) throws APIException {
 		List<Person> whom = new Vector<Person>();
@@ -366,14 +472,24 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#getObsByUuid(java.lang.String)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public Obs getObsByUuid(String uuid) throws APIException {
 		return dao.getObsByUuid(uuid);
 	}
-	
+
+	/**
+	 * @see org.openmrs.api.ObsService#getRevisionObs(org.openmrs.Obs)
+	 */
+	@Transactional(readOnly = true)
+	public Obs getRevisionObs(Obs initialObs) {
+		return dao.getRevisionObs(initialObs);
+	}
+
 	/**
 	 * @see org.openmrs.api.ObsService#getComplexObs(Integer, String)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public Obs getComplexObs(Integer obsId, String view) throws APIException {
 		Obs obs = dao.getObs(obsId);
@@ -402,6 +518,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#getHandler(org.openmrs.Obs)
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public ComplexObsHandler getHandler(Obs obs) throws APIException {
 		if (obs.getConcept().isComplex()) {
@@ -427,6 +544,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#getHandler(java.lang.String)
 	 */
+	@Override
 	public ComplexObsHandler getHandler(String key) {
 		return handlers.get(key);
 	}
@@ -435,6 +553,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	 * @see org.openmrs.api.ObsService#setHandlers(Map)
 	 * @see #registerHandler(String, ComplexObsHandler)
 	 */
+	@Override
 	public void setHandlers(Map<String, ComplexObsHandler> newHandlers) throws APIException {
 		if (newHandlers == null) {
 			ObsServiceImpl.setStaticHandlers(null);
@@ -457,6 +576,8 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#getHandlers()
 	 */
+	@Override
+	@Transactional(readOnly = true)
 	public Map<String, ComplexObsHandler> getHandlers() throws APIException {
 		if (handlers == null) {
 			handlers = new LinkedHashMap<String, ComplexObsHandler>();
@@ -468,6 +589,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#registerHandler(String, ComplexObsHandler)
 	 */
+	@Override
 	public void registerHandler(String key, ComplexObsHandler handler) throws APIException {
 		getHandlers().put(key, handler);
 	}
@@ -475,6 +597,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#registerHandler(String, String)
 	 */
+	@Override
 	public void registerHandler(String key, String handlerClass) throws APIException {
 		try {
 			Class<?> loadedClass = OpenmrsClassLoader.getInstance().loadClass(handlerClass);
@@ -499,6 +622,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService {
 	/**
 	 * @see org.openmrs.api.ObsService#removeHandler(java.lang.String)
 	 */
+	@Override
 	public void removeHandler(String key) {
 		handlers.remove(key);
 	}

@@ -14,13 +14,11 @@ import java.util.Locale;
 
 import org.springframework.context.HierarchicalMessageSource;
 import org.springframework.context.MessageSource;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Extended MessageSource interface, which provides more information about the available messages
  * and can be changed.
  */
-@Transactional(readOnly = true)
 public interface MutableMessageSource extends MessageSource, HierarchicalMessageSource {
 	
 	/**

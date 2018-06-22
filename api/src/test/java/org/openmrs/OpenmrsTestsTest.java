@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -30,12 +28,11 @@ import org.openmrs.util.OpenmrsUtil;
  * assert* in them. This would help prevent people from making tests that just print results to the
  * screen
  */
-@SuppressWarnings("unchecked")
 public class OpenmrsTestsTest {
 	
 	private ClassLoader classLoader = this.getClass().getClassLoader();
 	
-	private List<Class> testClasses = null;
+	private List<Class<?>> testClasses = null;
 	
 	/**
 	 * Make sure there is at least one _other_ test case out there
@@ -44,7 +41,7 @@ public class OpenmrsTestsTest {
 	 */
 	@Test
 	public void shouldHaveAtLeastOneTest() throws Exception {
-		List<Class> classes = getTestClasses();
+		List<Class<?>> classes = getTestClasses();
 		
 		assertTrue("There should be more than one class but there was only " + classes.size(), classes.size() > 1);
 	}
@@ -57,9 +54,9 @@ public class OpenmrsTestsTest {
 	@Test
 	public void shouldStartWithShould() throws Exception {
 		
-		List<Class> classes = getTestClasses();
+		List<Class<?>> classes = getTestClasses();
 		
-		for (Class<TestCase> currentClass : classes) {
+		for (Class<?> currentClass : classes) {
 			for (Method method : currentClass.getMethods()) {
 				
 				// make sure every "test" method (determined by having 
@@ -85,7 +82,7 @@ public class OpenmrsTestsTest {
 	@Test
 	public void shouldHaveTestAnnotationWhenStartingWithShould() throws Exception {
 		// loop over all methods in all test classes
-		for (Class<TestCase> currentClass : getTestClasses()) {
+		for (Class<?> currentClass : getTestClasses()) {
 			for (Method method : currentClass.getMethods()) {
 				String methodName = method.getName();
 				
@@ -135,7 +132,7 @@ public class OpenmrsTestsTest {
 	 * 
 	 * @return list of classes whose name ends with Test.class
 	 */
-	private List<Class> getTestClasses() {
+	private List<Class<?>> getTestClasses() {
 		return getClasses(".*(Test|IT|PT)\\.class$");
 	}
 	
@@ -144,7 +141,7 @@ public class OpenmrsTestsTest {
 	 * 
 	 * @return list of TestCase classes in org.openmrs.test
 	 */
-	private List<Class> getClasses(String classNameRegex) {
+	private List<Class<?>> getClasses(String classNameRegex) {
 		if (testClasses != null)
 			return testClasses;
 		
@@ -175,9 +172,9 @@ public class OpenmrsTestsTest {
 	 * 
 	 * @param directory to loop through the files of
 	 */
-	private List<Class> getClassesInDirectory(File directory, Pattern pattern) {
+	private List<Class<?>> getClassesInDirectory(File directory, Pattern pattern) {
 		
-		List<Class> currentDirTestClasses = new ArrayList<Class>();
+		List<Class<?>> currentDirTestClasses = new ArrayList<>();
 		
 		for (File currentFile : directory.listFiles()) {
 			

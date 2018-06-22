@@ -14,18 +14,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.springframework.util.Assert;
-
 import org.openmrs.Obs;
 import org.openmrs.api.APIException;
 import org.openmrs.obs.ComplexData;
 import org.openmrs.obs.ComplexObsHandler;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.util.Assert;
 
 /**
  * Handler for storing files for complex obs to the file system. Files are stored in the location
@@ -54,6 +54,7 @@ public class TextHandler extends AbstractHandler implements ComplexObsHandler {
 	 * 
 	 * @see org.openmrs.obs.ComplexObsHandler#getObs(org.openmrs.Obs, java.lang.String)
 	 */
+	@Override
 	public Obs getObs(Obs obs, String view) {
 		File file = getComplexDataFile(obs);
 		log.debug("value complex: " + obs.getValueComplex());
@@ -131,6 +132,13 @@ public class TextHandler extends AbstractHandler implements ComplexObsHandler {
 				}
 				catch (IOException e) {
 					throw new APIException("Obs.error.unable.convert.complex.data", new Object[] { "Reader" }, e);
+				}
+			} else if (InputStream.class.isAssignableFrom(data.getClass())) {
+				try {
+					IOUtils.copy((InputStream) data, fout);
+				}
+				catch (IOException e) {
+					throw new APIException("Obs.error.unable.convert.complex.data", new Object[] { "input stream" }, e);
 				}
 			}
 			

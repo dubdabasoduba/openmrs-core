@@ -17,6 +17,7 @@ import org.openmrs.Person;
 import org.openmrs.PersonAddress;
 import org.openmrs.PersonName;
 import org.openmrs.annotation.Handler;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
@@ -48,6 +49,8 @@ public class PersonValidator implements Validator {
 	 *      org.springframework.validation.Errors)
 	 * @should fail validation if birthdate makes patient older that 120 years old
 	 * @should fail validation if birthdate is a future date
+	 * @should fail validation if deathdate is a future date
+	 * @should fail validation if birthdate is after death date
 	 * @should fail validation if voidReason is blank when patient is voided
 	 * @should fail validation if causeOfDeath is blank when patient is dead
 	 * @should pass validation if gender is blank for Persons
@@ -71,17 +74,17 @@ public class PersonValidator implements Validator {
 		for (PersonName personName : person.getNames()) {
 			errors.pushNestedPath("names[" + index + "]");
 			personNameValidator.validate(personName, errors);
-			if (!personName.isVoided()) {
+			if (!personName.getVoided()) {
 				atLeastOneNonVoidPersonNameLeft = true;
 			}
 			errors.popNestedPath();
 			index++;
 		}
-		if (!person.isVoided() && !atLeastOneNonVoidPersonNameLeft) {
+		if (!person.getVoided() && !atLeastOneNonVoidPersonNameLeft) {
 			errors.rejectValue("names", "Person.shouldHaveAtleastOneNonVoidedName");
 		}
 		
-		//validate the personAddress
+		// validate the personAddress
 		index = 0;
 		for (PersonAddress address : person.getAddresses()) {
 			try {
@@ -95,11 +98,12 @@ public class PersonValidator implements Validator {
 		}
 		
 		validateBirthDate(errors, person.getBirthdate());
+		validateDeathDate(errors, person.getDeathDate(), person.getBirthdate());
 		
-		if (person.isVoided()) {
+		if (person.getVoided()) {
 			ValidationUtils.rejectIfEmptyOrWhitespace(errors, "voidReason", "error.null");
 		}
-		if (person.isDead()) {
+		if (person.getDead()) {
 			ValidationUtils.rejectIfEmpty(errors, "causeOfDeath", "Person.dead.causeOfDeathNull");
 		}
 		
@@ -113,18 +117,72 @@ public class PersonValidator implements Validator {
 	 * @param errors Stores information about errors encountered during validation.
 	 */
 	private void validateBirthDate(Errors errors, Date birthDate) {
-		if (birthDate != null) {
-			if (birthDate.after(new Date())) {
-				errors.rejectValue("birthdate", "error.date.future");
-			} else {
-				Calendar c = Calendar.getInstance();
-				c.setTime(new Date());
-				c.add(Calendar.YEAR, -120);
-				if (birthDate.before(c.getTime())) {
-					errors.rejectValue("birthdate", "error.date.nonsensical");
-				}
-			}
+		if (birthDate == null) {
+			return;
+		}
+		rejectIfFutureDate(errors, birthDate, "birthdate");
+		rejectDateIfBefore120YearsAgo(errors, birthDate, "birthdate");
+	}
+	
+	/**
+	 * Checks if the death date is in the future.
+	 * 
+	 * @param errors Stores information about errors encountered during validation
+	 * @param deathDate the deathdate to validate
+	 */
+	private void validateDeathDate(Errors errors, Date deathDate, Date birthDate) {
+		if (deathDate == null) {
+			return;
+		}
+		rejectIfFutureDate(errors, deathDate, "deathDate");
+		if (birthDate == null) {
+			return;
+		}
+		rejectDeathDateIfBeforeBirthDate(errors, deathDate, birthDate);
+	}
+	
+	/**
+	 * Rejects a date if it is in the future.
+	 * 
+	 * @param errors the error object
+	 * @param date the date to check
+	 * @param dateField the name of the field
+	 */
+	private void rejectIfFutureDate(Errors errors, Date date, String dateField) {
+		if (OpenmrsUtil.compare(date, new Date()) > 0) {
+			errors.rejectValue(dateField, "error.date.future");
 		}
 	}
+	
+	/**
+	 * Rejects a date if it is before 120 years ago.
+	 * 
+	 * @param errors the error object
+	 * @param date the date to check
+	 * @param dateField the name of the field
+	 */
+	private void rejectDateIfBefore120YearsAgo(Errors errors, Date date, String dateField) {
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		c.add(Calendar.YEAR, -120);
+		if (OpenmrsUtil.compare(date, c.getTime()) < 0) {
+			errors.rejectValue(dateField, "error.date.nonsensical");
+		}
+	}
+
+	/**
+	 * Rejects a death date if it is before birth date
+	 * 
+	 * @param errors the error object
+	 * @param deathdate the date to check
+	 * @param birthdate to check with
+	 */
+	private void rejectDeathDateIfBeforeBirthDate(Errors errors, Date deathdate, Date birthdate) {
+		if (OpenmrsUtil.compare(deathdate, birthdate) < 0) {
+			errors.rejectValue("deathDate", "error.deathdate.before.birthdate");
+		}
+	}
+
+
 	
 }

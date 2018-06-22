@@ -37,24 +37,29 @@ public class PersonSaveHandler implements SaveHandler<Person> {
 	 * @see org.openmrs.api.handler.SaveHandler#handle(org.openmrs.OpenmrsObject, org.openmrs.User,
 	 *      java.util.Date, java.lang.String)
 	 */
+	@Override
 	public void handle(Person person, User creator, Date dateCreated, String other) {
 		
 		// address collection
-		if (person.getAddresses() != null && person.getAddresses().size() > 0) {
+		if (person.getAddresses() != null && !person.getAddresses().isEmpty()) {
 			for (PersonAddress pAddress : person.getAddresses()) {
+				if (pAddress.isBlank()){
+					person.removeAddress(pAddress);
+					continue;
+				}
 				pAddress.setPerson(person);
 			}
 		}
 		
 		// name collection
-		if (person.getNames() != null && person.getNames().size() > 0) {
+		if (person.getNames() != null && !person.getNames().isEmpty()) {
 			for (PersonName pName : person.getNames()) {
 				pName.setPerson(person);
 			}
 		}
 		
 		// attribute collection
-		if (person.getAttributes() != null && person.getAttributes().size() > 0) {
+		if (person.getAttributes() != null && !person.getAttributes().isEmpty()) {
 			for (PersonAttribute pAttr : person.getAttributes()) {
 				pAttr.setPerson(person);
 			}

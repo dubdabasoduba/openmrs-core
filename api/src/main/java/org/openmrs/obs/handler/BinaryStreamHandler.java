@@ -17,15 +17,13 @@ import java.io.OutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.springframework.util.Assert;
-
 import org.openmrs.Obs;
 import org.openmrs.api.APIException;
 import org.openmrs.obs.ComplexData;
 import org.openmrs.obs.ComplexObsHandler;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.util.Assert;
 
 /**
  * Handler for storing generic binary data for complex obs to the file system.
@@ -103,6 +101,7 @@ public class BinaryStreamHandler extends AbstractHandler implements ComplexObsHa
 	/**
 	 * @see ComplexObsHandler#saveObs(Obs)
 	 */
+	@Override
 	public Obs saveObs(Obs obs) throws APIException {
 		try {
 			// Write the File to the File System

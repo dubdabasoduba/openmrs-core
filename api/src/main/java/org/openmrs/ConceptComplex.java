@@ -9,8 +9,6 @@
  */
 package org.openmrs;
 
-import java.io.Serializable;
-
 import org.hibernate.search.annotations.Indexed;
 import org.openmrs.obs.ComplexObsHandler;
 
@@ -20,7 +18,7 @@ import org.openmrs.obs.ComplexObsHandler;
  * @since 1.5
  */
 @Indexed
-public class ConceptComplex extends Concept implements Serializable {
+public class ConceptComplex extends Concept {
 	
 	public static final long serialVersionUID = 473231233L;
 	
@@ -65,11 +63,11 @@ public class ConceptComplex extends Concept implements Serializable {
 		this.setDatatype(c.getDatatype());
 		this.setDateChanged(c.getDateChanged());
 		this.setDateCreated(c.getDateCreated());
-		this.setSet(c.isSet());
+		this.setSet(c.getSet());
 		this.setNames(c.getNames());
 		this.setDescriptions(c.getDescriptions());
 		this.setConceptMappings(c.getConceptMappings());
-		this.setRetired(c.isRetired());
+		this.setRetired(c.getRetired());
 		this.setVersion(c.getVersion());
 		this.setUuid(c.getUuid());
 		
@@ -87,7 +85,7 @@ public class ConceptComplex extends Concept implements Serializable {
 			return false;
 		}
 		
-		return getDatatype().getHl7Abbreviation().equals("ED");
+		return "ED".equals(getDatatype().getHl7Abbreviation());
 	}
 	
 	/**

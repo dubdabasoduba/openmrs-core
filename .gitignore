@@ -64,6 +64,8 @@ nb-configuration.xml
 .*
 !.gitignore
 !.gitattributes
+!.tx
+!.github/
 *~
 #############
 
@@ -74,3 +76,5 @@ nb-configuration.xml
 /webapp/src/main/webapp/WEB-INF/module_messages*
 /web/WEB-INF/dwr-modules.xml
 #############
+
+*.log
